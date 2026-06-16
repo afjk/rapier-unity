@@ -117,9 +117,7 @@ fn body_can_sleep_entries(world: &RapierUnityWorld) -> Vec<BodyCanSleepEntry> {
         .body_can_sleep
         .iter()
         .filter_map(|(handle, can_sleep)| {
-            if world.bodies.get(*handle).is_none() {
-                return None;
-            }
+            world.bodies.get(*handle)?;
 
             let (index, generation) = handle.into_raw_parts();
             Some(BodyCanSleepEntry {
