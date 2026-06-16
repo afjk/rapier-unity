@@ -3,6 +3,14 @@
 This profile defines the minimum contract for comparing Rapier physics state
 across Scene Sync hosts such as Unity, Browser, and Godot.
 
+Web/Unity parity depends on matching the selected physics profile. See
+[support-matrix.md](support-matrix.md) for the full list of profiles, platform
+support status, and backend strategy.
+
+Unity WebGL should eventually use a rapier.js / Wasm backend rather than the
+native FFI path. Until that backend exists, Unity WebGL is not a valid parity
+host.
+
 ## Target
 
 - Rapier Rust core: `0.30.0`

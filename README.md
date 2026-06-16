@@ -101,6 +101,12 @@ The produced library is named `rapier_unity_ffi` with the platform-specific exte
 
 See [native/README.md](native/README.md) and [docs/native-packaging.md](docs/native-packaging.md) for platform notes.
 
+## Parity profile and versioning
+
+The current parity profile is **SceneSyncRapierParity-0.30**. This project is intentionally pinned to Rapier 0.30.0 for Browser/Unity bit parity. API expansion should target rapier.js 0.19.3 compatibility first. Latest Rapier support may be added later as a separate profile once the current parity baseline is stable.
+
+See [docs/support-matrix.md](docs/support-matrix.md) for platform and backend support status, and [docs/api-coverage.md](docs/api-coverage.md) for the Rapier JS API coverage matrix and recommended implementation order.
+
 ## Roadmap
 
 - Foundation: repository structure, package metadata, native workspace, low-level world wrapper.
@@ -112,6 +118,8 @@ See [native/README.md](native/README.md) and [docs/native-packaging.md](docs/nat
 
 Snapshot format notes live in [docs/snapshot-design.md](docs/snapshot-design.md).
 Scene Sync parity notes live in [docs/scenesync-parity.md](docs/scenesync-parity.md).
+Platform and backend support live in [docs/support-matrix.md](docs/support-matrix.md).
+API coverage and implementation order live in [docs/api-coverage.md](docs/api-coverage.md).
 
 ## Relationship to Scene Sync
 
