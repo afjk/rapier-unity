@@ -49,6 +49,20 @@ pub struct RapierUnityRigidBodyDesc {
     pub ccd_enabled: u8,
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct RapierUnityRigidBodyState {
+    pub transform: RapierUnityTransform,
+    pub linear_velocity_x: f32,
+    pub linear_velocity_y: f32,
+    pub linear_velocity_z: f32,
+    pub angular_velocity_x: f32,
+    pub angular_velocity_y: f32,
+    pub angular_velocity_z: f32,
+    pub sleeping: u8,
+    pub enabled: u8,
+}
+
 impl Default for RapierUnityTransform {
     fn default() -> Self {
         Self {
@@ -273,6 +287,31 @@ pub fn get_body_transform(
         .bodies
         .get(body.into())
         .map(|body| RapierUnityTransform::from_pose(body.position()))
+}
+
+pub fn get_body_state(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<RapierUnityRigidBodyState> {
+    if !body.is_valid() {
+        return None;
+    }
+
+    world.bodies.get(body.into()).map(|body| {
+        let linvel = body.linvel();
+        let angvel = body.angvel();
+        RapierUnityRigidBodyState {
+            transform: RapierUnityTransform::from_pose(body.position()),
+            linear_velocity_x: linvel.x,
+            linear_velocity_y: linvel.y,
+            linear_velocity_z: linvel.z,
+            angular_velocity_x: angvel.x,
+            angular_velocity_y: angvel.y,
+            angular_velocity_z: angvel.z,
+            sleeping: u8::from(body.is_sleeping()),
+            enabled: u8::from(body.is_enabled()),
+        }
+    })
 }
 
 pub fn set_body_transform(

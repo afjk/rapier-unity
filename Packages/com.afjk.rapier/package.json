@@ -25,6 +25,11 @@
       "displayName": "Deterministic Replay",
       "description": "Compares two identical worlds using state hashes.",
       "path": "Samples~/DeterministicReplay"
+    },
+    {
+      "displayName": "Cross-Host Parity",
+      "description": "Runs a shared Unity/Browser Rapier parity fixture and logs canonical hashes.",
+      "path": "Samples~/CrossHostParity"
     }
   ]
 }

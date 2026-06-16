@@ -115,3 +115,23 @@ import RAPIER from '@dimforge/rapier3d-deterministic-compat';
 
 Exported viewers should map that specifier to the bundled deterministic
 `rapier.mjs` asset.
+
+## Cross-Host Fixture v0
+
+The first shared fixture is:
+
+```text
+fixtures/rapier/parity-basic-001.json
+```
+
+It uses `SceneSyncRapierParity-0.30`, Rapier core `0.30.0`, one fixed floor,
+one dynamic box, and sample ticks through tick 600.
+
+Browser support lives in `afjk.jp` as `rapier-parity-fixture.js` and records
+`world.canonicalStateHash()` plus `canonicalStateDump()` for mismatch debugging.
+
+Unity support lives in the `CrossHostParity` sample. It loads the same fixture,
+creates bodies in stable Scene Sync object id order, assigns body/collider
+stable ids with `RapierWorld.StableIdHash(objectId)`, and logs a JSON result
+using the same `hashes` / `dumps` shape. Unity validation is manual until an
+Editor CI job exists.

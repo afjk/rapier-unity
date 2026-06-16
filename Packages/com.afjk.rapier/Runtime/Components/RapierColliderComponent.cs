@@ -8,6 +8,8 @@ namespace AFJK.Rapier
         [SerializeField] private bool registerOnEnable = true;
         [SerializeField] private bool isSensor;
         [SerializeField] private float density = 1f;
+        [SerializeField] private float friction = 0.5f;
+        [SerializeField] private float restitution;
         [SerializeField] private Vector3 localPosition;
         [SerializeField] private Quaternion localRotation = Quaternion.identity;
 
@@ -27,6 +29,18 @@ namespace AFJK.Rapier
         {
             get => density;
             set => density = Mathf.Max(0f, value);
+        }
+
+        public float Friction
+        {
+            get => friction;
+            set => friction = Mathf.Max(0f, value);
+        }
+
+        public float Restitution
+        {
+            get => restitution;
+            set => restitution = Mathf.Max(0f, value);
         }
 
         public Vector3 LocalPosition
@@ -145,6 +159,16 @@ namespace AFJK.Rapier
                 density = 0f;
             }
 
+            if (friction < 0f)
+            {
+                friction = 0f;
+            }
+
+            if (restitution < 0f)
+            {
+                restitution = 0f;
+            }
+
             if (localRotation == default(Quaternion))
             {
                 localRotation = Quaternion.identity;
@@ -152,4 +176,3 @@ namespace AFJK.Rapier
         }
     }
 }
-

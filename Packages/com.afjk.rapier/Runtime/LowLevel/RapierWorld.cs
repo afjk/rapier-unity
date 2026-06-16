@@ -94,6 +94,19 @@ namespace AFJK.Rapier
             return RapierNative.BodyGetTransform(world, body, out transform);
         }
 
+        public bool TryGetRigidBodyState(RapierRigidBodyHandle body, out RapierRigidBodyState state)
+        {
+            ThrowIfDisposed();
+            if (RapierNative.BodyGetState(world, body, out var nativeState))
+            {
+                state = new RapierRigidBodyState(nativeState);
+                return true;
+            }
+
+            state = default;
+            return false;
+        }
+
         public bool SetTransform(RapierRigidBodyHandle body, RapierTransform transform)
         {
             ThrowIfDisposed();
