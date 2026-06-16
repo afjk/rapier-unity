@@ -39,7 +39,8 @@ Initial development targets macOS Editor and Windows Editor. Mobile, XR, and Web
 
 ## Determinism
 
-The Rust crate enables Rapier's `enhanced-determinism` feature. Deterministic behavior still depends on platform, compiler flags, stable setup ordering, and avoiding nondeterministic gameplay code around the physics step.
+The Rust crate targets the Scene Sync parity profile by pinning `rapier3d = "=0.30.0"` and enabling Rapier's `enhanced-determinism` feature. Deterministic behavior still depends on platform, compiler flags, stable setup ordering, and avoiding nondeterministic gameplay code around the physics step.
 
-The current state hash uses stable sorting before hashing body and collider state. Snapshot APIs are present but intentionally stubbed until serialization is implemented.
+The current state hash implements `SceneSyncCanonicalPhysicsHashV1`. Set stable ids on bodies and colliders before comparing cross-host hashes; without stable ids the hash falls back to Rapier handles and is only useful for same-host replay diagnostics.
 
+Snapshot APIs serialize a native Rapier snapshot with a format/version header and restore it only when the native format and Rapier core version match. This is the fast rollback/resync layer, not the long-term Scene Sync canonical snapshot schema.

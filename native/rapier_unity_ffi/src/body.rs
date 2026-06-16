@@ -1,4 +1,5 @@
-use rapier3d::math::{Pose, Rotation, Vector};
+use rapier3d::math::{Isometry, Rotation, Vector};
+use rapier3d::na::{Quaternion, Translation3};
 use rapier3d::prelude::*;
 
 use crate::handles::RapierUnityRigidBodyHandle;
@@ -109,37 +110,47 @@ impl RapierUnityRigidBodyType {
 }
 
 impl RapierUnityTransform {
-    pub fn to_pose(self) -> Pose {
-        let rotation = Rotation::from_xyzw(
+    pub fn to_pose(self) -> Isometry<Real> {
+        let quaternion = Quaternion::new(
+            self.rotation_w,
             self.rotation_x,
             self.rotation_y,
             self.rotation_z,
-            self.rotation_w,
         );
-        let rotation = if rotation.is_finite() && rotation.length_squared() > f32::EPSILON {
-            rotation.normalize()
+        let rotation = if quaternion
+            .coords
+            .iter()
+            .all(|component| component.is_finite())
+            && quaternion.norm_squared() > f32::EPSILON
+        {
+            Rotation::new_normalize(quaternion)
         } else {
-            Rotation::IDENTITY
+            Rotation::identity()
         };
 
-        Pose::from_parts(
-            Vector::new(self.position_x, self.position_y, self.position_z),
+        Isometry::from_parts(
+            Translation3::from(Vector::new(
+                self.position_x,
+                self.position_y,
+                self.position_z,
+            )),
             rotation,
         )
     }
 
-    pub fn from_pose(pose: &Pose) -> Self {
+    pub fn from_pose(pose: &Isometry<Real>) -> Self {
         let rotation = pose.rotation;
-        let translation = pose.translation;
+        let quaternion = rotation.quaternion();
+        let translation = pose.translation.vector;
 
         Self {
             position_x: translation.x,
             position_y: translation.y,
             position_z: translation.z,
-            rotation_x: rotation.x,
-            rotation_y: rotation.y,
-            rotation_z: rotation.z,
-            rotation_w: rotation.w,
+            rotation_x: quaternion.i,
+            rotation_y: quaternion.j,
+            rotation_z: quaternion.k,
+            rotation_w: quaternion.w,
         }
     }
 }
@@ -188,7 +199,9 @@ pub fn create_body(
     .can_sleep(desc.can_sleep != 0)
     .ccd_enabled(desc.ccd_enabled != 0);
 
-    world.bodies.insert(builder.build()).into()
+    let handle = world.bodies.insert(builder.build());
+    world.body_can_sleep.insert(handle, desc.can_sleep != 0);
+    handle.into()
 }
 
 pub fn destroy_body(world: &mut RapierUnityWorld, body: RapierUnityRigidBodyHandle) -> bool {
@@ -196,17 +209,56 @@ pub fn destroy_body(world: &mut RapierUnityWorld, body: RapierUnityRigidBodyHand
         return false;
     }
 
-    world
+    let handle = body.into();
+    let removed = world
         .bodies
         .remove(
-            body.into(),
+            handle,
             &mut world.islands,
             &mut world.colliders,
             &mut world.impulse_joints,
             &mut world.multibody_joints,
             true,
         )
-        .is_some()
+        .is_some();
+
+    if removed {
+        world.body_stable_ids.remove(&handle);
+        world.body_can_sleep.remove(&handle);
+        world
+            .collider_stable_ids
+            .retain(|handle, _| world.colliders.get(*handle).is_some());
+    }
+
+    removed
+}
+
+pub fn set_body_stable_id(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    stable_id: u64,
+) -> bool {
+    if !body.is_valid() || stable_id == 0 {
+        return false;
+    }
+
+    let handle = body.into();
+    if world.bodies.get(handle).is_none() {
+        return false;
+    }
+
+    if world
+        .body_stable_ids
+        .iter()
+        .any(|(other_handle, other_stable_id)| {
+            *other_handle != handle && *other_stable_id == stable_id
+        })
+    {
+        return false;
+    }
+
+    world.body_stable_ids.insert(handle, stable_id);
+    true
 }
 
 pub fn get_body_transform(

@@ -1,6 +1,6 @@
 # Snapshot Design Notes
 
-Snapshot APIs are present in the C ABI but currently stubbed:
+Snapshot APIs are present in the C ABI:
 
 ```c
 size_t rapier_unity_world_snapshot_size(uint64_t world);
@@ -8,7 +8,8 @@ bool rapier_unity_world_snapshot_write(uint64_t world, uint8_t* out_bytes, size_
 bool rapier_unity_world_snapshot_read(uint64_t world, const uint8_t* bytes, size_t len);
 ```
 
-The intended design is a versioned binary format that can restore a world for replay and rollback.
+The implemented native format is a versioned binary snapshot that can restore a
+world for same-profile replay and rollback.
 
 ## Requirements
 
@@ -21,11 +22,15 @@ The intended design is a versioned binary format that can restore a world for re
 - Keep byte order and float representation explicit.
 - Add tests for roundtrip restore and hash equality.
 
-## Current Stub Behavior
+## Current Native Behavior
 
-- `snapshot_size` returns `0`.
-- `snapshot_write` returns `true` only for a zero-length write.
-- `snapshot_read` returns `false`.
+- `snapshot_size` returns the serialized native snapshot size.
+- `snapshot_write` requires an exact-size output buffer.
+- `snapshot_read` rejects malformed bytes or incompatible format/core versions.
+- Roundtrip restore preserves the canonical state hash and future deterministic
+  steps for the same Rapier core/profile.
 
-This keeps the public ABI shape stable while making it impossible to accidentally treat the current stubs as usable snapshot data.
-
+This native snapshot is intended for fast rollback/resync inside a matching
+Unity FFI build. It is not the cross-host Scene Sync canonical physics snapshot.
+The canonical snapshot should remain a separate versioned schema over
+body/collider/settings state.

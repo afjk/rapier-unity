@@ -222,8 +222,43 @@ pub fn destroy_collider(world: &mut RapierUnityWorld, collider: RapierUnityColli
         return false;
     }
 
-    world
+    let handle = collider.into();
+    let removed = world
         .colliders
-        .remove(collider.into(), &mut world.islands, &mut world.bodies, true)
-        .is_some()
+        .remove(handle, &mut world.islands, &mut world.bodies, true)
+        .is_some();
+
+    if removed {
+        world.collider_stable_ids.remove(&handle);
+    }
+
+    removed
+}
+
+pub fn set_collider_stable_id(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    stable_id: u64,
+) -> bool {
+    if !collider.is_valid() || stable_id == 0 {
+        return false;
+    }
+
+    let handle = collider.into();
+    if world.colliders.get(handle).is_none() {
+        return false;
+    }
+
+    if world
+        .collider_stable_ids
+        .iter()
+        .any(|(other_handle, other_stable_id)| {
+            *other_handle != handle && *other_stable_id == stable_id
+        })
+    {
+        return false;
+    }
+
+    world.collider_stable_ids.insert(handle, stable_id);
+    true
 }

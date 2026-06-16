@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{LazyLock, Mutex};
 
-use rapier3d::math::Vector;
 use rapier3d::prelude::*;
 
 pub struct RapierUnityWorld {
-    pub gravity: Vector,
+    pub gravity: Vector<Real>,
     pub integration_parameters: IntegrationParameters,
     pub physics_pipeline: PhysicsPipeline,
     pub islands: IslandManager,
@@ -17,6 +16,9 @@ pub struct RapierUnityWorld {
     pub impulse_joints: ImpulseJointSet,
     pub multibody_joints: MultibodyJointSet,
     pub ccd_solver: CCDSolver,
+    pub body_stable_ids: HashMap<RigidBodyHandle, u64>,
+    pub collider_stable_ids: HashMap<ColliderHandle, u64>,
+    pub body_can_sleep: HashMap<RigidBodyHandle, bool>,
 }
 
 impl Default for RapierUnityWorld {
@@ -33,6 +35,9 @@ impl Default for RapierUnityWorld {
             impulse_joints: ImpulseJointSet::new(),
             multibody_joints: MultibodyJointSet::new(),
             ccd_solver: CCDSolver::new(),
+            body_stable_ids: HashMap::new(),
+            collider_stable_ids: HashMap::new(),
+            body_can_sleep: HashMap::new(),
         }
     }
 }
@@ -40,7 +45,7 @@ impl Default for RapierUnityWorld {
 impl RapierUnityWorld {
     pub fn step(&mut self) {
         self.physics_pipeline.step(
-            self.gravity,
+            &self.gravity,
             &self.integration_parameters,
             &mut self.islands,
             &mut self.broad_phase,

@@ -25,7 +25,7 @@ This is not an official Rapier project.
 
 ## Current Status
 
-The package is in early foundation work. The initial native API covers explicit world creation, stepping, rigid bodies, primitive colliders, raycasts, deterministic state hashing, and snapshot API stubs. Unity components are intentionally opt-in and operate only on selected `RapierWorldComponent` instances.
+The package is in early foundation work. The initial native API covers explicit world creation, stepping, rigid bodies, primitive colliders, raycasts, deterministic state hashing, stable ids, and native snapshot restore. Unity components are intentionally opt-in and operate only on selected `RapierWorldComponent` instances.
 
 ## Architecture
 
@@ -107,10 +107,11 @@ See [native/README.md](native/README.md) and [docs/native-packaging.md](docs/nat
 - Rigid bodies and primitive colliders.
 - Unity component API.
 - Scene queries and deterministic replay samples.
-- Snapshot/restore implementation and native packaging/artifact CI.
+- Native packaging/artifact CI.
 - More platforms, joints, character controller, events, and rollback tooling.
 
 Snapshot format notes live in [docs/snapshot-design.md](docs/snapshot-design.md).
+Scene Sync parity notes live in [docs/scenesync-parity.md](docs/scenesync-parity.md).
 
 ## Relationship to Scene Sync
 
