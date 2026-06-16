@@ -734,9 +734,20 @@ namespace AFJK.Rapier.Samples
                 return FixtureRelativePath;
             }
 
-            return asset.name.EndsWith(".json", StringComparison.Ordinal)
-                ? asset.name
-                : $"{asset.name}.json";
+            var fixtureName = asset.name.Replace('\\', '/');
+            if (fixtureName.Contains("/"))
+            {
+                fixtureName = Path.GetFileName(fixtureName);
+            }
+
+            if (!fixtureName.EndsWith(".json", StringComparison.Ordinal))
+            {
+                fixtureName = $"{fixtureName}.json";
+            }
+
+            return fixtureName.StartsWith("fixtures/rapier/", StringComparison.Ordinal)
+                ? fixtureName
+                : $"fixtures/rapier/{fixtureName}";
         }
 
         private static void AppendQuoted(StringBuilder sb, string value)
