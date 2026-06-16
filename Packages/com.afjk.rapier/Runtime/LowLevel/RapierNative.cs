@@ -33,6 +33,8 @@ namespace AFJK.Rapier
         {
             public Vector3 HalfExtents;
             public float Density;
+            public float Friction;
+            public float Restitution;
             public byte IsSensor;
             public Vector3 LocalPosition;
             public Quaternion LocalRotation;
@@ -43,6 +45,8 @@ namespace AFJK.Rapier
         {
             public float Radius;
             public float Density;
+            public float Friction;
+            public float Restitution;
             public byte IsSensor;
             public Vector3 LocalPosition;
             public Quaternion LocalRotation;
@@ -54,9 +58,21 @@ namespace AFJK.Rapier
             public float HalfHeight;
             public float Radius;
             public float Density;
+            public float Friction;
+            public float Restitution;
             public byte IsSensor;
             public Vector3 LocalPosition;
             public Quaternion LocalRotation;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RigidBodyStateNative
+        {
+            public RapierTransform Transform;
+            public Vector3 LinearVelocity;
+            public Vector3 AngularVelocity;
+            public byte Sleeping;
+            public byte Enabled;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -117,6 +133,13 @@ namespace AFJK.Rapier
             ulong world,
             RapierRigidBodyHandle body,
             out RapierTransform transform);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_state")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetState(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out RigidBodyStateNative state);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_transform")]
         [return: MarshalAs(UnmanagedType.I1)]

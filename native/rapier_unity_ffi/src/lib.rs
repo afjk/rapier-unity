@@ -6,7 +6,10 @@ mod query;
 mod snapshot;
 mod world;
 
-pub use body::{RapierUnityRigidBodyDesc, RapierUnityRigidBodyType, RapierUnityTransform};
+pub use body::{
+    RapierUnityRigidBodyDesc, RapierUnityRigidBodyState, RapierUnityRigidBodyType,
+    RapierUnityTransform,
+};
 pub use collider::{
     RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnitySphereColliderDesc,
 };
@@ -103,6 +106,31 @@ pub unsafe extern "C" fn rapier_unity_body_get_transform(
     if let Some(transform) = transform {
         unsafe {
             *out_transform = transform;
+        }
+        true
+    } else {
+        false
+    }
+}
+
+/// # Safety
+///
+/// `out_state` must be valid for writes of one `RapierUnityRigidBodyState`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_state(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_state: *mut RapierUnityRigidBodyState,
+) -> bool {
+    if out_state.is_null() {
+        return false;
+    }
+
+    let state = world::with_world(world_id, |world| body::get_body_state(world, body)).flatten();
+
+    if let Some(state) = state {
+        unsafe {
+            *out_state = state;
         }
         true
     } else {
@@ -332,6 +360,88 @@ mod tests {
         assert!(collider.is_valid());
 
         assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn body_state_reports_pose_and_velocities() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_x: -0.75,
+                position_y: 5.0,
+                linear_velocity_x: 0.75,
+                linear_velocity_z: 0.15,
+                angular_velocity_x: 0.35,
+                angular_velocity_y: 1.25,
+                angular_velocity_z: 0.55,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(body.is_valid());
+
+        let mut state = RapierUnityRigidBodyState {
+            transform: RapierUnityTransform::default(),
+            linear_velocity_x: 0.0,
+            linear_velocity_y: 0.0,
+            linear_velocity_z: 0.0,
+            angular_velocity_x: 0.0,
+            angular_velocity_y: 0.0,
+            angular_velocity_z: 0.0,
+            sleeping: 0,
+            enabled: 0,
+        };
+        assert!(unsafe { rapier_unity_body_get_state(world_id, body, &mut state) });
+        assert_eq!(state.transform.position_x, -0.75);
+        assert_eq!(state.transform.position_y, 5.0);
+        assert_eq!(state.linear_velocity_x, 0.75);
+        assert_eq!(state.linear_velocity_z, 0.15);
+        assert_eq!(state.angular_velocity_y, 1.25);
+        assert_eq!(state.enabled, 1);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collider_material_fields_affect_state_hash() {
+        let world_a = rapier_unity_world_create();
+        let world_b = rapier_unity_world_create();
+
+        let body_a = create_test_body(world_a);
+        let body_b = create_test_body(world_b);
+        assert!(rapier_unity_body_set_stable_id(world_a, body_a, 10));
+        assert!(rapier_unity_body_set_stable_id(world_b, body_b, 10));
+
+        let collider_a = rapier_unity_collider_create_box(
+            world_a,
+            body_a,
+            RapierUnityBoxColliderDesc {
+                friction: 0.5,
+                restitution: 0.0,
+                ..RapierUnityBoxColliderDesc::default()
+            },
+        );
+        let collider_b = rapier_unity_collider_create_box(
+            world_b,
+            body_b,
+            RapierUnityBoxColliderDesc {
+                friction: 0.5,
+                restitution: 0.2,
+                ..RapierUnityBoxColliderDesc::default()
+            },
+        );
+        assert!(rapier_unity_collider_set_stable_id(world_a, collider_a, 10));
+        assert!(rapier_unity_collider_set_stable_id(world_b, collider_b, 10));
+
+        assert_ne!(
+            rapier_unity_world_state_hash(world_a),
+            rapier_unity_world_state_hash(world_b)
+        );
+
+        assert!(rapier_unity_world_destroy(world_a));
+        assert!(rapier_unity_world_destroy(world_b));
     }
 
     #[test]

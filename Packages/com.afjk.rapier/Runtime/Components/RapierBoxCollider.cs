@@ -22,6 +22,9 @@ namespace AFJK.Rapier
                 {
                     HalfExtents = halfExtents,
                     Density = Density,
+                    Friction = Friction,
+                    HasFriction = true,
+                    Restitution = Restitution,
                     IsSensor = IsSensor,
                     LocalPosition = LocalPosition,
                     LocalRotation = LocalRotation
@@ -35,4 +38,3 @@ namespace AFJK.Rapier
         }
     }
 }
-

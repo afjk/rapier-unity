@@ -33,9 +33,10 @@ Use `RapierWorld` for low-level code and `RapierWorldComponent` for scene-author
 
 ## Samples
 
-Unity Package Manager exposes two samples:
+Unity Package Manager exposes three samples:
 
 - `Basic Falling Ball`: a component API scene with a fixed floor and dynamic sphere.
 - `Deterministic Replay`: a low-level API scene that compares two identical worlds by state hash.
+- `Cross-Host Parity`: a low-level runner that loads `fixtures/rapier/parity-basic-001.json` and logs Browser-comparable canonical hash JSON.
 
 Import a sample from Package Manager, open its scene, and enter Play Mode after the native plugin is built and copied into `Runtime/Plugins`.

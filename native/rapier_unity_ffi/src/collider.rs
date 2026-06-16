@@ -11,6 +11,8 @@ pub struct RapierUnityBoxColliderDesc {
     pub half_extents_y: f32,
     pub half_extents_z: f32,
     pub density: f32,
+    pub friction: f32,
+    pub restitution: f32,
     pub is_sensor: u8,
     pub local_position_x: f32,
     pub local_position_y: f32,
@@ -26,6 +28,8 @@ pub struct RapierUnityBoxColliderDesc {
 pub struct RapierUnitySphereColliderDesc {
     pub radius: f32,
     pub density: f32,
+    pub friction: f32,
+    pub restitution: f32,
     pub is_sensor: u8,
     pub local_position_x: f32,
     pub local_position_y: f32,
@@ -42,6 +46,8 @@ pub struct RapierUnityCapsuleColliderDesc {
     pub half_height: f32,
     pub radius: f32,
     pub density: f32,
+    pub friction: f32,
+    pub restitution: f32,
     pub is_sensor: u8,
     pub local_position_x: f32,
     pub local_position_y: f32,
@@ -59,6 +65,8 @@ impl Default for RapierUnityBoxColliderDesc {
             half_extents_y: 0.5,
             half_extents_z: 0.5,
             density: 1.0,
+            friction: 0.5,
+            restitution: 0.0,
             is_sensor: 0,
             local_position_x: 0.0,
             local_position_y: 0.0,
@@ -76,6 +84,8 @@ impl Default for RapierUnitySphereColliderDesc {
         Self {
             radius: 0.5,
             density: 1.0,
+            friction: 0.5,
+            restitution: 0.0,
             is_sensor: 0,
             local_position_x: 0.0,
             local_position_y: 0.0,
@@ -94,6 +104,8 @@ impl Default for RapierUnityCapsuleColliderDesc {
             half_height: 0.5,
             radius: 0.25,
             density: 1.0,
+            friction: 0.5,
+            restitution: 0.0,
             is_sensor: 0,
             local_position_x: 0.0,
             local_position_y: 0.0,
@@ -152,6 +164,8 @@ pub fn create_box_collider(
         desc.half_extents_z.max(0.0),
     )
     .density(desc.density.max(0.0))
+    .friction(desc.friction.max(0.0))
+    .restitution(desc.restitution.max(0.0))
     .sensor(desc.is_sensor != 0)
     .position(
         local_transform(
@@ -176,6 +190,8 @@ pub fn create_sphere_collider(
 ) -> RapierUnityColliderHandle {
     let collider = ColliderBuilder::ball(desc.radius.max(0.0))
         .density(desc.density.max(0.0))
+        .friction(desc.friction.max(0.0))
+        .restitution(desc.restitution.max(0.0))
         .sensor(desc.is_sensor != 0)
         .position(
             local_transform(
@@ -200,6 +216,8 @@ pub fn create_capsule_collider(
 ) -> RapierUnityColliderHandle {
     let collider = ColliderBuilder::capsule_y(desc.half_height.max(0.0), desc.radius.max(0.0))
         .density(desc.density.max(0.0))
+        .friction(desc.friction.max(0.0))
+        .restitution(desc.restitution.max(0.0))
         .sensor(desc.is_sensor != 0)
         .position(
             local_transform(
