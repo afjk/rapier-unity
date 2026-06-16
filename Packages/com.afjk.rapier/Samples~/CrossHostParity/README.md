@@ -9,9 +9,9 @@ Fixture:
 fixtures/rapier/parity-basic-001.json
 ```
 
-The runner creates one explicit `RapierWorld`, creates bodies in stable object
-id order, assigns stable ids with `RapierWorld.StableIdHash(objectId)`, steps
-to the fixture sample ticks, and records `StateHash()` as 16-character hex.
+The runner creates one explicit `RapierWorld`, creates bodies in fixture array
+order, assigns stable ids with `RapierWorld.StableIdHash(objectId)`, steps to
+the fixture sample ticks, and records `StateHash()` as 16-character hex.
 
 ## Manual Check
 
@@ -23,6 +23,7 @@ to the fixture sample ticks, and records `StateHash()` as 16-character hex.
    ```
 
 2. Open the Unity 6000 dev project or import this sample into a Unity project.
+   The sample includes its own fixture copy under `fixtures/rapier/`.
 3. Create an empty GameObject and add `CrossHostParityRunner`.
 4. Enter Play Mode.
 5. Copy the logged JSON and compare `hashes` with the Browser result.

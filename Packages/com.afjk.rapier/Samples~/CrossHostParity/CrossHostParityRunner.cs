@@ -167,7 +167,7 @@ namespace AFJK.Rapier.Samples
             var runtimeBodies = new List<RuntimeBody>(bodies.Length);
             foreach (var bodyDef in bodies)
             {
-                var fixedBody = string.Equals(bodyDef.type, "fixed", StringComparison.Ordinal) || bodyDef.density <= 0f;
+                var fixedBody = string.Equals(bodyDef.type, "fixed", StringComparison.Ordinal);
                 var body = world.CreateRigidBody(new RapierBodyDesc
                 {
                     BodyType = fixedBody ? RapierRigidBodyType.Fixed : RapierRigidBodyType.Dynamic,
@@ -275,13 +275,28 @@ namespace AFJK.Rapier.Samples
                 RequireNonNegative(body.density, $"body '{body.id}' density");
                 RequireNonNegative(body.friction, $"body '{body.id}' friction");
                 RequireNonNegative(body.restitution, $"body '{body.id}' restitution");
+                RequireNonNegative(body.linearDamping, $"body '{body.id}' linearDamping");
+                RequireNonNegative(body.angularDamping, $"body '{body.id}' angularDamping");
 
                 if (string.Equals(body.type, "dynamic", StringComparison.Ordinal))
                 {
+                    if (body.density <= 0f)
+                    {
+                        throw new InvalidOperationException($"Parity fixture dynamic body '{body.id}' density must be positive.");
+                    }
+
                     RequireVec3(body.linearVelocity, $"body '{body.id}' linearVelocity");
                     RequireVec3(body.angularVelocity, $"body '{body.id}' angularVelocity");
-                    RequireNonNegative(body.linearDamping, $"body '{body.id}' linearDamping");
-                    RequireNonNegative(body.angularDamping, $"body '{body.id}' angularDamping");
+                }
+                else
+                {
+                    if (body.ccd)
+                    {
+                        throw new InvalidOperationException($"Parity fixture fixed body '{body.id}' cannot enable CCD.");
+                    }
+
+                    RequireOptionalZeroVec3(body.linearVelocity, $"body '{body.id}' linearVelocity");
+                    RequireOptionalZeroVec3(body.angularVelocity, $"body '{body.id}' angularVelocity");
                 }
             }
 
@@ -636,6 +651,22 @@ namespace AFJK.Rapier.Samples
             if (values[0] <= 0f || values[1] <= 0f || values[2] <= 0f)
             {
                 throw new InvalidOperationException($"Parity fixture {label} components must be positive.");
+            }
+        }
+
+        private static void RequireOptionalZeroVec3(float[] values, string label)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            RequireVec3(values, label);
+            if (Mathf.Abs(values[0]) > Mathf.Epsilon ||
+                Mathf.Abs(values[1]) > Mathf.Epsilon ||
+                Mathf.Abs(values[2]) > Mathf.Epsilon)
+            {
+                throw new InvalidOperationException($"Parity fixture fixed {label} must be omitted or zero.");
             }
         }
 
