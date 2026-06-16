@@ -1,12 +1,14 @@
 # Cross-Host Parity
 
-Runs the shared Scene Sync Rapier parity fixture and logs a JSON result that can
+Runs the shared Scene Sync Rapier parity fixtures and logs a JSON result that can
 be compared with the Browser fixture runner.
 
-Fixture:
+Fixtures:
 
 ```text
 fixtures/rapier/parity-basic-001.json
+fixtures/rapier/parity-freefall-001.json
+fixtures/rapier/parity-contact-basic-001.json
 ```
 
 The runner creates one explicit `RapierWorld`, creates bodies in fixture array
@@ -23,10 +25,14 @@ the fixture sample ticks, and records `StateHash()` as 16-character hex.
    ```
 
 2. Open the Unity 6000 dev project or import this sample into a Unity project.
-   The sample includes its own fixture copy under `fixtures/rapier/`.
+   The sample includes its own fixture copies under `fixtures/rapier/`.
 3. Create an empty GameObject and add `CrossHostParityRunner`.
-4. Enter Play Mode.
-5. Copy the logged JSON and compare `hashes` with the Browser result.
+4. Leave `fixtureJson` empty to run `parity-basic-001.json`, or assign one of
+   the fixture TextAssets to run `parity-freefall-001.json` or
+   `parity-contact-basic-001.json`.
+5. Enter Play Mode.
+6. Copy the logged JSON and compare `hashes` with the Browser result for the
+   same fixture.
 
 If the hashes differ, compare the same tick under `dumps`. The dump includes
 the canonical body and collider fields used to diagnose initial pose, velocity,
