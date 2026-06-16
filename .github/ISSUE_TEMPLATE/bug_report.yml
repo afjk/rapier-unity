@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible problem in Rapier for Unity.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. This package is not an official Rapier project.
+  - type: input
+    id: package_version
+    attributes:
+      label: Package version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: unity_version
+    attributes:
+      label: Unity version
+      placeholder: "2022.3.x"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS Editor
+        - Windows Editor
+        - Linux Editor
+        - iOS
+        - Android
+        - WebGL
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Include expected behavior, actual behavior, and relevant logs.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Create a RapierWorldComponent
+        2. Add ...
+        3. Press Play
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Attach minimal scenes, code snippets, native build output, or hash mismatch details when relevant.
+
