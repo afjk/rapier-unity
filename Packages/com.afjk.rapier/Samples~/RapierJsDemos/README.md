@@ -8,9 +8,10 @@ Source demo:
 https://rapier.rs/demos3d/index.html
 ```
 
+Open `RapierJsDemos.unity` and enter Play Mode.
+
 The sample generates its world at runtime with the low-level `RapierWorld` API
-and visual-only Unity primitives. Add `RapierJsDemosSample` to an empty
-GameObject, enter Play Mode, and switch demos from the on-screen menu.
+and visual-only Unity primitives. Switch demos from the on-screen menu.
 
 ## Ported Demos
 
