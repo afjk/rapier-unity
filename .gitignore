@@ -27,3 +27,13 @@ Thumbs.db
 # Native build artifacts copied into Unity packages.
 Packages/com.afjk.rapier/Runtime/Plugins/
 
+# Nested Unity development projects
+dev/**/Library/
+dev/**/Temp/
+dev/**/Obj/
+dev/**/Build/
+dev/**/Builds/
+dev/**/Logs/
+dev/**/UserSettings/
+dev/**/MemoryCaptures/
+dev/**/Recordings/

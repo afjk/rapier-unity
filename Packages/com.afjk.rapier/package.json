@@ -14,6 +14,17 @@
     "deterministic",
     "replay",
     "rollback"
+  ],
+  "samples": [
+    {
+      "displayName": "Basic Falling Ball",
+      "description": "A minimal Rapier world with a fixed floor and a dynamic body.",
+      "path": "Samples~/BasicFallingBall"
+    },
+    {
+      "displayName": "Deterministic Replay",
+      "description": "Compares two identical worlds using state hashes.",
+      "path": "Samples~/DeterministicReplay"
+    }
   ]
 }
-
