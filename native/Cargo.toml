@@ -1,0 +1,4 @@
+[workspace]
+members = ["rapier_unity_ffi"]
+resolver = "2"
+

@@ -1,0 +1,19 @@
+{
+  "name": "com.afjk.rapier",
+  "displayName": "Rapier for Unity",
+  "version": "0.1.0",
+  "description": "A general-purpose Unity integration for the Rapier physics engine.",
+  "unity": "2022.3",
+  "license": "MIT OR Apache-2.0",
+  "author": {
+    "name": "afjk"
+  },
+  "keywords": [
+    "rapier",
+    "physics",
+    "deterministic",
+    "replay",
+    "rollback"
+  ]
+}
+

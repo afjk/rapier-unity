@@ -1,0 +1,19 @@
+{
+  "name": "AFJK.Rapier.Editor",
+  "rootNamespace": "AFJK.Rapier.Editor",
+  "references": [
+    "AFJK.Rapier.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+
