@@ -133,6 +133,15 @@ fn body_type_id(body_type: RigidBodyType) -> u8 {
     }
 }
 
+fn coefficient_combine_rule_id(rule: CoefficientCombineRule) -> u8 {
+    match rule {
+        CoefficientCombineRule::Average => 0,
+        CoefficientCombineRule::Min => 1,
+        CoefficientCombineRule::Multiply => 2,
+        CoefficientCombineRule::Max => 3,
+    }
+}
+
 pub fn stable_id_hash_bytes(bytes: &[u8]) -> u64 {
     let mut hasher = StableHasher::new();
     hasher.write_bytes(bytes);
@@ -198,6 +207,15 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
     for (handle, body) in bodies {
         hasher.write_body_identity(world, handle);
         hasher.write_u8(body_type_id(body.body_type()));
+        hasher.write_f32(body.linear_damping());
+        hasher.write_f32(body.angular_damping());
+        hasher.write_u64(body.additional_solver_iterations() as u64);
+        hasher.write_u8(u8::from(body.is_ccd_enabled()));
+        let activation = body.activation();
+        hasher.write_f32(activation.normalized_linear_threshold);
+        hasher.write_f32(activation.angular_threshold);
+        hasher.write_f32(activation.time_until_sleep);
+        hasher.write_f32(activation.time_since_can_sleep);
         hasher.write_pose(body.position());
         hasher.write_vec3(body.linvel());
         hasher.write_vec3(body.angvel());
@@ -220,6 +238,14 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
         }
         hash_collider_shape(&mut hasher, collider);
         hasher.write_f32(collider.density());
+        hasher.write_f32(collider.friction());
+        hasher.write_u8(coefficient_combine_rule_id(
+            collider.friction_combine_rule(),
+        ));
+        hasher.write_f32(collider.restitution());
+        hasher.write_u8(coefficient_combine_rule_id(
+            collider.restitution_combine_rule(),
+        ));
         hasher.write_u8(u8::from(collider.is_sensor()));
         hasher.write_u8(u8::from(collider.is_enabled()));
     }

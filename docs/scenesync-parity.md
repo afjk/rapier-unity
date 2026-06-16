@@ -64,6 +64,11 @@ Rigid body fields:
 
 - stable id
 - body type
+- linear damping
+- angular damping
+- additional solver iterations
+- CCD enabled
+- activation thresholds and sleep timer
 - translation
 - rotation quaternion
 - linear velocity
@@ -78,6 +83,8 @@ Collider fields:
 - local translation and rotation
 - shape type and shape parameters
 - density
+- friction and combine rule
+- restitution and combine rule
 - sensor
 - enabled
 

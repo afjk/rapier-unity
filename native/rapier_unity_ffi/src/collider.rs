@@ -249,6 +249,16 @@ pub fn set_collider_stable_id(
         return false;
     }
 
+    if world
+        .collider_stable_ids
+        .iter()
+        .any(|(other_handle, other_stable_id)| {
+            *other_handle != handle && *other_stable_id == stable_id
+        })
+    {
+        return false;
+    }
+
     world.collider_stable_ids.insert(handle, stable_id);
     true
 }

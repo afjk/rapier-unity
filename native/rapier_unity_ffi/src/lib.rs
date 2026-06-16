@@ -396,6 +396,85 @@ mod tests {
     }
 
     #[test]
+    fn body_step_settings_affect_state_hash() {
+        let world_a = rapier_unity_world_create();
+        let world_b = rapier_unity_world_create();
+        let world_c = rapier_unity_world_create();
+
+        let body_a = rapier_unity_body_create(
+            world_a,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                can_sleep: 1,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let body_b = rapier_unity_body_create(
+            world_b,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                linear_damping: 0.25,
+                angular_damping: 0.5,
+                can_sleep: 1,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let body_c = rapier_unity_body_create(
+            world_c,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                can_sleep: 0,
+                ccd_enabled: 1,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+
+        assert!(rapier_unity_body_set_stable_id(world_a, body_a, 10));
+        assert!(rapier_unity_body_set_stable_id(world_b, body_b, 10));
+        assert!(rapier_unity_body_set_stable_id(world_c, body_c, 10));
+        assert!(attach_test_box(world_a, body_a).is_valid());
+        assert!(attach_test_box(world_b, body_b).is_valid());
+        assert!(attach_test_box(world_c, body_c).is_valid());
+
+        assert_ne!(
+            rapier_unity_world_state_hash(world_a),
+            rapier_unity_world_state_hash(world_b)
+        );
+        assert_ne!(
+            rapier_unity_world_state_hash(world_a),
+            rapier_unity_world_state_hash(world_c)
+        );
+
+        assert!(rapier_unity_world_destroy(world_a));
+        assert!(rapier_unity_world_destroy(world_b));
+        assert!(rapier_unity_world_destroy(world_c));
+    }
+
+    #[test]
+    fn duplicate_stable_ids_are_rejected() {
+        let world_id = rapier_unity_world_create();
+        let body_a = create_test_body(world_id);
+        let body_b = create_test_body(world_id);
+        assert!(rapier_unity_body_set_stable_id(world_id, body_a, 10));
+        assert!(rapier_unity_body_set_stable_id(world_id, body_a, 10));
+        assert!(!rapier_unity_body_set_stable_id(world_id, body_b, 10));
+
+        let collider_a = attach_test_box(world_id, body_a);
+        let collider_b = attach_test_box(world_id, body_b);
+        assert!(rapier_unity_collider_set_stable_id(
+            world_id, collider_a, 20
+        ));
+        assert!(rapier_unity_collider_set_stable_id(
+            world_id, collider_a, 20
+        ));
+        assert!(!rapier_unity_collider_set_stable_id(
+            world_id, collider_b, 20
+        ));
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
     fn stable_id_hash_is_available_for_scene_sync_object_ids() {
         let id = b"scene-sync-object-1";
         assert_eq!(

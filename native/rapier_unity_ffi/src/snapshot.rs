@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ptr;
 use std::slice;
 
@@ -131,6 +131,40 @@ fn validate_snapshot(snapshot: &NativeSnapshot) -> bool {
         && snapshot.format_version == SNAPSHOT_FORMAT_VERSION
         && snapshot.ffi_schema_version == FFI_SCHEMA_VERSION
         && snapshot.rapier_core_version == RAPIER_CORE_VERSION
+        && valid_body_stable_entries(snapshot)
+        && valid_collider_stable_entries(snapshot)
+}
+
+fn valid_stable_entry(
+    entry: &StableIdEntry,
+    seen_handles: &mut HashSet<(u32, u32)>,
+    seen_stable_ids: &mut HashSet<u64>,
+) -> bool {
+    entry.stable_id != 0
+        && seen_handles.insert((entry.index, entry.generation))
+        && seen_stable_ids.insert(entry.stable_id)
+}
+
+fn valid_body_stable_entries(snapshot: &NativeSnapshot) -> bool {
+    let mut seen_handles = HashSet::new();
+    let mut seen_stable_ids = HashSet::new();
+
+    snapshot.body_stable_ids.iter().all(|entry| {
+        let handle = RigidBodyHandle::from_raw_parts(entry.index, entry.generation);
+        snapshot.bodies.get(handle).is_some()
+            && valid_stable_entry(entry, &mut seen_handles, &mut seen_stable_ids)
+    })
+}
+
+fn valid_collider_stable_entries(snapshot: &NativeSnapshot) -> bool {
+    let mut seen_handles = HashSet::new();
+    let mut seen_stable_ids = HashSet::new();
+
+    snapshot.collider_stable_ids.iter().all(|entry| {
+        let handle = ColliderHandle::from_raw_parts(entry.index, entry.generation);
+        snapshot.colliders.get(handle).is_some()
+            && valid_stable_entry(entry, &mut seen_handles, &mut seen_stable_ids)
+    })
 }
 
 fn restore_body_stable_ids(snapshot: &NativeSnapshot) -> HashMap<RigidBodyHandle, u64> {
