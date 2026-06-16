@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Rapier project
+    url: https://rapier.rs/
+    about: Use the upstream Rapier project for core Rapier engine questions that are not specific to this Unity integration.
+

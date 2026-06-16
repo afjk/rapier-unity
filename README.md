@@ -99,7 +99,7 @@ The produced library is named `rapier_unity_ffi` with the platform-specific exte
 - Linux: `librapier_unity_ffi.so`
 - iOS/WebGL player builds: linked as `__Internal`
 
-See [native/README.md](native/README.md) for platform notes.
+See [native/README.md](native/README.md) and [docs/native-packaging.md](docs/native-packaging.md) for platform notes.
 
 ## Roadmap
 
@@ -109,6 +109,8 @@ See [native/README.md](native/README.md) for platform notes.
 - Scene queries and deterministic replay samples.
 - Snapshot/restore implementation and native build CI.
 - More platforms, joints, character controller, events, and rollback tooling.
+
+Snapshot format notes live in [docs/snapshot-design.md](docs/snapshot-design.md).
 
 ## Relationship to Scene Sync
 
@@ -126,4 +128,3 @@ Licensed under either of:
 - Apache-2.0, see [LICENSE-APACHE](LICENSE-APACHE)
 
 at your option.
-

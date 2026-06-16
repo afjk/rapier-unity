@@ -1,0 +1,49 @@
+name: Feature request
+description: Propose an improvement to the Unity integration.
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep requests general-purpose. Scene Sync-specific integration belongs downstream, not in the core package.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What Unity/Rapier workflow does this unblock?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the API, component, native FFI, or documentation change you want.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Low-level C# API
+        - Unity components
+        - Native FFI
+        - Colliders
+        - Scene queries
+        - Events
+        - Joints
+        - Character controller
+        - Snapshot / restore
+        - Determinism / replay
+        - Build / packaging
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
