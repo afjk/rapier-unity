@@ -1,0 +1,17 @@
+[package]
+name = "rapier_unity_ffi"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT OR Apache-2.0"
+description = "C ABI bridge for Rapier for Unity."
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+rapier3d = { version = "0.33.0", features = ["enhanced-determinism"] }
+
+[dev-dependencies]
+approx = "0.5"
+

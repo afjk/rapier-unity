@@ -1,0 +1,29 @@
+.DS_Store
+Thumbs.db
+
+# Rust
+/native/target/
+**/*.rs.bk
+
+# Unity
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/UserSettings/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Native build artifacts copied into Unity packages.
+Packages/com.afjk.rapier/Runtime/Plugins/
+

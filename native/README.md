@@ -1,0 +1,45 @@
+# Native Build
+
+The native plugin is implemented in Rust and exposes a small C ABI over `rapier3d`.
+
+## Build
+
+```sh
+cd native
+cargo build --release -p rapier_unity_ffi
+```
+
+The output is written to `native/target/release/`:
+
+- macOS: `librapier_unity_ffi.dylib`
+- Windows: `rapier_unity_ffi.dll`
+- Linux: `librapier_unity_ffi.so`
+- Static library: platform-specific `librapier_unity_ffi.a` where supported
+
+Copy the platform binary into the Unity package plugin folder expected by your project, for example:
+
+```text
+Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
+Packages/com.afjk.rapier/Runtime/Plugins/Windows/rapier_unity_ffi.dll
+```
+
+## Platform Notes
+
+The C# binding uses this library name:
+
+```csharp
+#if !UNITY_EDITOR && (UNITY_IOS || UNITY_WEBGL)
+private const string DllName = "__Internal";
+#else
+private const string DllName = "rapier_unity_ffi";
+#endif
+```
+
+Initial development targets macOS Editor and Windows Editor. Mobile, XR, and WebGL builds need platform-specific native build, packaging, and CI work.
+
+## Determinism
+
+The Rust crate enables Rapier's `enhanced-determinism` feature. Deterministic behavior still depends on platform, compiler flags, stable setup ordering, and avoiding nondeterministic gameplay code around the physics step.
+
+The current state hash uses stable sorting before hashing body and collider state. Snapshot APIs are present but intentionally stubbed until serialization is implemented.
+
