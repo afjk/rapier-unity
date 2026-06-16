@@ -1,46 +1,30 @@
 # Deterministic Replay
 
-This sample plan compares two explicit worlds with identical setup.
+Open `DeterministicReplay.unity` and enter Play Mode.
 
-## Scenario
+The scene creates two explicit `RapierWorld` instances through the low-level API. Both worlds receive the same setup:
 
-1. Create two `RapierWorld` instances.
-2. Apply the same gravity and timestep to both.
-3. Create the same fixed floor and dynamic body in the same order.
-4. Step both worlds for 600 ticks.
-5. Compare `StateHash()` after each tick or at the end.
+- fixed floor
+- dynamic box
+- gravity
+- timestep
+- creation order
 
-```csharp
-using AFJK.Rapier;
-using UnityEngine;
+The sample advances both worlds one tick per `FixedUpdate`, updates the two visible cubes, and compares `StateHash()` after every tick. It logs an error if the hashes diverge and shows the current tick and hash values in the Game view.
 
-using var a = RapierWorld.Create();
-using var b = RapierWorld.Create();
+## Native Plugin
 
-a.SetGravity(new Vector3(0, -9.81f, 0));
-b.SetGravity(new Vector3(0, -9.81f, 0));
-a.SetTimestep(1f / 60f);
-b.SetTimestep(1f / 60f);
+Build and copy the native plugin before running the scene:
 
-var bodyA = a.CreateRigidBody(RapierBodyDesc.Dynamic(new Vector3(0, 5, 0)));
-var bodyB = b.CreateRigidBody(RapierBodyDesc.Dynamic(new Vector3(0, 5, 0)));
-a.CreateBoxCollider(bodyA, RapierBoxColliderDesc.Unit);
-b.CreateBoxCollider(bodyB, RapierBoxColliderDesc.Unit);
+```sh
+cd native
+cargo build --release -p rapier_unity_ffi
+```
 
-for (var tick = 0; tick < 600; tick++)
-{
-    a.Step();
-    b.Step();
+Then copy the platform binary into the package plugin folder, for example:
 
-    var hashA = a.StateHash();
-    var hashB = b.StateHash();
-    if (hashA != hashB)
-    {
-        Debug.LogError($"Rapier hash mismatch at tick {tick}: {hashA} != {hashB}");
-        break;
-    }
-}
+```text
+Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
 ```
 
 The current hash is intended for same-version comparisons. Cross-platform and cross-version guarantees require more validation and a versioned snapshot format.
-
