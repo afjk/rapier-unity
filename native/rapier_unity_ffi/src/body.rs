@@ -199,7 +199,9 @@ pub fn create_body(
     .can_sleep(desc.can_sleep != 0)
     .ccd_enabled(desc.ccd_enabled != 0);
 
-    world.bodies.insert(builder.build()).into()
+    let handle = world.bodies.insert(builder.build());
+    world.body_can_sleep.insert(handle, desc.can_sleep != 0);
+    handle.into()
 }
 
 pub fn destroy_body(world: &mut RapierUnityWorld, body: RapierUnityRigidBodyHandle) -> bool {
@@ -222,6 +224,7 @@ pub fn destroy_body(world: &mut RapierUnityWorld, body: RapierUnityRigidBodyHand
 
     if removed {
         world.body_stable_ids.remove(&handle);
+        world.body_can_sleep.remove(&handle);
         world
             .collider_stable_ids
             .retain(|handle, _| world.colliders.get(*handle).is_some());

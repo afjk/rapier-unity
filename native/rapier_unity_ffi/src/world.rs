@@ -18,6 +18,7 @@ pub struct RapierUnityWorld {
     pub ccd_solver: CCDSolver,
     pub body_stable_ids: HashMap<RigidBodyHandle, u64>,
     pub collider_stable_ids: HashMap<ColliderHandle, u64>,
+    pub body_can_sleep: HashMap<RigidBodyHandle, bool>,
 }
 
 impl Default for RapierUnityWorld {
@@ -36,6 +37,7 @@ impl Default for RapierUnityWorld {
             ccd_solver: CCDSolver::new(),
             body_stable_ids: HashMap::new(),
             collider_stable_ids: HashMap::new(),
+            body_can_sleep: HashMap::new(),
         }
     }
 }

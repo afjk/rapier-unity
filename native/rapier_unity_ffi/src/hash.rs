@@ -211,11 +211,9 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
         hasher.write_f32(body.angular_damping());
         hasher.write_u64(body.additional_solver_iterations() as u64);
         hasher.write_u8(u8::from(body.is_ccd_enabled()));
-        let activation = body.activation();
-        hasher.write_f32(activation.normalized_linear_threshold);
-        hasher.write_f32(activation.angular_threshold);
-        hasher.write_f32(activation.time_until_sleep);
-        hasher.write_f32(activation.time_since_can_sleep);
+        hasher.write_u8(u8::from(
+            world.body_can_sleep.get(&handle).copied().unwrap_or(true),
+        ));
         hasher.write_pose(body.position());
         hasher.write_vec3(body.linvel());
         hasher.write_vec3(body.angvel());

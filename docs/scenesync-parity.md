@@ -68,7 +68,7 @@ Rigid body fields:
 - angular damping
 - additional solver iterations
 - CCD enabled
-- activation thresholds and sleep timer
+- can sleep
 - translation
 - rotation quaternion
 - linear velocity

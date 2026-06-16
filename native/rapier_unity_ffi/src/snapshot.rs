@@ -10,13 +10,20 @@ use crate::world::RapierUnityWorld;
 
 const SNAPSHOT_FORMAT: &str = "rapier-unity-native-snapshot";
 const SNAPSHOT_FORMAT_VERSION: u32 = 1;
-const FFI_SCHEMA_VERSION: u32 = 1;
+const FFI_SCHEMA_VERSION: u32 = 2;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 struct StableIdEntry {
     index: u32,
     generation: u32,
     stable_id: u64,
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
+struct BodyCanSleepEntry {
+    index: u32,
+    generation: u32,
+    can_sleep: bool,
 }
 
 #[derive(Serialize)]
@@ -37,6 +44,7 @@ struct NativeSnapshotRef<'a> {
     ccd_solver: &'a CCDSolver,
     body_stable_ids: Vec<StableIdEntry>,
     collider_stable_ids: Vec<StableIdEntry>,
+    body_can_sleep: Vec<BodyCanSleepEntry>,
 }
 
 #[derive(Deserialize)]
@@ -57,6 +65,7 @@ struct NativeSnapshot {
     ccd_solver: CCDSolver,
     body_stable_ids: Vec<StableIdEntry>,
     collider_stable_ids: Vec<StableIdEntry>,
+    body_can_sleep: Vec<BodyCanSleepEntry>,
 }
 
 fn rigid_body_stable_entries(world: &RapierUnityWorld) -> Vec<StableIdEntry> {
@@ -103,6 +112,28 @@ fn collider_stable_entries(world: &RapierUnityWorld) -> Vec<StableIdEntry> {
     entries
 }
 
+fn body_can_sleep_entries(world: &RapierUnityWorld) -> Vec<BodyCanSleepEntry> {
+    let mut entries: Vec<_> = world
+        .body_can_sleep
+        .iter()
+        .filter_map(|(handle, can_sleep)| {
+            if world.bodies.get(*handle).is_none() {
+                return None;
+            }
+
+            let (index, generation) = handle.into_raw_parts();
+            Some(BodyCanSleepEntry {
+                index,
+                generation,
+                can_sleep: *can_sleep,
+            })
+        })
+        .collect();
+
+    entries.sort_by_key(|entry| (entry.index, entry.generation));
+    entries
+}
+
 fn serialize_snapshot(world: &RapierUnityWorld) -> Option<Vec<u8>> {
     let snapshot = NativeSnapshotRef {
         format: SNAPSHOT_FORMAT,
@@ -121,6 +152,7 @@ fn serialize_snapshot(world: &RapierUnityWorld) -> Option<Vec<u8>> {
         ccd_solver: &world.ccd_solver,
         body_stable_ids: rigid_body_stable_entries(world),
         collider_stable_ids: collider_stable_entries(world),
+        body_can_sleep: body_can_sleep_entries(world),
     };
 
     bincode::serialize(&snapshot).ok()
@@ -133,6 +165,7 @@ fn validate_snapshot(snapshot: &NativeSnapshot) -> bool {
         && snapshot.rapier_core_version == RAPIER_CORE_VERSION
         && valid_body_stable_entries(snapshot)
         && valid_collider_stable_entries(snapshot)
+        && valid_body_can_sleep_entries(snapshot)
 }
 
 fn valid_stable_entry(
@@ -164,6 +197,16 @@ fn valid_collider_stable_entries(snapshot: &NativeSnapshot) -> bool {
         let handle = ColliderHandle::from_raw_parts(entry.index, entry.generation);
         snapshot.colliders.get(handle).is_some()
             && valid_stable_entry(entry, &mut seen_handles, &mut seen_stable_ids)
+    })
+}
+
+fn valid_body_can_sleep_entries(snapshot: &NativeSnapshot) -> bool {
+    let mut seen_handles = HashSet::new();
+
+    snapshot.body_can_sleep.iter().all(|entry| {
+        let handle = RigidBodyHandle::from_raw_parts(entry.index, entry.generation);
+        snapshot.bodies.get(handle).is_some()
+            && seen_handles.insert((entry.index, entry.generation))
     })
 }
 
@@ -199,6 +242,20 @@ fn restore_collider_stable_ids(snapshot: &NativeSnapshot) -> HashMap<ColliderHan
                 .colliders
                 .get(handle)
                 .map(|_| (handle, entry.stable_id))
+        })
+        .collect()
+}
+
+fn restore_body_can_sleep(snapshot: &NativeSnapshot) -> HashMap<RigidBodyHandle, bool> {
+    snapshot
+        .body_can_sleep
+        .iter()
+        .filter_map(|entry| {
+            let handle = RigidBodyHandle::from_raw_parts(entry.index, entry.generation);
+            snapshot
+                .bodies
+                .get(handle)
+                .map(|_| (handle, entry.can_sleep))
         })
         .collect()
 }
@@ -246,6 +303,7 @@ pub fn snapshot_read(world: &mut RapierUnityWorld, bytes: *const u8, len: usize)
 
     let body_stable_ids = restore_body_stable_ids(&snapshot);
     let collider_stable_ids = restore_collider_stable_ids(&snapshot);
+    let body_can_sleep = restore_body_can_sleep(&snapshot);
 
     *world = RapierUnityWorld {
         gravity: Vector::new(
@@ -265,6 +323,7 @@ pub fn snapshot_read(world: &mut RapierUnityWorld, bytes: *const u8, len: usize)
         ccd_solver: snapshot.ccd_solver,
         body_stable_ids,
         collider_stable_ids,
+        body_can_sleep,
     };
 
     true
