@@ -29,6 +29,12 @@ namespace AFJK.Rapier
 
         public RapierWorld World => worldComponent != null ? worldComponent.World : null;
 
+        public RapierRigidBodyType BodyType
+        {
+            get => bodyType;
+            set => bodyType = value;
+        }
+
         public bool SyncTransformFromRapier
         {
             get => syncTransformFromRapier;
@@ -211,4 +217,3 @@ namespace AFJK.Rapier
         }
     }
 }
-
