@@ -28,7 +28,7 @@ pub enum RapierUnityRigidBodyType {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub struct RapierUnityRigidBodyDesc {
-    pub body_type: RapierUnityRigidBodyType,
+    pub body_type: u32,
     pub position_x: f32,
     pub position_y: f32,
     pub position_z: f32,
@@ -65,7 +65,7 @@ impl Default for RapierUnityTransform {
 impl Default for RapierUnityRigidBodyDesc {
     fn default() -> Self {
         Self {
-            body_type: RapierUnityRigidBodyType::Dynamic,
+            body_type: RapierUnityRigidBodyType::Dynamic as u32,
             position_x: 0.0,
             position_y: 0.0,
             position_z: 0.0,
@@ -88,6 +88,16 @@ impl Default for RapierUnityRigidBodyDesc {
 }
 
 impl RapierUnityRigidBodyType {
+    fn from_u32(value: u32) -> Option<Self> {
+        match value {
+            0 => Some(Self::Dynamic),
+            1 => Some(Self::Fixed),
+            2 => Some(Self::KinematicPositionBased),
+            3 => Some(Self::KinematicVelocityBased),
+            _ => None,
+        }
+    }
+
     fn to_rapier(self) -> RigidBodyType {
         match self {
             Self::Dynamic => RigidBodyType::Dynamic,
@@ -152,7 +162,11 @@ pub fn create_body(
     world: &mut RapierUnityWorld,
     desc: RapierUnityRigidBodyDesc,
 ) -> RapierUnityRigidBodyHandle {
-    let builder = match desc.body_type.to_rapier() {
+    let Some(body_type) = RapierUnityRigidBodyType::from_u32(desc.body_type) else {
+        return RapierUnityRigidBodyHandle::INVALID;
+    };
+
+    let builder = match body_type.to_rapier() {
         RigidBodyType::Dynamic => RigidBodyBuilder::dynamic(),
         RigidBodyType::Fixed => RigidBodyBuilder::fixed(),
         RigidBodyType::KinematicPositionBased => RigidBodyBuilder::kinematic_position_based(),

@@ -49,7 +49,7 @@ namespace AFJK.Rapier
 
             return new RapierNative.RigidBodyDescNative
             {
-                BodyType = BodyType,
+                BodyType = (uint)BodyType,
                 Position = Position,
                 Rotation = rotation,
                 LinearVelocity = LinearVelocity,

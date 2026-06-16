@@ -1,3 +1,4 @@
+use rapier3d::parry::shape::TypedShape;
 use rapier3d::prelude::*;
 
 use crate::world::RapierUnityWorld;
@@ -62,6 +63,16 @@ impl StableHasher {
         self.write_u32(index);
         self.write_u32(generation);
     }
+
+    fn write_optional_rigid_body_handle(&mut self, handle: Option<RigidBodyHandle>) {
+        if let Some(handle) = handle {
+            let (index, generation) = handle.into_raw_parts();
+            self.write_u8(1);
+            self.write_handle(index, generation);
+        } else {
+            self.write_u8(0);
+        }
+    }
 }
 
 fn canonical_f32_bits(value: f32) -> u32 {
@@ -80,6 +91,29 @@ fn body_type_id(body_type: RigidBodyType) -> u8 {
         RigidBodyType::Fixed => 1,
         RigidBodyType::KinematicPositionBased => 2,
         RigidBodyType::KinematicVelocityBased => 3,
+    }
+}
+
+fn hash_collider_shape(hasher: &mut StableHasher, collider: &Collider) {
+    match collider.shape().as_typed_shape() {
+        TypedShape::Ball(ball) => {
+            hasher.write_u8(1);
+            hasher.write_f32(ball.radius);
+        }
+        TypedShape::Cuboid(cuboid) => {
+            hasher.write_u8(2);
+            hasher.write_vec3(cuboid.half_extents);
+        }
+        TypedShape::Capsule(capsule) => {
+            hasher.write_u8(3);
+            hasher.write_vec3(capsule.segment.a);
+            hasher.write_vec3(capsule.segment.b);
+            hasher.write_f32(capsule.radius);
+        }
+        _ => {
+            // Keep unknown shapes distinguishable until each shape gets a full stable descriptor.
+            hasher.write_u8(255);
+        }
     }
 }
 
@@ -114,6 +148,14 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
         let (index, generation) = handle.into_raw_parts();
         hasher.write_handle(index, generation);
         hasher.write_pose(collider.position());
+        hasher.write_optional_rigid_body_handle(collider.parent());
+        if let Some(local_pose) = collider.position_wrt_parent() {
+            hasher.write_u8(1);
+            hasher.write_pose(local_pose);
+        } else {
+            hasher.write_u8(0);
+        }
+        hash_collider_shape(&mut hasher, collider);
         hasher.write_f32(collider.density());
         hasher.write_u8(u8::from(collider.is_sensor()));
         hasher.write_u8(u8::from(collider.is_enabled()));

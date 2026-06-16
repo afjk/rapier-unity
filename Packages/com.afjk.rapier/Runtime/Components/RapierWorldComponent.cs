@@ -117,16 +117,31 @@ namespace AFJK.Rapier
         private void OnEnable()
         {
             EnsureWorld();
+            for (var i = bodies.Count - 1; i >= 0; i--)
+            {
+                var body = bodies[i];
+                if (body == null)
+                {
+                    bodies.RemoveAt(i);
+                    continue;
+                }
+
+                if (body.isActiveAndEnabled)
+                {
+                    body.Register();
+                }
+            }
         }
 
         private void OnDisable()
         {
             for (var i = bodies.Count - 1; i >= 0; i--)
             {
-                bodies[i].ForgetNativeRegistration(this);
+                if (bodies[i] != null)
+                {
+                    bodies[i].ForgetNativeRegistration(this);
+                }
             }
-
-            bodies.Clear();
 
             if (world != null)
             {
@@ -158,4 +173,3 @@ namespace AFJK.Rapier
         }
     }
 }
-

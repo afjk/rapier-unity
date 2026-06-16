@@ -17,7 +17,7 @@ namespace AFJK.Rapier
         [StructLayout(LayoutKind.Sequential)]
         internal struct RigidBodyDescNative
         {
-            public RapierRigidBodyType BodyType;
+            public uint BodyType;
             public Vector3 Position;
             public Quaternion Rotation;
             public Vector3 LinearVelocity;
@@ -160,4 +160,3 @@ namespace AFJK.Rapier
         internal static extern bool WorldSnapshotRead(ulong world, IntPtr bytes, UIntPtr len);
     }
 }
-

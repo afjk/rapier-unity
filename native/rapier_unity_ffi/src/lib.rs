@@ -55,8 +55,11 @@ pub extern "C" fn rapier_unity_body_destroy(
     world::with_world_mut(world_id, |world| body::destroy_body(world, body)).unwrap_or(false)
 }
 
+/// # Safety
+///
+/// `out_transform` must be valid for writes of one `RapierUnityTransform`.
 #[no_mangle]
-pub extern "C" fn rapier_unity_body_get_transform(
+pub unsafe extern "C" fn rapier_unity_body_get_transform(
     world_id: u64,
     body: RapierUnityRigidBodyHandle,
     out_transform: *mut RapierUnityTransform,
@@ -137,8 +140,11 @@ pub extern "C" fn rapier_unity_collider_destroy(
     .unwrap_or(false)
 }
 
+/// # Safety
+///
+/// `out_hit` must be valid for writes of one `RapierUnityRaycastHit`.
 #[no_mangle]
-pub extern "C" fn rapier_unity_raycast(
+pub unsafe extern "C" fn rapier_unity_raycast(
     world_id: u64,
     ray: RapierUnityRay,
     max_toi: f32,
@@ -170,8 +176,11 @@ pub extern "C" fn rapier_unity_world_snapshot_size(world_id: u64) -> usize {
     world::with_world(world_id, snapshot::snapshot_size).unwrap_or(0)
 }
 
+/// # Safety
+///
+/// If `len > 0`, `out_bytes` must be valid for writes of `len` bytes.
 #[no_mangle]
-pub extern "C" fn rapier_unity_world_snapshot_write(
+pub unsafe extern "C" fn rapier_unity_world_snapshot_write(
     world_id: u64,
     out_bytes: *mut u8,
     len: usize,
@@ -182,8 +191,11 @@ pub extern "C" fn rapier_unity_world_snapshot_write(
     .unwrap_or(false)
 }
 
+/// # Safety
+///
+/// If `len > 0`, `bytes` must be valid for reads of `len` bytes.
 #[no_mangle]
-pub extern "C" fn rapier_unity_world_snapshot_read(
+pub unsafe extern "C" fn rapier_unity_world_snapshot_read(
     world_id: u64,
     bytes: *const u8,
     len: usize,
@@ -200,7 +212,7 @@ mod tests {
         rapier_unity_body_create(
             world_id,
             RapierUnityRigidBodyDesc {
-                body_type: RapierUnityRigidBodyType::Dynamic,
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
                 position_y: 10.0,
                 can_sleep: 0,
                 ..RapierUnityRigidBodyDesc::default()
@@ -236,11 +248,7 @@ mod tests {
         assert!(rapier_unity_world_step(world_id));
 
         let mut transform = RapierUnityTransform::default();
-        assert!(rapier_unity_body_get_transform(
-            world_id,
-            body,
-            &mut transform
-        ));
+        assert!(unsafe { rapier_unity_body_get_transform(world_id, body, &mut transform) });
         assert!(transform.position_y < 10.0);
 
         assert!(rapier_unity_world_destroy(world_id));
@@ -306,8 +314,8 @@ mod tests {
         let mut byte = 0_u8;
 
         assert_eq!(rapier_unity_world_snapshot_size(world_id), 0);
-        assert!(rapier_unity_world_snapshot_write(world_id, &mut byte, 0));
-        assert!(!rapier_unity_world_snapshot_read(world_id, &byte, 1));
+        assert!(unsafe { rapier_unity_world_snapshot_write(world_id, &mut byte, 0) });
+        assert!(!unsafe { rapier_unity_world_snapshot_read(world_id, &byte, 1) });
 
         assert!(rapier_unity_world_destroy(world_id));
     }
