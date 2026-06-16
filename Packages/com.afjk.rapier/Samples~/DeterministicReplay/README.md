@@ -10,7 +10,7 @@ The scene creates two explicit `RapierWorld` instances through the low-level API
 - timestep
 - creation order
 
-The sample steps both worlds for 600 ticks and compares `StateHash()` after every tick. It logs an error if the hashes diverge and shows the final hash values in the Game view.
+The sample advances both worlds one tick per `FixedUpdate`, updates the two visible cubes, and compares `StateHash()` after every tick. It logs an error if the hashes diverge and shows the current tick and hash values in the Game view.
 
 ## Native Plugin
 
