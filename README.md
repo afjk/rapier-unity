@@ -107,7 +107,7 @@ See [native/README.md](native/README.md) and [docs/native-packaging.md](docs/nat
 - Rigid bodies and primitive colliders.
 - Unity component API.
 - Scene queries and deterministic replay samples.
-- Snapshot/restore implementation and native build CI.
+- Snapshot/restore implementation and native packaging/artifact CI.
 - More platforms, joints, character controller, events, and rollback tooling.
 
 Snapshot format notes live in [docs/snapshot-design.md](docs/snapshot-design.md).
