@@ -78,6 +78,9 @@ namespace AFJK.Rapier
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_create")]
         internal static extern ulong WorldCreate();
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_stable_id_hash")]
+        internal static extern ulong StableIdHash(IntPtr bytes, UIntPtr len);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_destroy")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool WorldDestroy(ulong world);
@@ -100,6 +103,13 @@ namespace AFJK.Rapier
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_destroy")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool BodyDestroy(ulong world, RapierRigidBodyHandle body);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_stable_id")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetStableId(
+            ulong world,
+            RapierRigidBodyHandle body,
+            ulong stableId);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_transform")]
         [return: MarshalAs(UnmanagedType.I1)]
@@ -136,6 +146,13 @@ namespace AFJK.Rapier
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_destroy")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool ColliderDestroy(ulong world, RapierColliderHandle collider);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_stable_id")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetStableId(
+            ulong world,
+            RapierColliderHandle collider,
+            ulong stableId);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast")]
         [return: MarshalAs(UnmanagedType.I1)]

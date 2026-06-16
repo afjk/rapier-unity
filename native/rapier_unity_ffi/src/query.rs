@@ -51,9 +51,9 @@ pub fn raycast(
         return None;
     }
 
-    let origin = Vector::new(ray.origin_x, ray.origin_y, ray.origin_z);
+    let origin = Point::new(ray.origin_x, ray.origin_y, ray.origin_z);
     let direction = Vector::new(ray.direction_x, ray.direction_y, ray.direction_z);
-    let direction_length = direction.length();
+    let direction_length = direction.norm();
 
     if !direction_length.is_finite() || direction_length <= f32::EPSILON {
         return None;

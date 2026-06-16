@@ -13,6 +13,23 @@ pub use collider::{
 pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 pub use query::{RapierUnityRay, RapierUnityRaycastHit};
 
+/// # Safety
+///
+/// If `len > 0`, `bytes` must be valid for reads of `len` bytes.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_stable_id_hash(bytes: *const u8, len: usize) -> u64 {
+    if len == 0 {
+        return 0;
+    }
+
+    if bytes.is_null() {
+        return 0;
+    }
+
+    let bytes = unsafe { std::slice::from_raw_parts(bytes, len) };
+    hash::stable_id_hash_bytes(bytes)
+}
+
 #[no_mangle]
 pub extern "C" fn rapier_unity_world_create() -> u64 {
     world::create_world()
@@ -53,6 +70,18 @@ pub extern "C" fn rapier_unity_body_destroy(
     body: RapierUnityRigidBodyHandle,
 ) -> bool {
     world::with_world_mut(world_id, |world| body::destroy_body(world, body)).unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_stable_id(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    stable_id: u64,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_stable_id(world, body, stable_id)
+    })
+    .unwrap_or(false)
 }
 
 /// # Safety
@@ -136,6 +165,18 @@ pub extern "C" fn rapier_unity_collider_destroy(
 ) -> bool {
     world::with_world_mut(world_id, |world| {
         collider::destroy_collider(world, collider)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_stable_id(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    stable_id: u64,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_stable_id(world, collider, stable_id)
     })
     .unwrap_or(false)
 }
@@ -227,6 +268,32 @@ mod tests {
         rapier_unity_collider_create_box(world_id, body, RapierUnityBoxColliderDesc::default())
     }
 
+    fn create_stable_test_body(
+        world_id: u64,
+        stable_id: u64,
+        y: f32,
+    ) -> (RapierUnityRigidBodyHandle, RapierUnityColliderHandle) {
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_y: y,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(body.is_valid());
+        assert!(rapier_unity_body_set_stable_id(world_id, body, stable_id));
+
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+        assert!(rapier_unity_collider_set_stable_id(
+            world_id, collider, stable_id
+        ));
+
+        (body, collider)
+    }
+
     #[test]
     fn world_create_destroy() {
         let world_id = rapier_unity_world_create();
@@ -309,14 +376,70 @@ mod tests {
     }
 
     #[test]
-    fn snapshot_api_documents_current_stub_behavior() {
-        let world_id = rapier_unity_world_create();
-        let mut byte = 0_u8;
+    fn stable_ids_make_initial_hash_independent_of_creation_order() {
+        let world_a = rapier_unity_world_create();
+        let world_b = rapier_unity_world_create();
 
-        assert_eq!(rapier_unity_world_snapshot_size(world_id), 0);
-        assert!(unsafe { rapier_unity_world_snapshot_write(world_id, &mut byte, 0) });
-        assert!(!unsafe { rapier_unity_world_snapshot_read(world_id, &byte, 1) });
+        create_stable_test_body(world_a, 10, 8.0);
+        create_stable_test_body(world_a, 20, 12.0);
+
+        create_stable_test_body(world_b, 20, 12.0);
+        create_stable_test_body(world_b, 10, 8.0);
+
+        assert_eq!(
+            rapier_unity_world_state_hash(world_a),
+            rapier_unity_world_state_hash(world_b)
+        );
+
+        assert!(rapier_unity_world_destroy(world_a));
+        assert!(rapier_unity_world_destroy(world_b));
+    }
+
+    #[test]
+    fn stable_id_hash_is_available_for_scene_sync_object_ids() {
+        let id = b"scene-sync-object-1";
+        assert_eq!(
+            unsafe { rapier_unity_stable_id_hash(id.as_ptr(), id.len()) },
+            hash::stable_id_hash_bytes(id)
+        );
+        assert_eq!(unsafe { rapier_unity_stable_id_hash(id.as_ptr(), 0) }, 0);
+    }
+
+    #[test]
+    fn snapshot_roundtrip_restores_hash_and_future_steps() {
+        let world_id = rapier_unity_world_create();
+        create_stable_test_body(world_id, 10, 10.0);
+
+        for _ in 0..30 {
+            assert!(rapier_unity_world_step(world_id));
+        }
+
+        let source_hash = rapier_unity_world_state_hash(world_id);
+        let size = rapier_unity_world_snapshot_size(world_id);
+        assert!(size > 0);
+
+        let mut bytes = vec![0_u8; size];
+        assert!(unsafe {
+            rapier_unity_world_snapshot_write(world_id, bytes.as_mut_ptr(), bytes.len())
+        });
+
+        let restored_world = rapier_unity_world_create();
+        assert!(unsafe {
+            rapier_unity_world_snapshot_read(restored_world, bytes.as_ptr(), bytes.len())
+        });
+        assert_eq!(source_hash, rapier_unity_world_state_hash(restored_world));
+
+        for _ in 0..30 {
+            assert!(rapier_unity_world_step(world_id));
+            assert!(rapier_unity_world_step(restored_world));
+        }
+
+        assert_eq!(
+            rapier_unity_world_state_hash(world_id),
+            rapier_unity_world_state_hash(restored_world)
+        );
 
         assert!(rapier_unity_world_destroy(world_id));
+        assert!(rapier_unity_world_destroy(restored_world));
     }
 }

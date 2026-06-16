@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 
 namespace AFJK.Rapier
@@ -26,6 +27,29 @@ namespace AFJK.Rapier
             }
 
             return new RapierWorld(handle);
+        }
+
+        public static ulong StableIdHash(string stableId)
+        {
+            if (string.IsNullOrEmpty(stableId))
+            {
+                return 0;
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(stableId);
+            var handle = default(GCHandle);
+            try
+            {
+                handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+                return RapierNative.StableIdHash(handle.AddrOfPinnedObject(), (UIntPtr)bytes.Length);
+            }
+            finally
+            {
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
         }
 
         public bool SetGravity(Vector3 gravity)
@@ -56,6 +80,12 @@ namespace AFJK.Rapier
         {
             ThrowIfDisposed();
             return RapierNative.BodyDestroy(world, body);
+        }
+
+        public bool SetRigidBodyStableId(RapierRigidBodyHandle body, ulong stableId)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetStableId(world, body, stableId);
         }
 
         public bool TryGetTransform(RapierRigidBodyHandle body, out RapierTransform transform)
@@ -98,6 +128,12 @@ namespace AFJK.Rapier
         {
             ThrowIfDisposed();
             return RapierNative.ColliderDestroy(world, collider);
+        }
+
+        public bool SetColliderStableId(RapierColliderHandle collider, ulong stableId)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetStableId(world, collider, stableId);
         }
 
         public bool Raycast(Ray ray, float maxDistance, out RapierRaycastHit hit)
