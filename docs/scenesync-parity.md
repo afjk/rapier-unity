@@ -30,8 +30,8 @@ Cross-host parity requires all of the following to match:
 - canonical hash schema
 
 Creation, mutation, and destruction inputs must be ordered by a total key such
-as `(tick, sequence, authorId, eventId)`. When building an initial world, create
-bodies and colliders in stable Scene Sync object id order.
+as `(tick, sequence, authorId, eventId)`. A parity fixture's `bodies` array is
+the stable initial-world creation order.
 
 ## Stable IDs
 
@@ -131,7 +131,7 @@ Browser support lives in `afjk.jp` as `rapier-parity-fixture.js` and records
 `world.canonicalStateHash()` plus `canonicalStateDump()` for mismatch debugging.
 
 Unity support lives in the `CrossHostParity` sample. It loads the same fixture,
-creates bodies in stable Scene Sync object id order, assigns body/collider
-stable ids with `RapierWorld.StableIdHash(objectId)`, and logs a JSON result
-using the same `hashes` / `dumps` shape. Unity validation is manual until an
-Editor CI job exists.
+creates bodies in fixture order, assigns body/collider stable ids with
+`RapierWorld.StableIdHash(objectId)`, and logs a JSON result using the same
+`hashes` / `dumps` shape. Unity validation is manual until an Editor CI job
+exists.

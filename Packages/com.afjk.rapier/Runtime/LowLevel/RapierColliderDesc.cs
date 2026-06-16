@@ -4,9 +4,12 @@ namespace AFJK.Rapier
 {
     public struct RapierBoxColliderDesc
     {
+        private const float DefaultFriction = 0.5f;
+
         public Vector3 HalfExtents;
         public float Density;
         public float Friction;
+        public bool HasFriction;
         public float Restitution;
         public bool IsSensor;
         public Vector3 LocalPosition;
@@ -17,6 +20,7 @@ namespace AFJK.Rapier
             HalfExtents = Vector3.one * 0.5f,
             Density = 1f,
             Friction = 0.5f,
+            HasFriction = true,
             Restitution = 0f,
             LocalRotation = Quaternion.identity
         };
@@ -27,7 +31,7 @@ namespace AFJK.Rapier
             {
                 HalfExtents = HalfExtents,
                 Density = Density,
-                Friction = Friction,
+                Friction = HasFriction || Friction > 0f ? Mathf.Max(0f, Friction) : DefaultFriction,
                 Restitution = Restitution,
                 IsSensor = IsSensor ? (byte)1 : (byte)0,
                 LocalPosition = LocalPosition,
@@ -38,9 +42,12 @@ namespace AFJK.Rapier
 
     public struct RapierSphereColliderDesc
     {
+        private const float DefaultFriction = 0.5f;
+
         public float Radius;
         public float Density;
         public float Friction;
+        public bool HasFriction;
         public float Restitution;
         public bool IsSensor;
         public Vector3 LocalPosition;
@@ -51,6 +58,7 @@ namespace AFJK.Rapier
             Radius = 0.5f,
             Density = 1f,
             Friction = 0.5f,
+            HasFriction = true,
             Restitution = 0f,
             LocalRotation = Quaternion.identity
         };
@@ -61,7 +69,7 @@ namespace AFJK.Rapier
             {
                 Radius = Radius,
                 Density = Density,
-                Friction = Friction,
+                Friction = HasFriction || Friction > 0f ? Mathf.Max(0f, Friction) : DefaultFriction,
                 Restitution = Restitution,
                 IsSensor = IsSensor ? (byte)1 : (byte)0,
                 LocalPosition = LocalPosition,
@@ -72,10 +80,13 @@ namespace AFJK.Rapier
 
     public struct RapierCapsuleColliderDesc
     {
+        private const float DefaultFriction = 0.5f;
+
         public float HalfHeight;
         public float Radius;
         public float Density;
         public float Friction;
+        public bool HasFriction;
         public float Restitution;
         public bool IsSensor;
         public Vector3 LocalPosition;
@@ -87,6 +98,7 @@ namespace AFJK.Rapier
             Radius = 0.25f,
             Density = 1f,
             Friction = 0.5f,
+            HasFriction = true,
             Restitution = 0f,
             LocalRotation = Quaternion.identity
         };
@@ -98,7 +110,7 @@ namespace AFJK.Rapier
                 HalfHeight = HalfHeight,
                 Radius = Radius,
                 Density = Density,
-                Friction = Friction,
+                Friction = HasFriction || Friction > 0f ? Mathf.Max(0f, Friction) : DefaultFriction,
                 Restitution = Restitution,
                 IsSensor = IsSensor ? (byte)1 : (byte)0,
                 LocalPosition = LocalPosition,

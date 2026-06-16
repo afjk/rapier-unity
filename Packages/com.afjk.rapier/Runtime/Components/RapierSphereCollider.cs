@@ -23,6 +23,7 @@ namespace AFJK.Rapier
                     Radius = radius,
                     Density = Density,
                     Friction = Friction,
+                    HasFriction = true,
                     Restitution = Restitution,
                     IsSensor = IsSensor,
                     LocalPosition = LocalPosition,

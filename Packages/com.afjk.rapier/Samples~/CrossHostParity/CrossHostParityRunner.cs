@@ -130,9 +130,11 @@ namespace AFJK.Rapier.Samples
                 throw new InvalidOperationException($"Fixture Rapier core {fixture.rapierCoreVersion} does not match Unity core {RapierCoreVersion}.");
             }
 
+            ValidateFixture(fixture);
+
             using var world = RapierWorld.Create();
-            world.SetGravity(ToVector3(fixture.gravity, new Vector3(0f, -9.81f, 0f)));
-            world.SetTimestep(fixture.timestep > 0f ? fixture.timestep : 1f / 60f);
+            world.SetGravity(ToVector3(fixture.gravity));
+            world.SetTimestep(fixture.timestep);
 
             var runtimeBodies = CreateBodies(world, fixture);
             var sampleTicks = SortedSampleTicks(fixture.sampleTicks);
@@ -161,17 +163,10 @@ namespace AFJK.Rapier.Samples
 
         private static List<RuntimeBody> CreateBodies(RapierWorld world, ParityFixture fixture)
         {
-            var bodies = fixture.bodies ?? Array.Empty<ParityBody>();
-            Array.Sort(bodies, (left, right) => string.CompareOrdinal(left?.id, right?.id));
-
+            var bodies = fixture.bodies;
             var runtimeBodies = new List<RuntimeBody>(bodies.Length);
             foreach (var bodyDef in bodies)
             {
-                if (string.IsNullOrEmpty(bodyDef?.id))
-                {
-                    continue;
-                }
-
                 var fixedBody = string.Equals(bodyDef.type, "fixed", StringComparison.Ordinal) || bodyDef.density <= 0f;
                 var body = world.CreateRigidBody(new RapierBodyDesc
                 {
@@ -225,6 +220,85 @@ namespace AFJK.Rapier.Samples
             return runtimeBodies;
         }
 
+        private static void ValidateFixture(ParityFixture fixture)
+        {
+            if (string.IsNullOrWhiteSpace(fixture.profile))
+            {
+                throw new InvalidOperationException("Parity fixture is missing profile.");
+            }
+
+            if (!IsFinitePositive(fixture.timestep))
+            {
+                throw new InvalidOperationException("Parity fixture timestep must be finite and positive.");
+            }
+
+            RequireVec3(fixture.gravity, "gravity");
+
+            if (fixture.bodies == null || fixture.bodies.Length == 0)
+            {
+                throw new InvalidOperationException("Parity fixture must contain at least one body.");
+            }
+
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < fixture.bodies.Length; i++)
+            {
+                var body = fixture.bodies[i];
+                if (body == null)
+                {
+                    throw new InvalidOperationException($"Parity fixture body[{i}] is null.");
+                }
+
+                if (string.IsNullOrWhiteSpace(body.id))
+                {
+                    throw new InvalidOperationException($"Parity fixture body[{i}] is missing id.");
+                }
+
+                if (!ids.Add(body.id))
+                {
+                    throw new InvalidOperationException($"Parity fixture contains duplicate body id '{body.id}'.");
+                }
+
+                if (!string.Equals(body.type, "fixed", StringComparison.Ordinal) &&
+                    !string.Equals(body.type, "dynamic", StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException($"Parity fixture body '{body.id}' has unsupported type '{body.type}'.");
+                }
+
+                if (!string.Equals(body.shape, "box", StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException($"CrossHostParity v0 only supports box fixtures. Got '{body.shape}' for '{body.id}'.");
+                }
+
+                RequireVec3(body.position, $"body '{body.id}' position");
+                RequireQuat(body.rotation, $"body '{body.id}' rotation");
+                RequirePositiveVec3(body.halfExtents, $"body '{body.id}' halfExtents");
+                RequireNonNegative(body.density, $"body '{body.id}' density");
+                RequireNonNegative(body.friction, $"body '{body.id}' friction");
+                RequireNonNegative(body.restitution, $"body '{body.id}' restitution");
+
+                if (string.Equals(body.type, "dynamic", StringComparison.Ordinal))
+                {
+                    RequireVec3(body.linearVelocity, $"body '{body.id}' linearVelocity");
+                    RequireVec3(body.angularVelocity, $"body '{body.id}' angularVelocity");
+                    RequireNonNegative(body.linearDamping, $"body '{body.id}' linearDamping");
+                    RequireNonNegative(body.angularDamping, $"body '{body.id}' angularDamping");
+                }
+            }
+
+            if (fixture.sampleTicks == null || fixture.sampleTicks.Length == 0)
+            {
+                throw new InvalidOperationException("Parity fixture must contain sampleTicks.");
+            }
+
+            foreach (var tick in fixture.sampleTicks)
+            {
+                if (tick < 0)
+                {
+                    throw new InvalidOperationException("Parity fixture sampleTicks must be non-negative.");
+                }
+            }
+        }
+
         private static RapierColliderHandle CreateCollider(
             RapierWorld world,
             RapierRigidBodyHandle body,
@@ -242,6 +316,7 @@ namespace AFJK.Rapier.Samples
                     HalfExtents = ToVector3(bodyDef.halfExtents, Vector3.one * 0.5f),
                     Density = Mathf.Max(0f, bodyDef.density),
                     Friction = Mathf.Max(0f, bodyDef.friction),
+                    HasFriction = true,
                     Restitution = Mathf.Max(0f, bodyDef.restitution),
                     LocalRotation = Quaternion.identity
                 });
@@ -509,6 +584,11 @@ namespace AFJK.Rapier.Samples
             return new Vector3(values[0], values[1], values[2]);
         }
 
+        private static Vector3 ToVector3(float[] values)
+        {
+            return new Vector3(values[0], values[1], values[2]);
+        }
+
         private static Quaternion ToQuaternion(float[] values, Quaternion fallback)
         {
             if (values == null || values.Length < 4)
@@ -523,6 +603,62 @@ namespace AFJK.Rapier.Samples
                 : fallback;
         }
 
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
+        private static bool IsFinitePositive(float value)
+        {
+            return IsFinite(value) && value > 0f;
+        }
+
+        private static void RequireNonNegative(float value, string label)
+        {
+            if (!IsFinite(value) || value < 0f)
+            {
+                throw new InvalidOperationException($"Parity fixture {label} must be finite and non-negative.");
+            }
+        }
+
+        private static void RequireVec3(float[] values, string label)
+        {
+            if (values == null || values.Length < 3 ||
+                !IsFinite(values[0]) || !IsFinite(values[1]) || !IsFinite(values[2]))
+            {
+                throw new InvalidOperationException($"Parity fixture {label} must be a finite vec3.");
+            }
+        }
+
+        private static void RequirePositiveVec3(float[] values, string label)
+        {
+            RequireVec3(values, label);
+            if (values[0] <= 0f || values[1] <= 0f || values[2] <= 0f)
+            {
+                throw new InvalidOperationException($"Parity fixture {label} components must be positive.");
+            }
+        }
+
+        private static void RequireQuat(float[] values, string label)
+        {
+            if (values == null || values.Length < 4 ||
+                !IsFinite(values[0]) || !IsFinite(values[1]) ||
+                !IsFinite(values[2]) || !IsFinite(values[3]))
+            {
+                throw new InvalidOperationException($"Parity fixture {label} must be a finite quaternion.");
+            }
+
+            var lengthSquared =
+                values[0] * values[0] +
+                values[1] * values[1] +
+                values[2] * values[2] +
+                values[3] * values[3];
+            if (lengthSquared <= Mathf.Epsilon)
+            {
+                throw new InvalidOperationException($"Parity fixture {label} quaternion must be non-zero.");
+            }
+        }
+
         private static StringBuilder Indent(StringBuilder sb, int depth)
         {
             return sb.Append(' ', depth * 2);
@@ -535,12 +671,24 @@ namespace AFJK.Rapier.Samples
             {
                 switch (ch)
                 {
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
                     case '\\': sb.Append("\\\\"); break;
                     case '"': sb.Append("\\\""); break;
                     case '\n': sb.Append("\\n"); break;
                     case '\r': sb.Append("\\r"); break;
                     case '\t': sb.Append("\\t"); break;
-                    default: sb.Append(ch); break;
+                    default:
+                        if (char.IsControl(ch))
+                        {
+                            sb.Append("\\u");
+                            sb.Append(((int)ch).ToString("x4", CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            sb.Append(ch);
+                        }
+                        break;
                 }
             }
             sb.Append('"');
