@@ -37,3 +37,5 @@ dev/**/Logs/
 dev/**/UserSettings/
 dev/**/MemoryCaptures/
 dev/**/Recordings/
+dev/**/Assets/Samples/
+dev/**/Assets/Samples.meta

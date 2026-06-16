@@ -1,42 +1,30 @@
 # Basic Falling Ball
 
-This sample plan creates one explicit Rapier world, a fixed floor, and a dynamic sphere.
+Open `BasicFallingBall.unity` and enter Play Mode.
 
-## Scene Setup
+The scene contains a small bootstrap script that creates:
 
-1. Create an empty GameObject named `Rapier World`.
-2. Add `RapierWorldComponent`.
-3. Enable `Log State Hash` if you want a per-step hash in the console.
-4. Create a floor GameObject at `(0, -0.5, 0)`.
-5. Add `RapierRigidBodyComponent`, set `Body Type` to `Fixed`, and add `RapierBoxCollider` with large half extents.
-6. Create a ball GameObject at `(0, 5, 0)`.
-7. Add `RapierRigidBodyComponent`, set `Body Type` to `Dynamic`, and add `RapierSphereCollider`.
-8. Parent the floor and ball under `Rapier World`, or assign their `World Component` field explicitly.
+- one explicit `RapierWorldComponent`
+- one fixed Rapier floor body
+- one dynamic Rapier sphere body
+- Rapier colliders for both bodies
+- visual-only Unity primitives with Unity colliders removed
 
-The world steps in `FixedUpdate` by default and each body can sync its transform from Rapier.
+The sample uses `RapierWorldComponent` stepping in `FixedUpdate`, syncs the dynamic body's transform back to Unity, and logs a state hash once per simulated second.
 
-## Low-level Equivalent
+## Native Plugin
 
-```csharp
-using AFJK.Rapier;
-using UnityEngine;
+Build and copy the native plugin before running the scene:
 
-using var world = RapierWorld.Create();
-world.SetGravity(new Vector3(0, -9.81f, 0));
-world.SetTimestep(1f / 60f);
-
-var floor = world.CreateRigidBody(RapierBodyDesc.Fixed(new Vector3(0, -0.5f, 0)));
-world.CreateBoxCollider(floor, new RapierBoxColliderDesc
-{
-    HalfExtents = new Vector3(10, 0.5f, 10),
-    Density = 0f,
-    LocalRotation = Quaternion.identity
-});
-
-var ball = world.CreateRigidBody(RapierBodyDesc.Dynamic(new Vector3(0, 5, 0)));
-world.CreateSphereCollider(ball, RapierSphereColliderDesc.Unit);
-
-world.Step();
-Debug.Log(world.StateHash());
+```sh
+cd native
+cargo build --release -p rapier_unity_ffi
 ```
 
+Then copy the platform binary into the package plugin folder, for example:
+
+```text
+Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
+```
+
+If the native plugin is missing, the scene shows a warning instead of throwing during setup.

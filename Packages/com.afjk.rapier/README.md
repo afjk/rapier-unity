@@ -31,3 +31,11 @@ Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
 
 Use `RapierWorld` for low-level code and `RapierWorldComponent` for scene-authored worlds. Both are explicit world owners, so multiple worlds are supported.
 
+## Samples
+
+Unity Package Manager exposes two samples:
+
+- `Basic Falling Ball`: a component API scene with a fixed floor and dynamic sphere.
+- `Deterministic Replay`: a low-level API scene that compares two identical worlds by state hash.
+
+Import a sample from Package Manager, open its scene, and enter Play Mode after the native plugin is built and copied into `Runtime/Plugins`.
