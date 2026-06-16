@@ -10,6 +10,7 @@ namespace AFJK.Rapier.Samples
     public sealed class CrossHostParityRunner : MonoBehaviour
     {
         private const string FixtureRelativePath = "fixtures/rapier/parity-basic-001.json";
+        private const string DefaultFixtureName = "parity-basic-001.json";
         private const string HashVersion = "SceneSyncCanonicalPhysicsHashV1";
         private const string RapierCoreVersion = "0.30.0";
 
@@ -58,6 +59,8 @@ namespace AFJK.Rapier.Samples
             public bool ccd;
             public float friction = 0.5f;
             public float restitution = 0.2f;
+            public int frictionCombineRule;
+            public int restitutionCombineRule;
         }
 
         private void Start()
@@ -91,9 +94,9 @@ namespace AFJK.Rapier.Samples
         {
             try
             {
-                var fixtureText = ResolveFixtureJson();
-                var fixture = JsonUtility.FromJson<ParityFixture>(fixtureText);
-                lastResultJson = RunFixture(fixture);
+                var fixtureSource = ResolveFixtureJson();
+                var fixture = JsonUtility.FromJson<ParityFixture>(fixtureSource.Json);
+                lastResultJson = RunFixture(fixture, fixtureSource.Name);
                 lastStatus = "Cross-host parity fixture completed. Result JSON was logged.";
                 Debug.Log(lastResultJson, this);
 
@@ -118,7 +121,7 @@ namespace AFJK.Rapier.Samples
             }
         }
 
-        private static string RunFixture(ParityFixture fixture)
+        private static string RunFixture(ParityFixture fixture, string fixtureName)
         {
             if (fixture == null)
             {
@@ -158,7 +161,7 @@ namespace AFJK.Rapier.Samples
                 dumps[targetTick] = BuildDumpJson(world, fixture, runtimeBodies, targetTick);
             }
 
-            return BuildResultJson(fixture, sampleTicks, hashes, dumps);
+            return BuildResultJson(fixture, fixtureName, sampleTicks, hashes, dumps);
         }
 
         private static List<RuntimeBody> CreateBodies(RapierWorld world, ParityFixture fixture)
@@ -277,6 +280,8 @@ namespace AFJK.Rapier.Samples
                 RequireNonNegative(body.restitution, $"body '{body.id}' restitution");
                 RequireNonNegative(body.linearDamping, $"body '{body.id}' linearDamping");
                 RequireNonNegative(body.angularDamping, $"body '{body.id}' angularDamping");
+                RequireCombineRuleZero(body.frictionCombineRule, $"body '{body.id}' frictionCombineRule");
+                RequireCombineRuleZero(body.restitutionCombineRule, $"body '{body.id}' restitutionCombineRule");
 
                 if (string.Equals(body.type, "dynamic", StringComparison.Ordinal))
                 {
@@ -337,11 +342,21 @@ namespace AFJK.Rapier.Samples
                 });
         }
 
-        private string ResolveFixtureJson()
+        private sealed class FixtureSource
+        {
+            public string Name;
+            public string Json;
+        }
+
+        private FixtureSource ResolveFixtureJson()
         {
             if (fixtureJson != null)
             {
-                return fixtureJson.text;
+                return new FixtureSource
+                {
+                    Name = FixtureNameFromTextAsset(fixtureJson),
+                    Json = fixtureJson.text
+                };
             }
 
             var current = new DirectoryInfo(Application.dataPath);
@@ -350,16 +365,24 @@ namespace AFJK.Rapier.Samples
                 var candidate = Path.Combine(current.FullName, FixtureRelativePath);
                 if (File.Exists(candidate))
                 {
-                    return File.ReadAllText(candidate, Encoding.UTF8);
+                    return new FixtureSource
+                    {
+                        Name = FixtureRelativePath,
+                        Json = File.ReadAllText(candidate, Encoding.UTF8)
+                    };
                 }
             }
 
-            foreach (var candidate in Directory.GetFiles(Application.dataPath, "parity-basic-001.json", SearchOption.AllDirectories))
+            foreach (var candidate in Directory.GetFiles(Application.dataPath, DefaultFixtureName, SearchOption.AllDirectories))
             {
                 var normalized = candidate.Replace('\\', '/');
                 if (normalized.EndsWith(FixtureRelativePath, StringComparison.Ordinal))
                 {
-                    return File.ReadAllText(candidate, Encoding.UTF8);
+                    return new FixtureSource
+                    {
+                        Name = FixtureRelativePath,
+                        Json = File.ReadAllText(candidate, Encoding.UTF8)
+                    };
                 }
             }
 
@@ -392,6 +415,7 @@ namespace AFJK.Rapier.Samples
 
         private static string BuildResultJson(
             ParityFixture fixture,
+            string fixtureName,
             int[] sampleTicks,
             SortedDictionary<int, string> hashes,
             SortedDictionary<int, string> dumps)
@@ -403,7 +427,7 @@ namespace AFJK.Rapier.Samples
             WriteProperty(sb, 1, "rapierCoreVersion", RapierCoreVersion, true);
             WriteProperty(sb, 1, "buildFlavor", "enhanced-determinism", true);
             WriteProperty(sb, 1, "hashVersion", HashVersion, true);
-            WriteProperty(sb, 1, "fixture", FixtureRelativePath, true);
+            WriteProperty(sb, 1, "fixture", string.IsNullOrWhiteSpace(fixtureName) ? FixtureRelativePath : fixtureName, true);
             Indent(sb, 1).Append("\"sampleTicks\": [");
             for (var i = 0; i < sampleTicks.Length; i++)
             {
@@ -636,6 +660,14 @@ namespace AFJK.Rapier.Samples
             }
         }
 
+        private static void RequireCombineRuleZero(int value, string label)
+        {
+            if (value != 0)
+            {
+                throw new InvalidOperationException($"Parity fixture {label} must be 0 in CrossHostParity v0.");
+            }
+        }
+
         private static void RequireVec3(float[] values, string label)
         {
             if (values == null || values.Length < 3 ||
@@ -693,6 +725,18 @@ namespace AFJK.Rapier.Samples
         private static StringBuilder Indent(StringBuilder sb, int depth)
         {
             return sb.Append(' ', depth * 2);
+        }
+
+        private static string FixtureNameFromTextAsset(TextAsset asset)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.name))
+            {
+                return FixtureRelativePath;
+            }
+
+            return asset.name.EndsWith(".json", StringComparison.Ordinal)
+                ? asset.name
+                : $"{asset.name}.json";
         }
 
         private static void AppendQuoted(StringBuilder sb, string value)

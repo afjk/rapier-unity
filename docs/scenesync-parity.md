@@ -118,20 +118,33 @@ Exported viewers should map that specifier to the bundled deterministic
 
 ## Cross-Host Fixture v0
 
-The first shared fixture is:
+The shared fixtures live under:
 
 ```text
-fixtures/rapier/parity-basic-001.json
+fixtures/rapier/
 ```
 
-It uses `SceneSyncRapierParity-0.30`, Rapier core `0.30.0`, one fixed floor,
-one dynamic box, and sample ticks through tick 600.
+They use `SceneSyncRapierParity-0.30`, Rapier core `0.30.0`, and sample ticks
+through tick 600.
+
+The staged fixture set provides narrower parity coverage for regression
+isolation:
+
+- `parity-freefall-001.json`: no contact through tick 600, used to confirm free
+  rigid-body integration.
+- `parity-contact-basic-001.json`: one fixed floor and one vertically falling
+  dynamic box with zero friction, zero restitution, zero angular velocity, no
+  damping, `canSleep: false`, and explicit combine rules.
+- `parity-basic-001.json`: the original floor + moving/rotating box case. It
+  has been manually validated in Unity 6000 and matches the Browser hashes
+  through tick 600. Keep the staged fixtures around to isolate future
+  contact/material/solver regressions from initial-state setup issues.
 
 Browser support lives in `afjk.jp` as `rapier-parity-fixture.js` and records
 `world.canonicalStateHash()` plus `canonicalStateDump()` for mismatch debugging.
 
-Unity support lives in the `CrossHostParity` sample. It loads the same fixture,
-creates bodies in fixture order, assigns body/collider stable ids with
+Unity support lives in the `CrossHostParity` sample. It loads the selected
+fixture, creates bodies in fixture order, assigns body/collider stable ids with
 `RapierWorld.StableIdHash(objectId)`, and logs a JSON result using the same
 `hashes` / `dumps` shape. Unity validation is manual until an Editor CI job
 exists.
