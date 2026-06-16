@@ -30,6 +30,11 @@
       "displayName": "Cross-Host Parity",
       "description": "Runs a shared Unity/Browser Rapier parity fixture and logs canonical hashes.",
       "path": "Samples~/CrossHostParity"
+    },
+    {
+      "displayName": "Rapier JS Demos",
+      "description": "Ports the supported Rapier 3D JavaScript demos into a generated Unity sample.",
+      "path": "Samples~/RapierJsDemos"
     }
   ]
 }
