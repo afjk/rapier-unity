@@ -223,10 +223,12 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
     for (handle, body) in bodies {
         hasher.write_body_identity(world, handle);
         hasher.write_u8(body_type_id(body.body_type()));
+        hasher.write_f32(body.gravity_scale());
         hasher.write_f32(body.linear_damping());
         hasher.write_f32(body.angular_damping());
         hasher.write_u64(body.additional_solver_iterations() as u64);
         hasher.write_u8(u8::from(body.is_ccd_enabled()));
+        hasher.write_f32(body.soft_ccd_prediction());
         hasher.write_u8(u8::from(
             world.body_can_sleep.get(&handle).copied().unwrap_or(true),
         ));

@@ -21,6 +21,12 @@ pub struct RapierUnityColliderHandle {
     pub generation: u32,
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct RapierUnityPidControllerHandle {
+    pub id: u64,
+}
+
 impl RapierUnityRigidBodyHandle {
     pub const INVALID: Self = Self {
         index: u32::MAX,
@@ -40,6 +46,14 @@ impl RapierUnityColliderHandle {
 
     pub fn is_valid(self) -> bool {
         self != Self::INVALID
+    }
+}
+
+impl RapierUnityPidControllerHandle {
+    pub const INVALID: Self = Self { id: 0 };
+
+    pub fn is_valid(self) -> bool {
+        self.id != 0
     }
 }
 

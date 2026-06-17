@@ -481,6 +481,21 @@ pub fn set_body_ccd_enabled(
     with_body_mut(world, body, |body| body.enable_ccd(enabled))
 }
 
+pub fn get_body_soft_ccd_prediction(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<f32> {
+    map_body(world, body, |body| body.soft_ccd_prediction())
+}
+
+pub fn set_body_soft_ccd_prediction(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    prediction: f32,
+) -> bool {
+    with_body_mut(world, body, |body| body.set_soft_ccd_prediction(prediction))
+}
+
 pub fn get_body_enabled(
     world: &RapierUnityWorld,
     body: RapierUnityRigidBodyHandle,

@@ -24,12 +24,17 @@ All entries in the on-screen menu are ported and run with the Unity API:
 - `fountain` (cycles boxes/spheres/capsules; cone/cylinder colliders are not exposed yet)
 - `collision groups` (per-collider interaction groups)
 - `joints` (a spherical-joint chain)
+- `PID controller` (dynamic cylinder body driven by Rapier PID correction)
 - `platform` (kinematic-position platform via set-next-kinematic-translation)
 - `locked rotations` (per-axis rotation locks)
 - `convex polyhedron` (convex hull colliders)
 - `triangle mesh` (trimesh ground + generated visual mesh)
 - `heightfield` (heightfield ground + generated visual mesh)
+- `voxels` (voxel collider terrain + generated voxel visual mesh)
 - `character controller` (kinematic capsule moved with the character controller, autostep + snap-to-ground)
+
+The GLB asset demos are not included yet because this sample currently uses
+runtime-generated Unity geometry only.
 
 ## Native Plugin
 

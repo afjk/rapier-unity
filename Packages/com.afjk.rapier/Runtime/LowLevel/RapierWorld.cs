@@ -70,6 +70,64 @@ namespace AFJK.Rapier
             return RapierNative.WorldStep(world);
         }
 
+        public RapierPidControllerHandle CreatePidController(
+            float kp,
+            float ki,
+            float kd,
+            RapierPidAxesMask axes)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerCreate(world, kp, ki, kd, (byte)axes);
+        }
+
+        public bool DestroyPidController(RapierPidControllerHandle controller)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerDestroy(world, controller);
+        }
+
+        public bool SetPidControllerAxes(RapierPidControllerHandle controller, RapierPidAxesMask axes)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerSetAxes(world, controller, (byte)axes);
+        }
+
+        public bool ResetPidControllerIntegrals(RapierPidControllerHandle controller)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerResetIntegrals(world, controller);
+        }
+
+        public bool ApplyPidLinearCorrection(
+            RapierPidControllerHandle controller,
+            RapierRigidBodyHandle body,
+            Vector3 targetPosition,
+            Vector3 targetLinearVelocity)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerApplyLinearCorrection(
+                world,
+                controller,
+                body,
+                targetPosition,
+                targetLinearVelocity);
+        }
+
+        public bool ApplyPidAngularCorrection(
+            RapierPidControllerHandle controller,
+            RapierRigidBodyHandle body,
+            Quaternion targetRotation,
+            Vector3 targetAngularVelocity)
+        {
+            ThrowIfDisposed();
+            return RapierNative.PidControllerApplyAngularCorrection(
+                world,
+                controller,
+                body,
+                new RapierTransform(Vector3.zero, targetRotation),
+                targetAngularVelocity);
+        }
+
         public RapierRigidBodyHandle CreateRigidBody(RapierBodyDesc desc)
         {
             ThrowIfDisposed();
@@ -183,6 +241,18 @@ namespace AFJK.Rapier
         {
             ThrowIfDisposed();
             return RapierNative.BodySetCcdEnabled(world, body, enabled);
+        }
+
+        public bool TryGetSoftCcdPrediction(RapierRigidBodyHandle body, out float prediction)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetSoftCcdPrediction(world, body, out prediction);
+        }
+
+        public bool SetSoftCcdPrediction(RapierRigidBodyHandle body, float prediction)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetSoftCcdPrediction(world, body, prediction);
         }
 
         public bool TryGetBodyEnabled(RapierRigidBodyHandle body, out bool enabled)
