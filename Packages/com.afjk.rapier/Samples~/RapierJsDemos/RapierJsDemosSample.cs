@@ -92,7 +92,7 @@ namespace AFJK.Rapier.Samples
         // Character controller demo state.
         private VisualBody characterBody;
         private RapierQueryShape characterShape;
-        private Vector3 characterVelocity;
+        private Vector3 characterMovementDirection;
 
         private void Start()
         {
@@ -1089,18 +1089,41 @@ namespace AFJK.Rapier.Samples
         private void BuildCharacterController()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+            CreateBox("floor", RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, new Vector3(15f, 0.1f, 15f), 0f, ColorFor("floor"));
 
-            for (var i = 0; i < 4; i++)
+            const float radius = 0.5f;
+            const int count = 5;
+            var shift = radius * 2.5f;
+            var center = count * radius;
+            const float height = 5f;
+
+            for (var layer = 0; layer < count; layer++)
             {
-                CreateBox(NextId("step"), RapierRigidBodyType.Fixed, new Vector3(2f + i * 1.5f, 0.25f + i * 0.25f, 0f), Quaternion.identity, new Vector3(0.75f, 0.25f + i * 0.25f, 2f), 0f, ColorFor("keva"));
+                for (var row = layer; row < count; row++)
+                {
+                    for (var column = layer; column < count; column++)
+                    {
+                        var position = new Vector3(
+                            layer * shift * 0.5f + (column - layer) * shift - center,
+                            layer * shift * 0.5f + height,
+                            layer * shift * 0.5f + (row - layer) * shift - center);
+                        CreateBox(
+                            NextId("character-block"),
+                            RapierRigidBodyType.Dynamic,
+                            position,
+                            Quaternion.identity,
+                            new Vector3(radius, radius * 0.5f, radius),
+                            1f,
+                            ColorFor("box"));
+                    }
+                }
             }
 
-            characterBody = CreateCapsule("character", RapierRigidBodyType.KinematicPositionBased, new Vector3(-4f, 2f, 0f), 0.5f, 0.4f, 1f, ColorFor("capsule"), Vector3.zero);
-            characterShape = RapierQueryShape.Capsule(0.5f, 0.4f);
-            characterVelocity = Vector3.zero;
+            characterBody = CreateCharacterControllerBody("character", new Vector3(-10f, 4f, -10f), 1.2f, 0.6f);
+            characterShape = RapierQueryShape.Capsule(1.2f, 0.6f);
+            characterMovementDirection = new Vector3(0f, -0.2f, 0f);
 
-            LookAt(new Vector3(0f, 6f, 14f), new Vector3(2f, 1f, 0f));
+            LookAt(new Vector3(-40f, 19.73f, 0f), new Vector3(0f, -0.4126f, 0f));
         }
 
         private void PreStepCharacter()
@@ -1111,35 +1134,57 @@ namespace AFJK.Rapier.Samples
             }
 
             var dt = Mathf.Max(0.0001f, timestep);
-            characterVelocity.y -= 9.81f * dt;
+            const float speed = 0.2f;
+            characterMovementDirection = new Vector3(0f, Input.GetKey(KeyCode.Space) ? speed : -speed, 0f);
+
+            if (Input.GetKey(KeyCode.UpArrow))
+            {
+                characterMovementDirection.x = speed;
+            }
+            else if (Input.GetKey(KeyCode.DownArrow))
+            {
+                characterMovementDirection.x = -speed;
+            }
+
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                characterMovementDirection.z = -speed;
+            }
+            else if (Input.GetKey(KeyCode.RightArrow))
+            {
+                characterMovementDirection.z = speed;
+            }
 
             if (!world.TryGetTransform(characterBody.Body, out var current))
             {
                 return;
             }
 
-            var desired = new Vector3(1.5f * dt, characterVelocity.y * dt, 0f);
             var controller = RapierCharacterController.Default;
             controller.AutostepEnabled = true;
-            controller.AutostepMaxHeight = 0.4f;
-            controller.AutostepMinWidth = 0.2f;
+            controller.AutostepMaxHeight = 0.7f;
+            controller.AutostepMinWidth = 0.3f;
+            controller.AutostepIncludeDynamicBodies = true;
             controller.SnapToGroundEnabled = true;
-            controller.SnapToGroundDistance = 0.3f;
+            controller.SnapToGroundDistance = 0.7f;
 
-            if (world.MoveCharacter(characterShape, new RapierTransform(current.Position, current.Rotation), desired, dt, controller, RapierQueryFilter.Default, out var movement))
+            if (world.MoveCharacter(characterShape, new RapierTransform(current.Position, current.Rotation), characterMovementDirection, dt, controller, RapierQueryFilter.Default, out var movement))
             {
                 world.SetNextKinematicTranslation(characterBody.Body, current.Position + movement.Translation);
-                if (movement.Grounded)
-                {
-                    characterVelocity.y = 0f;
-                }
-
-                if (current.Position.x > 8f)
-                {
-                    world.SetTransform(characterBody.Body, new RapierTransform(new Vector3(-4f, 2f, 0f), Quaternion.identity));
-                    characterVelocity = Vector3.zero;
-                }
             }
+        }
+
+        private VisualBody CreateCharacterControllerBody(string id, Vector3 position, float halfHeight, float radius)
+        {
+            const int segments = 16;
+            var body = CreateRigidBody(id, RapierRigidBodyType.KinematicPositionBased, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateConvexHullCollider(body, CylinderHullPoints(halfHeight, radius, segments), RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+
+            BuildCylinderMesh(halfHeight, radius, segments, out var vertices, out var indices);
+            var visual = CreateMeshVisual(id, vertices, indices, ColorFor("capsule"));
+            visual.transform.SetPositionAndRotation(position, Quaternion.identity);
+            return TrackBody(id, body, visual, true);
         }
 
         private void CreateTrimeshGround(string id, Vector3[] vertices, int[] indices, Color color)
