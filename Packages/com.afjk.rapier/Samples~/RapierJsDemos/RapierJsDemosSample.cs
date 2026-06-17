@@ -1168,7 +1168,8 @@ namespace AFJK.Rapier.Samples
             controller.SnapToGroundEnabled = true;
             controller.SnapToGroundDistance = 0.7f;
 
-            if (world.MoveCharacter(characterShape, new RapierTransform(current.Position, current.Rotation), characterMovementDirection, dt, controller, RapierQueryFilter.Default, out var movement))
+            var filter = RapierQueryFilter.Default.ExcludingBody(characterBody.Body);
+            if (world.MoveCharacter(characterShape, new RapierTransform(current.Position, current.Rotation), characterMovementDirection, dt, controller, filter, out var movement))
             {
                 world.SetNextKinematicTranslation(characterBody.Body, current.Position + movement.Translation);
             }
