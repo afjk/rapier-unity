@@ -22,6 +22,7 @@ All entries in the on-screen menu are ported and run with the Unity API:
 - `damping`
 - `CCD`
 - `fountain` (cycles boxes/spheres/capsules; cone/cylinder colliders are not exposed yet)
+- `GLB to convex hull` (Suzanne mesh extracted from the upstream GLB asset)
 - `GLB to trimesh` (Suzanne mesh extracted from the upstream GLB asset)
 - `collision groups` (per-collider interaction groups)
 - `joints` (a spherical-joint chain)
@@ -33,8 +34,6 @@ All entries in the on-screen menu are ported and run with the Unity API:
 - `heightfield` (heightfield ground + generated visual mesh)
 - `voxels` (voxel collider terrain + generated voxel visual mesh)
 - `character controller` (kinematic capsule moved with the character controller, autostep + snap-to-ground)
-
-The GLB convex hull asset demo is not included yet.
 
 ## Native Plugin
 
