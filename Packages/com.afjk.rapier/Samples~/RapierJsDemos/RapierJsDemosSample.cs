@@ -89,6 +89,7 @@ namespace AFJK.Rapier.Samples
         private GameObject generatedRoot;
         private RapierWorld world;
         private string status = "Not started.";
+        private Vector2 demoScroll;
         private int selectedDemoIndex;
         private int tick;
         private ulong lastHash;
@@ -176,12 +177,17 @@ namespace AFJK.Rapier.Samples
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(12f, 12f, 520f, 300f), GUI.skin.window);
+            var areaHeight = Mathf.Min(Screen.height - 24f, 540f);
+            GUILayout.BeginArea(new Rect(12f, 12f, 520f, areaHeight), GUI.skin.window);
             GUILayout.Label("Rapier JS 3D Demo Ports");
             GUILayout.Label(status);
             GUILayout.Label($"Tick: {tick}  Hash: {lastHash:x16}");
 
+            // Scroll the demo list so the controls below stay visible even when the
+            // entry count exceeds the panel height.
+            demoScroll = GUILayout.BeginScrollView(demoScroll);
             var nextIndex = GUILayout.SelectionGrid(selectedDemoIndex, DemoNames, 2);
+            GUILayout.EndScrollView();
             if (nextIndex != selectedDemoIndex)
             {
                 selectedDemoIndex = nextIndex;
