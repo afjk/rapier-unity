@@ -563,3 +563,29 @@ pub fn set_body_next_kinematic_rotation(
         body.set_next_kinematic_rotation(rotation.to_pose().rotation);
     })
 }
+
+pub fn set_body_enabled_rotations(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    allow_x: bool,
+    allow_y: bool,
+    allow_z: bool,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_enabled_rotations(allow_x, allow_y, allow_z, wake_up);
+    })
+}
+
+pub fn set_body_enabled_translations(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    allow_x: bool,
+    allow_y: bool,
+    allow_z: bool,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_enabled_translations(allow_x, allow_y, allow_z, wake_up);
+    })
+}

@@ -80,6 +80,8 @@ Coverage is tracked separately for:
 | apply impulse at point | Missing | Missing | Missing | B |
 | set next kinematic translation | Supported | Supported | Supported | A |
 | set next kinematic rotation | Supported | Supported | Supported | A |
+| lock/enable rotations (per axis) | Supported | Supported | Supported | A |
+| lock/enable translations (per axis) | Supported | Supported | Supported | A |
 | mass / mass properties getters | Missing | Missing | Missing | B |
 | dominance group | Missing | Missing | Missing | C |
 | user data / stable id | Supported | Supported | Supported | S |
