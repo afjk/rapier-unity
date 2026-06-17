@@ -1228,6 +1228,47 @@ pub extern "C" fn rapier_unity_joint_create_prismatic(
 }
 
 #[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_rope(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    max_distance: f32,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_rope_joint(world, body1, body2, anchor1, anchor2, max_distance)
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_spring(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    rest_length: f32,
+    stiffness: f32,
+    damping: f32,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_spring_joint(
+            world,
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            rest_length,
+            stiffness,
+            damping,
+        )
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
 pub extern "C" fn rapier_unity_joint_remove(world_id: u64, joint: RapierUnityJointHandle) -> bool {
     world::with_world_mut(world_id, |world| joints::remove_joint(world, joint)).unwrap_or(false)
 }
@@ -3120,6 +3161,79 @@ mod tests {
         assert!(rapier_unity_body_set_sleeping(world_id, body, false));
         assert!(unsafe { rapier_unity_body_get_state(world_id, body, &mut state) });
         assert_eq!(state.sleeping, 0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn rope_and_spring_joints_constrain_bodies() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, -9.81, 0.0));
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+
+        let anchor = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                position_y: 10.0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let roped = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_y: 10.0,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, roped).is_valid());
+
+        let rope = rapier_unity_joint_create_rope(
+            world_id,
+            anchor,
+            roped,
+            RapierUnityVector3::default(),
+            RapierUnityVector3::default(),
+            2.0,
+        );
+        assert!(rope.is_valid());
+
+        let springed = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_x: 5.0,
+                position_y: 10.0,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, springed).is_valid());
+        let spring = rapier_unity_joint_create_spring(
+            world_id,
+            anchor,
+            springed,
+            RapierUnityVector3::default(),
+            RapierUnityVector3::default(),
+            1.0,
+            100.0,
+            5.0,
+        );
+        assert!(spring.is_valid());
+
+        for _ in 0..240 {
+            assert!(rapier_unity_world_step(world_id));
+        }
+
+        // The rope caps the fall distance to roughly its max length.
+        let mut transform = RapierUnityTransform::default();
+        assert!(unsafe { rapier_unity_body_get_transform(world_id, roped, &mut transform) });
+        assert!(transform.position_y > 10.0 - 2.0 - 1.0);
+
+        assert!(rapier_unity_joint_remove(world_id, rope));
+        assert!(rapier_unity_joint_remove(world_id, spring));
 
         assert!(rapier_unity_world_destroy(world_id));
     }

@@ -704,6 +704,26 @@ namespace AFJK.Rapier
             Vector3 anchor2,
             Vector3 axis);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_rope")]
+        internal static extern RapierJointHandle JointCreateRope(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            float maxDistance);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_spring")]
+        internal static extern RapierJointHandle JointCreateSpring(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            float restLength,
+            float stiffness,
+            float damping);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_remove")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool JointRemove(ulong world, RapierJointHandle joint);
