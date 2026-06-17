@@ -15,29 +15,21 @@ and visual-only Unity primitives. Switch demos from the on-screen menu.
 
 ## Ported Demos
 
-These demos run with the Unity API exposed today:
+All entries in the on-screen menu are ported and run with the Unity API:
 
 - `pyramid`
 - `keva tower`
 - `damping`
 - `CCD`
-- `fountain`
-
-`fountain` is adapted to cycle through boxes, spheres, and capsules because
-cone/cylinder colliders are not exposed yet.
-
-## Cataloged But Not Ported Yet
-
-These entries remain in the menu and show an unsupported message:
-
-- `collision groups`: needs collider collision-group APIs
-- `character controller`: needs the Rapier character controller API
-- `convex polyhedron`: needs convex hull collider APIs
-- `heightfield`: needs heightfield collider APIs
-- `joints`: needs impulse/multibody joint APIs
-- `locked rotations`: needs axis locking APIs
-- `platform`: needs runtime kinematic velocity or next-position APIs
-- `triangle mesh`: needs triangle mesh collider APIs
+- `fountain` (cycles boxes/spheres/capsules; cone/cylinder colliders are not exposed yet)
+- `collision groups` (per-collider interaction groups)
+- `joints` (a spherical-joint chain)
+- `platform` (kinematic-position platform via set-next-kinematic-translation)
+- `locked rotations` (per-axis rotation locks)
+- `convex polyhedron` (convex hull colliders)
+- `triangle mesh` (trimesh ground + generated visual mesh)
+- `heightfield` (heightfield ground + generated visual mesh)
+- `character controller` (kinematic capsule moved with the character controller, autostep + snap-to-ground)
 
 ## Native Plugin
 

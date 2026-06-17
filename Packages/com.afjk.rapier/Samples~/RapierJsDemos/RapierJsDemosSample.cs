@@ -82,6 +82,16 @@ namespace AFJK.Rapier.Samples
         private ulong lastHash;
         private bool rebuildRequested;
         private int nextBodyId;
+        private RapierColliderHandle lastCollider = RapierColliderHandle.Invalid;
+
+        // Platform demo state.
+        private VisualBody platformBody;
+        private float platformPhase;
+
+        // Character controller demo state.
+        private VisualBody characterBody;
+        private RapierQueryShape characterShape;
+        private Vector3 characterVelocity;
 
         private void Start()
         {
@@ -110,9 +120,17 @@ namespace AFJK.Rapier.Samples
                 return;
             }
 
-            if (demo == DemoKind.Fountain)
+            switch (demo)
             {
-                PreStepFountain();
+                case DemoKind.Fountain:
+                    PreStepFountain();
+                    break;
+                case DemoKind.Platform:
+                    PreStepPlatform();
+                    break;
+                case DemoKind.CharacterController:
+                    PreStepCharacter();
+                    break;
             }
 
             if (!world.Step())
@@ -162,7 +180,7 @@ namespace AFJK.Rapier.Samples
             }
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Unsupported entries are kept in the menu to mirror the Rapier JS demo catalog.");
+            GUILayout.Label("All entries are ported from the Rapier JS 3D demo catalog.");
             GUILayout.EndArea();
         }
 
@@ -211,6 +229,30 @@ namespace AFJK.Rapier.Samples
                         break;
                     case DemoKind.Pyramid:
                         BuildPyramid();
+                        break;
+                    case DemoKind.CollisionGroups:
+                        BuildCollisionGroups();
+                        break;
+                    case DemoKind.Joints:
+                        BuildJoints();
+                        break;
+                    case DemoKind.Platform:
+                        BuildPlatform();
+                        break;
+                    case DemoKind.LockedRotations:
+                        BuildLockedRotations();
+                        break;
+                    case DemoKind.ConvexPolyhedron:
+                        BuildConvexPolyhedron();
+                        break;
+                    case DemoKind.TriangleMesh:
+                        BuildTriangleMesh();
+                        break;
+                    case DemoKind.Heightfield:
+                        BuildHeightfield();
+                        break;
+                    case DemoKind.CharacterController:
+                        BuildCharacterController();
                         break;
                     default:
                         BuildUnsupportedDemo(UnsupportedReason(demo));
@@ -428,6 +470,336 @@ namespace AFJK.Rapier.Samples
             }
         }
 
+        private void BuildCollisionGroups()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+            // Floor is a member of both groups so either set of boxes can land on it.
+            world.SetColliderCollisionGroups(lastCollider, RapierWorld.InteractionGroups(0x0003, 0x0003));
+
+            for (var i = 0; i < 8; i++)
+            {
+                var groupBit = i % 2 == 0 ? (ushort)0x0001 : (ushort)0x0002;
+                var color = i % 2 == 0 ? new Color(0.9f, 0.4f, 0.3f) : new Color(0.3f, 0.5f, 0.9f);
+                var x = i % 2 == 0 ? -0.2f : 0.2f;
+                CreateBox(NextId("group-box"), RapierRigidBodyType.Dynamic, new Vector3(x, 2f + i * 1.2f, 0f), Quaternion.identity, Vector3.one * 0.5f, 1f, color);
+                // Each box only collides with members of its own group (plus the floor).
+                world.SetColliderCollisionGroups(lastCollider, RapierWorld.InteractionGroups(groupBit, groupBit));
+            }
+
+            LookAt(new Vector3(0f, 6f, 16f), new Vector3(0f, 4f, 0f));
+        }
+
+        private void BuildJoints()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            var anchor = CreateBox("joint-anchor", RapierRigidBodyType.Fixed, new Vector3(0f, 10f, 0f), Quaternion.identity, Vector3.one * 0.25f, 0f, ColorFor("floor"));
+
+            var prev = anchor;
+            const int links = 8;
+            for (var i = 0; i < links; i++)
+            {
+                var position = new Vector3((i + 1) * 1.1f, 10f, 0f);
+                var link = CreateBox(NextId("joint-link"), RapierRigidBodyType.Dynamic, position, Quaternion.identity, new Vector3(0.5f, 0.2f, 0.2f), 1f, ColorFor("box"));
+                var anchorA = i == 0 ? Vector3.zero : new Vector3(0.55f, 0f, 0f);
+                world.CreateSphericalJoint(prev.Body, link.Body, anchorA, new Vector3(-0.55f, 0f, 0f));
+                prev = link;
+            }
+
+            LookAt(new Vector3(4f, 12f, 14f), new Vector3(4f, 8f, 0f));
+        }
+
+        private void BuildPlatform()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+            platformBody = CreateBox("platform", RapierRigidBodyType.KinematicPositionBased, new Vector3(0f, 1f, 0f), Quaternion.identity, new Vector3(3f, 0.25f, 3f), 0f, ColorFor("keva"));
+            platformPhase = 0f;
+
+            for (var i = 0; i < 5; i++)
+            {
+                CreateBox(NextId("platform-box"), RapierRigidBodyType.Dynamic, new Vector3(0f, 3f + i * 1.1f, 0f), Quaternion.identity, Vector3.one * 0.4f, 1f, ColorFor("box"));
+            }
+
+            LookAt(new Vector3(0f, 6f, 16f), new Vector3(0f, 2f, 0f));
+        }
+
+        private void PreStepPlatform()
+        {
+            if (platformBody == null || !platformBody.Body.IsValid)
+            {
+                return;
+            }
+
+            platformPhase += Mathf.Max(0.0001f, timestep);
+            var x = Mathf.Sin(platformPhase) * 4f;
+            world.SetNextKinematicTranslation(platformBody.Body, new Vector3(x, 1f, 0f));
+        }
+
+        private void BuildLockedRotations()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+
+            for (var i = 0; i < 6; i++)
+            {
+                var body = CreateBox(NextId("locked-box"), RapierRigidBodyType.Dynamic, new Vector3(i * 1.5f - 4f, 5f, 0f), Quaternion.Euler(0f, 0f, 25f), new Vector3(0.3f, 1.2f, 0.3f), 1f, ColorFor("box"));
+                // Locking rotations keeps the tall boxes upright as they settle.
+                world.SetEnabledRotations(body.Body, false, false, false);
+            }
+
+            LookAt(new Vector3(0f, 5f, 16f), new Vector3(0f, 2f, 0f));
+        }
+
+        private void BuildConvexPolyhedron()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+
+            var points = IcosahedronPoints(0.7f);
+            for (var i = 0; i < 12; i++)
+            {
+                var position = new Vector3(i % 4 * 1.5f - 2.25f, 3f + i / 4 * 1.6f, 0f);
+                CreateConvexBody(NextId("convex"), position, points, ColorFor("sphere"), 0.7f);
+            }
+
+            LookAt(new Vector3(0f, 6f, 14f), new Vector3(0f, 3f, 0f));
+        }
+
+        private VisualBody CreateConvexBody(string id, Vector3 position, Vector3[] points, Color color, float visualRadius)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateConvexHullCollider(body, points, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            ConfigureVisual(visual, id, position, Quaternion.identity, Vector3.one * visualRadius * 2f, color);
+            return TrackBody(id, body, visual, true);
+        }
+
+        private void BuildTriangleMesh()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            BuildGridSurface(out var vertices, out var indices, 16, 1.4f, 1.2f);
+            CreateTrimeshGround("trimesh-ground", vertices, indices, ColorFor("floor"));
+
+            for (var i = 0; i < 12; i++)
+            {
+                CreateBox(NextId("trimesh-box"), RapierRigidBodyType.Dynamic, new Vector3(i % 4 * 2f - 3f, 8f + i / 4 * 1.4f, i / 4 * 1.5f - 1.5f), Quaternion.identity, Vector3.one * 0.5f, 1f, ColorFor("box"));
+            }
+
+            LookAt(new Vector3(0f, 12f, 20f), new Vector3(0f, 2f, 0f));
+        }
+
+        private void BuildHeightfield()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+
+            const int n = 16;
+            var heights = new float[n * n];
+            for (var r = 0; r < n; r++)
+            {
+                for (var c = 0; c < n; c++)
+                {
+                    heights[r * n + c] = Mathf.Sin(r * 0.6f) * Mathf.Cos(c * 0.6f) * 0.5f;
+                }
+            }
+
+            var scale = new Vector3(20f, 4f, 20f);
+            CreateHeightfieldGround("heightfield-ground", heights, n, n, scale, ColorFor("keva"));
+
+            for (var i = 0; i < 12; i++)
+            {
+                CreateBox(NextId("hf-box"), RapierRigidBodyType.Dynamic, new Vector3(i % 4 * 2f - 3f, 8f + i / 4 * 1.4f, 0f), Quaternion.identity, Vector3.one * 0.5f, 1f, ColorFor("box"));
+            }
+
+            LookAt(new Vector3(0f, 14f, 22f), Vector3.zero);
+        }
+
+        private void BuildCharacterController()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+
+            for (var i = 0; i < 4; i++)
+            {
+                CreateBox(NextId("step"), RapierRigidBodyType.Fixed, new Vector3(2f + i * 1.5f, 0.25f + i * 0.25f, 0f), Quaternion.identity, new Vector3(0.75f, 0.25f + i * 0.25f, 2f), 0f, ColorFor("keva"));
+            }
+
+            characterBody = CreateCapsule("character", RapierRigidBodyType.KinematicPositionBased, new Vector3(-4f, 2f, 0f), 0.5f, 0.4f, 1f, ColorFor("capsule"), Vector3.zero);
+            characterShape = RapierQueryShape.Capsule(0.5f, 0.4f);
+            characterVelocity = Vector3.zero;
+
+            LookAt(new Vector3(0f, 6f, 14f), new Vector3(2f, 1f, 0f));
+        }
+
+        private void PreStepCharacter()
+        {
+            if (characterBody == null || !characterBody.Body.IsValid)
+            {
+                return;
+            }
+
+            var dt = Mathf.Max(0.0001f, timestep);
+            characterVelocity.y -= 9.81f * dt;
+
+            if (!world.TryGetTransform(characterBody.Body, out var current))
+            {
+                return;
+            }
+
+            var desired = new Vector3(1.5f * dt, characterVelocity.y * dt, 0f);
+            var controller = RapierCharacterController.Default;
+            controller.AutostepEnabled = true;
+            controller.AutostepMaxHeight = 0.4f;
+            controller.AutostepMinWidth = 0.2f;
+            controller.SnapToGroundEnabled = true;
+            controller.SnapToGroundDistance = 0.3f;
+
+            if (world.MoveCharacter(characterShape, new RapierTransform(current.Position, current.Rotation), desired, dt, controller, RapierQueryFilter.Default, out var movement))
+            {
+                world.SetNextKinematicTranslation(characterBody.Body, current.Position + movement.Translation);
+                if (movement.Grounded)
+                {
+                    characterVelocity.y = 0f;
+                }
+
+                if (current.Position.x > 8f)
+                {
+                    world.SetTransform(characterBody.Body, new RapierTransform(new Vector3(-4f, 2f, 0f), Quaternion.identity));
+                    characterVelocity = Vector3.zero;
+                }
+            }
+        }
+
+        private void CreateTrimeshGround(string id, Vector3[] vertices, int[] indices, Color color)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateTrimeshCollider(body, vertices, indices, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            TrackBody(id, body, visual, false);
+        }
+
+        private void CreateHeightfieldGround(string id, float[] heights, int rows, int columns, Vector3 scale, Color color)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateHeightfieldCollider(body, heights, rows, columns, scale, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+            BuildHeightfieldMesh(heights, rows, columns, scale, out var vertices, out var indices);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            TrackBody(id, body, visual, false);
+        }
+
+        private static void BuildGridSurface(out Vector3[] vertices, out int[] indices, int n, float extent, float amplitude)
+        {
+            vertices = new Vector3[n * n];
+            var half = extent * (n - 1) / 2f;
+            for (var r = 0; r < n; r++)
+            {
+                for (var c = 0; c < n; c++)
+                {
+                    var x = c * extent - half;
+                    var z = r * extent - half;
+                    var y = Mathf.Sin(c * 0.5f) * Mathf.Cos(r * 0.5f) * amplitude;
+                    vertices[r * n + c] = new Vector3(x, y, z);
+                }
+            }
+
+            indices = BuildGridIndices(n, n);
+        }
+
+        private static void BuildHeightfieldMesh(float[] heights, int rows, int columns, Vector3 scale, out Vector3[] vertices, out int[] indices)
+        {
+            vertices = new Vector3[rows * columns];
+            for (var r = 0; r < rows; r++)
+            {
+                for (var c = 0; c < columns; c++)
+                {
+                    var x = ((float)r / (rows - 1) - 0.5f) * scale.x;
+                    var z = ((float)c / (columns - 1) - 0.5f) * scale.z;
+                    var y = heights[r * columns + c] * scale.y;
+                    vertices[r * columns + c] = new Vector3(x, y, z);
+                }
+            }
+
+            indices = BuildGridIndices(rows, columns);
+        }
+
+        private static int[] BuildGridIndices(int rows, int columns)
+        {
+            var indices = new int[(rows - 1) * (columns - 1) * 6];
+            var t = 0;
+            for (var r = 0; r < rows - 1; r++)
+            {
+                for (var c = 0; c < columns - 1; c++)
+                {
+                    var i0 = r * columns + c;
+                    var i1 = r * columns + c + 1;
+                    var i2 = (r + 1) * columns + c;
+                    var i3 = (r + 1) * columns + c + 1;
+                    indices[t++] = i0;
+                    indices[t++] = i2;
+                    indices[t++] = i1;
+                    indices[t++] = i1;
+                    indices[t++] = i2;
+                    indices[t++] = i3;
+                }
+            }
+
+            return indices;
+        }
+
+        private GameObject CreateMeshVisual(string id, Vector3[] vertices, int[] indices, Color color)
+        {
+            var go = new GameObject(id);
+            go.transform.SetParent(generatedRoot.transform, false);
+
+            var mesh = new Mesh { name = id + "-mesh" };
+            if (vertices.Length > 65000)
+            {
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            }
+
+            mesh.vertices = vertices;
+            mesh.triangles = indices;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.material = CreateMaterial(color);
+            return go;
+        }
+
+        private static Material CreateMaterial(Color color)
+        {
+            var shader = Shader.Find("Standard")
+                ?? Shader.Find("Universal Render Pipeline/Lit")
+                ?? Shader.Find("Sprites/Default");
+            var material = new Material(shader);
+            material.color = color;
+            return material;
+        }
+
+        private static Vector3[] IcosahedronPoints(float radius)
+        {
+            var t = (1f + Mathf.Sqrt(5f)) / 2f;
+            var points = new[]
+            {
+                new Vector3(-1f, t, 0f), new Vector3(1f, t, 0f), new Vector3(-1f, -t, 0f), new Vector3(1f, -t, 0f),
+                new Vector3(0f, -1f, t), new Vector3(0f, 1f, t), new Vector3(0f, -1f, -t), new Vector3(0f, 1f, -t),
+                new Vector3(t, 0f, -1f), new Vector3(t, 0f, 1f), new Vector3(-t, 0f, -1f), new Vector3(-t, 0f, 1f)
+            };
+
+            for (var i = 0; i < points.Length; i++)
+            {
+                points[i] = points[i].normalized * radius;
+            }
+
+            return points;
+        }
+
         private void CreateWorld(Vector3 gravity)
         {
             world = RapierWorld.Create();
@@ -574,6 +946,7 @@ namespace AFJK.Rapier.Samples
             }
 
             world.SetColliderStableId(collider, RapierWorld.StableIdHash(id));
+            lastCollider = collider;
         }
 
         private VisualBody TrackBody(string id, RapierRigidBodyHandle body, GameObject visual, bool syncTransform)
@@ -656,27 +1029,7 @@ namespace AFJK.Rapier.Samples
 
         private static string UnsupportedReason(DemoKind value)
         {
-            switch (value)
-            {
-                case DemoKind.CollisionGroups:
-                    return "collider collision groups are not exposed by the Unity low-level API yet";
-                case DemoKind.CharacterController:
-                    return "the Rapier character controller API is not exposed yet";
-                case DemoKind.ConvexPolyhedron:
-                    return "convex hull and rounded convex hull colliders are not exposed yet";
-                case DemoKind.Heightfield:
-                    return "heightfield colliders are not exposed yet";
-                case DemoKind.Joints:
-                    return "impulse and multibody joints are not exposed yet";
-                case DemoKind.LockedRotations:
-                    return "axis locking APIs are not exposed yet";
-                case DemoKind.Platform:
-                    return "runtime kinematic velocity/next-position APIs are not exposed yet";
-                case DemoKind.TriangleMesh:
-                    return "triangle mesh colliders are not exposed yet";
-                default:
-                    return "this demo needs additional Rapier APIs";
-            }
+            return $"the '{value}' demo is not wired up";
         }
 
         private static Color ColorFor(string role)
