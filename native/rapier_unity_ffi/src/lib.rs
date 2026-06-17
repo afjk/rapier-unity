@@ -8,7 +8,7 @@ mod world;
 
 pub use body::{
     RapierUnityRigidBodyDesc, RapierUnityRigidBodyState, RapierUnityRigidBodyType,
-    RapierUnityTransform,
+    RapierUnityTransform, RapierUnityVector3,
 };
 pub use collider::{
     RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnitySphereColliderDesc,
@@ -31,6 +31,26 @@ pub unsafe extern "C" fn rapier_unity_stable_id_hash(bytes: *const u8, len: usiz
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, len) };
     hash::stable_id_hash_bytes(bytes)
+}
+
+/// Writes a produced value through `out` when it exists and the pointer is non-null.
+///
+/// # Safety
+///
+/// `out` must be valid for writes of one `T` when it is non-null.
+unsafe fn write_value<T>(out: *mut T, produce: impl FnOnce() -> Option<T>) -> bool {
+    if out.is_null() {
+        return false;
+    }
+
+    if let Some(value) = produce() {
+        unsafe {
+            *out = value;
+        }
+        true
+    } else {
+        false
+    }
 }
 
 #[no_mangle]
@@ -146,6 +166,270 @@ pub extern "C" fn rapier_unity_body_set_transform(
 ) -> bool {
     world::with_world_mut(world_id, |world| {
         body::set_body_transform(world, body, transform)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_velocity` must be valid for writes of one `RapierUnityVector3`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_linvel(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_velocity: *mut RapierUnityVector3,
+) -> bool {
+    write_value(out_velocity, || {
+        world::with_world(world_id, |world| body::get_body_linvel(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_linvel(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    velocity: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_linvel(world, body, velocity, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_velocity` must be valid for writes of one `RapierUnityVector3`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_angvel(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_velocity: *mut RapierUnityVector3,
+) -> bool {
+    write_value(out_velocity, || {
+        world::with_world(world_id, |world| body::get_body_angvel(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_angvel(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    velocity: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_angvel(world, body, velocity, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_damping` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_linear_damping(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_damping: *mut f32,
+) -> bool {
+    write_value(out_damping, || {
+        world::with_world(world_id, |world| body::get_body_linear_damping(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_linear_damping(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    damping: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_linear_damping(world, body, damping)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_damping` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_angular_damping(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_damping: *mut f32,
+) -> bool {
+    write_value(out_damping, || {
+        world::with_world(world_id, |world| {
+            body::get_body_angular_damping(world, body)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_angular_damping(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    damping: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_angular_damping(world, body, damping)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_scale` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_gravity_scale(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_scale: *mut f32,
+) -> bool {
+    write_value(out_scale, || {
+        world::with_world(world_id, |world| body::get_body_gravity_scale(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_gravity_scale(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    scale: f32,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_gravity_scale(world, body, scale, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_enabled` must be valid for writes of one `bool`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_ccd_enabled(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_enabled: *mut bool,
+) -> bool {
+    write_value(out_enabled, || {
+        world::with_world(world_id, |world| body::get_body_ccd_enabled(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_ccd_enabled(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    enabled: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_ccd_enabled(world, body, enabled)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_enabled` must be valid for writes of one `bool`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_enabled(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_enabled: *mut bool,
+) -> bool {
+    write_value(out_enabled, || {
+        world::with_world(world_id, |world| body::get_body_enabled(world, body)).flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_enabled(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    enabled: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_enabled(world, body, enabled)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_add_force(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    force: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::add_body_force(world, body, force, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_add_torque(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    torque: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::add_body_torque(world, body, torque, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_apply_impulse(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::apply_body_impulse(world, body, impulse, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_apply_torque_impulse(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::apply_body_torque_impulse(world, body, impulse, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_next_kinematic_translation(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    translation: RapierUnityVector3,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_next_kinematic_translation(world, body, translation)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_next_kinematic_rotation(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    rotation: RapierUnityTransform,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_next_kinematic_rotation(world, body, rotation)
     })
     .unwrap_or(false)
 }
@@ -592,6 +876,188 @@ mod tests {
             hash::stable_id_hash_bytes(id)
         );
         assert_eq!(unsafe { rapier_unity_stable_id_hash(id.as_ptr(), 0) }, 0);
+    }
+
+    #[test]
+    fn linear_and_angular_velocity_roundtrip() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        assert!(body.is_valid());
+
+        assert!(rapier_unity_body_set_linvel(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 1.0,
+                y: -2.0,
+                z: 3.0,
+            },
+            true,
+        ));
+        assert!(rapier_unity_body_set_angvel(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 0.25,
+                y: 0.5,
+                z: -0.75,
+            },
+            true,
+        ));
+
+        let mut linvel = RapierUnityVector3::default();
+        let mut angvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_linvel(world_id, body, &mut linvel) });
+        assert!(unsafe { rapier_unity_body_get_angvel(world_id, body, &mut angvel) });
+        assert_eq!(linvel.x, 1.0);
+        assert_eq!(linvel.y, -2.0);
+        assert_eq!(linvel.z, 3.0);
+        assert_eq!(angvel.x, 0.25);
+        assert_eq!(angvel.y, 0.5);
+        assert_eq!(angvel.z, -0.75);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn apply_impulse_changes_linear_velocity() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, 0.0, 0.0));
+        let body = create_test_body(world_id);
+        assert!(attach_test_box(world_id, body).is_valid());
+
+        assert!(rapier_unity_body_apply_impulse(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 5.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            true,
+        ));
+        assert!(rapier_unity_world_step(world_id));
+
+        let mut linvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_linvel(world_id, body, &mut linvel) });
+        assert!(linvel.x > 0.0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn add_force_moves_body_against_gravity() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, -9.81, 0.0));
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+        let body = create_test_body(world_id);
+        assert!(attach_test_box(world_id, body).is_valid());
+
+        // A large upward force should overcome gravity over several steps.
+        for _ in 0..30 {
+            assert!(rapier_unity_body_add_force(
+                world_id,
+                body,
+                RapierUnityVector3 {
+                    x: 0.0,
+                    y: 200.0,
+                    z: 0.0,
+                },
+                true,
+            ));
+            assert!(rapier_unity_world_step(world_id));
+        }
+
+        let mut linvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_linvel(world_id, body, &mut linvel) });
+        assert!(linvel.y > 0.0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn body_property_setters_roundtrip() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+
+        assert!(rapier_unity_body_set_linear_damping(world_id, body, 0.5));
+        assert!(rapier_unity_body_set_angular_damping(world_id, body, 0.25));
+        assert!(rapier_unity_body_set_gravity_scale(
+            world_id, body, 2.0, true
+        ));
+        assert!(rapier_unity_body_set_ccd_enabled(world_id, body, true));
+        assert!(rapier_unity_body_set_enabled(world_id, body, false));
+
+        let mut linear_damping = 0.0_f32;
+        let mut angular_damping = 0.0_f32;
+        let mut gravity_scale = 0.0_f32;
+        let mut ccd_enabled = false;
+        let mut enabled = true;
+        assert!(unsafe {
+            rapier_unity_body_get_linear_damping(world_id, body, &mut linear_damping)
+        });
+        assert!(unsafe {
+            rapier_unity_body_get_angular_damping(world_id, body, &mut angular_damping)
+        });
+        assert!(unsafe { rapier_unity_body_get_gravity_scale(world_id, body, &mut gravity_scale) });
+        assert!(unsafe { rapier_unity_body_get_ccd_enabled(world_id, body, &mut ccd_enabled) });
+        assert!(unsafe { rapier_unity_body_get_enabled(world_id, body, &mut enabled) });
+
+        assert_eq!(linear_damping, 0.5);
+        assert_eq!(angular_damping, 0.25);
+        assert_eq!(gravity_scale, 2.0);
+        assert!(ccd_enabled);
+        assert!(!enabled);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn kinematic_body_follows_next_translation() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::KinematicPositionBased as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(body.is_valid());
+
+        assert!(rapier_unity_body_set_next_kinematic_translation(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 4.0,
+                y: 0.0,
+                z: 0.0,
+            },
+        ));
+        assert!(rapier_unity_world_step(world_id));
+
+        let mut transform = RapierUnityTransform::default();
+        assert!(unsafe { rapier_unity_body_get_transform(world_id, body, &mut transform) });
+        assert!((transform.position_x - 4.0).abs() < 1e-4);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn missing_body_getters_return_false() {
+        let world_id = rapier_unity_world_create();
+        let missing = RapierUnityRigidBodyHandle::INVALID;
+
+        let mut linvel = RapierUnityVector3::default();
+        assert!(!unsafe { rapier_unity_body_get_linvel(world_id, missing, &mut linvel) });
+        assert!(!rapier_unity_body_set_linvel(
+            world_id,
+            missing,
+            RapierUnityVector3::default(),
+            true
+        ));
+
+        assert!(rapier_unity_world_destroy(world_id));
     }
 
     #[test]

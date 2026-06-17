@@ -148,6 +148,153 @@ namespace AFJK.Rapier
             RapierRigidBodyHandle body,
             RapierTransform transform);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_linvel")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetLinvel(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out Vector3 velocity);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_linvel")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetLinvel(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 velocity,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_angvel")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetAngvel(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out Vector3 velocity);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_angvel")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetAngvel(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 velocity,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_linear_damping")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetLinearDamping(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out float damping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_linear_damping")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetLinearDamping(
+            ulong world,
+            RapierRigidBodyHandle body,
+            float damping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_angular_damping")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetAngularDamping(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out float damping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_angular_damping")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetAngularDamping(
+            ulong world,
+            RapierRigidBodyHandle body,
+            float damping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_gravity_scale")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetGravityScale(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out float scale);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_gravity_scale")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetGravityScale(
+            ulong world,
+            RapierRigidBodyHandle body,
+            float scale,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_ccd_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetCcdEnabled(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] out bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_ccd_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetCcdEnabled(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetEnabled(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] out bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetEnabled(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_add_force")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyAddForce(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 force,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_add_torque")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyAddTorque(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 torque,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_apply_impulse")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyApplyImpulse(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 impulse,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_apply_torque_impulse")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyApplyTorqueImpulse(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 impulse,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_next_kinematic_translation")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetNextKinematicTranslation(
+            ulong world,
+            RapierRigidBodyHandle body,
+            Vector3 translation);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_next_kinematic_rotation")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetNextKinematicRotation(
+            ulong world,
+            RapierRigidBodyHandle body,
+            RapierTransform rotation);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_box")]
         internal static extern RapierColliderHandle ColliderCreateBox(
             ulong world,

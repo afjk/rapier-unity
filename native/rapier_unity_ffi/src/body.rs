@@ -50,6 +50,24 @@ pub struct RapierUnityRigidBodyDesc {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct RapierUnityVector3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
+impl RapierUnityVector3 {
+    fn from_vector(vector: &Vector<Real>) -> Self {
+        Self {
+            x: vector.x,
+            y: vector.y,
+            z: vector.z,
+        }
+    }
+}
+
+#[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub struct RapierUnityRigidBodyState {
     pub transform: RapierUnityTransform,
@@ -329,4 +347,219 @@ pub fn set_body_transform(
     } else {
         false
     }
+}
+
+/// Runs `f` against the body referenced by `body`, returning `true` when it exists.
+fn with_body_mut(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    f: impl FnOnce(&mut RigidBody),
+) -> bool {
+    if !body.is_valid() {
+        return false;
+    }
+
+    if let Some(body) = world.bodies.get_mut(body.into()) {
+        f(body);
+        true
+    } else {
+        false
+    }
+}
+
+/// Reads a value from the body referenced by `body`, returning `None` when it is missing.
+fn map_body<T>(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    f: impl FnOnce(&RigidBody) -> T,
+) -> Option<T> {
+    if !body.is_valid() {
+        return None;
+    }
+
+    world.bodies.get(body.into()).map(f)
+}
+
+pub fn get_body_linvel(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<RapierUnityVector3> {
+    map_body(world, body, |body| {
+        RapierUnityVector3::from_vector(body.linvel())
+    })
+}
+
+pub fn set_body_linvel(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    velocity: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_linvel(Vector::new(velocity.x, velocity.y, velocity.z), wake_up);
+    })
+}
+
+pub fn get_body_angvel(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<RapierUnityVector3> {
+    map_body(world, body, |body| {
+        RapierUnityVector3::from_vector(body.angvel())
+    })
+}
+
+pub fn set_body_angvel(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    velocity: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_angvel(Vector::new(velocity.x, velocity.y, velocity.z), wake_up);
+    })
+}
+
+pub fn get_body_linear_damping(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<f32> {
+    map_body(world, body, |body| body.linear_damping())
+}
+
+pub fn set_body_linear_damping(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    damping: f32,
+) -> bool {
+    with_body_mut(world, body, |body| body.set_linear_damping(damping))
+}
+
+pub fn get_body_angular_damping(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<f32> {
+    map_body(world, body, |body| body.angular_damping())
+}
+
+pub fn set_body_angular_damping(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    damping: f32,
+) -> bool {
+    with_body_mut(world, body, |body| body.set_angular_damping(damping))
+}
+
+pub fn get_body_gravity_scale(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<f32> {
+    map_body(world, body, |body| body.gravity_scale())
+}
+
+pub fn set_body_gravity_scale(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    scale: f32,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| body.set_gravity_scale(scale, wake_up))
+}
+
+pub fn get_body_ccd_enabled(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<bool> {
+    map_body(world, body, |body| body.is_ccd_enabled())
+}
+
+pub fn set_body_ccd_enabled(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    enabled: bool,
+) -> bool {
+    with_body_mut(world, body, |body| body.enable_ccd(enabled))
+}
+
+pub fn get_body_enabled(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<bool> {
+    map_body(world, body, |body| body.is_enabled())
+}
+
+pub fn set_body_enabled(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    enabled: bool,
+) -> bool {
+    with_body_mut(world, body, |body| body.set_enabled(enabled))
+}
+
+pub fn add_body_force(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    force: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.add_force(Vector::new(force.x, force.y, force.z), wake_up);
+    })
+}
+
+pub fn add_body_torque(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    torque: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.add_torque(Vector::new(torque.x, torque.y, torque.z), wake_up);
+    })
+}
+
+pub fn apply_body_impulse(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.apply_impulse(Vector::new(impulse.x, impulse.y, impulse.z), wake_up);
+    })
+}
+
+pub fn apply_body_torque_impulse(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.apply_torque_impulse(Vector::new(impulse.x, impulse.y, impulse.z), wake_up);
+    })
+}
+
+pub fn set_body_next_kinematic_translation(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    translation: RapierUnityVector3,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_next_kinematic_translation(Vector::new(
+            translation.x,
+            translation.y,
+            translation.z,
+        ));
+    })
+}
+
+pub fn set_body_next_kinematic_rotation(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    rotation: RapierUnityTransform,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_next_kinematic_rotation(rotation.to_pose().rotation);
+    })
 }
