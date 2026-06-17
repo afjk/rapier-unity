@@ -1098,25 +1098,21 @@ namespace AFJK.Rapier.Samples
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
 
-            const int n = 16;
-            var heights = new float[n * n];
-            for (var r = 0; r < n; r++)
+            const int subdivisions = 20;
+            var samples = subdivisions + 1;
+            var heights = new float[samples * samples];
+            var randomState = 0x68656967u;
+            for (var i = 0; i < heights.Length; i++)
             {
-                for (var c = 0; c < n; c++)
-                {
-                    heights[r * n + c] = Mathf.Sin(r * 0.6f) * Mathf.Cos(c * 0.6f) * 0.5f;
-                }
+                heights[i] = NextPlatformRandom(ref randomState);
             }
 
-            var scale = new Vector3(20f, 4f, 20f);
-            CreateHeightfieldGround("heightfield-ground", heights, n, n, scale, ColorFor("keva"));
+            var scale = new Vector3(70f, 4f, 70f);
+            CreateHeightfieldGround("heightfield-ground", heights, samples, samples, scale, ColorFor("keva"));
 
-            for (var i = 0; i < 12; i++)
-            {
-                CreateBox(NextId("hf-box"), RapierRigidBodyType.Dynamic, new Vector3(i % 4 * 2f - 3f, 8f + i / 4 * 1.4f, 0f), Quaternion.identity, Vector3.one * 0.5f, 1f, ColorFor("box"));
-            }
+            CreateStackedShapeGrid("heightfield-body");
 
-            LookAt(new Vector3(0f, 14f, 22f), Vector3.zero);
+            LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
         }
 
         private void BuildCharacterController()
@@ -1247,8 +1243,8 @@ namespace AFJK.Rapier.Samples
             {
                 for (var c = 0; c < columns; c++)
                 {
-                    var x = ((float)r / (rows - 1) - 0.5f) * scale.x;
-                    var z = ((float)c / (columns - 1) - 0.5f) * scale.z;
+                    var x = ((float)c / (columns - 1) - 0.5f) * scale.x;
+                    var z = ((float)r / (rows - 1) - 0.5f) * scale.z;
                     var y = heights[r * columns + c] * scale.y;
                     vertices[r * columns + c] = new Vector3(x, y, z);
                 }
