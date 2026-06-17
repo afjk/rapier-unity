@@ -1858,6 +1858,17 @@ mod tests {
         });
         assert_eq!(projection.is_inside, 1);
 
+        // A filter that excludes the only collider must return no projection
+        // (and must not abort the process via parry's internal unwrap).
+        let exclude_all = RapierUnityQueryFilter {
+            use_exclude_collider: 1,
+            exclude_collider: collider,
+            ..RapierUnityQueryFilter::default()
+        };
+        assert!(!unsafe {
+            rapier_unity_project_point(world_id, 0.0, 2.0, 0.0, true, exclude_all, &mut projection)
+        });
+
         assert!(rapier_unity_world_destroy(world_id));
     }
 

@@ -179,8 +179,14 @@ pub fn raycast_filtered(
 ///
 /// Scene queries operate against the broad-phase BVH as it was after the most
 /// recent [`RapierUnityWorld::step`]; call `step` at least once before querying.
-/// Returns `None` when there are no colliders (guarding the underlying parry
-/// projection, which expects a non-empty acceleration structure).
+///
+/// parry's `project_local_point` calls `.unwrap()` and panics (aborting across
+/// the FFI boundary) whenever no collider passes the query — either because the
+/// filter excludes every collider, or because the broad-phase BVH has not been
+/// populated by a step yet. We defend against both: a pre-filter pass returns
+/// `None` cleanly when nothing matches the filter, and a `catch_unwind` backstop
+/// turns any remaining panic (e.g. an un-stepped BVH) into `None` instead of a
+/// host-process abort.
 pub fn project_point(
     world: &RapierUnityWorld,
     point_x: f32,
@@ -189,7 +195,13 @@ pub fn project_point(
     solid: bool,
     filter: RapierUnityQueryFilter,
 ) -> Option<RapierUnityPointProjection> {
-    if world.colliders.is_empty() {
+    let query_filter = filter.to_query_filter();
+
+    let any_match = world
+        .colliders
+        .iter()
+        .any(|(handle, collider)| query_filter.test(&world.bodies, handle, collider));
+    if !any_match {
         return None;
     }
 
@@ -198,18 +210,22 @@ pub fn project_point(
         world.narrow_phase.query_dispatcher(),
         &world.bodies,
         &world.colliders,
-        filter.to_query_filter(),
+        query_filter,
     );
 
-    query_pipeline
-        .project_point(&point, Real::MAX, solid)
-        .map(|(collider, projection)| RapierUnityPointProjection {
-            collider: collider.into(),
-            point_x: projection.point.x,
-            point_y: projection.point.y,
-            point_z: projection.point.z,
-            is_inside: u8::from(projection.is_inside),
-        })
+    let projection = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        query_pipeline.project_point(&point, Real::MAX, solid)
+    }))
+    .ok()
+    .flatten();
+
+    projection.map(|(collider, projection)| RapierUnityPointProjection {
+        collider: collider.into(),
+        point_x: projection.point.x,
+        point_y: projection.point.y,
+        point_z: projection.point.z,
+        is_inside: u8::from(projection.is_inside),
+    })
 }
 
 pub fn intersection_with_point(
