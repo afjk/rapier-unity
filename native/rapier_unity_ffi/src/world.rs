@@ -4,6 +4,8 @@ use std::sync::{LazyLock, Mutex};
 
 use rapier3d::prelude::*;
 
+use crate::events::{EventCollector, RapierUnityCollisionEvent, RapierUnityContactForceEvent};
+
 pub struct RapierUnityWorld {
     pub gravity: Vector<Real>,
     pub integration_parameters: IntegrationParameters,
@@ -19,6 +21,8 @@ pub struct RapierUnityWorld {
     pub body_stable_ids: HashMap<RigidBodyHandle, u64>,
     pub collider_stable_ids: HashMap<ColliderHandle, u64>,
     pub body_can_sleep: HashMap<RigidBodyHandle, bool>,
+    pub collision_events: Vec<RapierUnityCollisionEvent>,
+    pub contact_force_events: Vec<RapierUnityContactForceEvent>,
 }
 
 impl Default for RapierUnityWorld {
@@ -38,12 +42,16 @@ impl Default for RapierUnityWorld {
             body_stable_ids: HashMap::new(),
             collider_stable_ids: HashMap::new(),
             body_can_sleep: HashMap::new(),
+            collision_events: Vec::new(),
+            contact_force_events: Vec::new(),
         }
     }
 }
 
 impl RapierUnityWorld {
     pub fn step(&mut self) {
+        let collector = EventCollector::default();
+
         self.physics_pipeline.step(
             &self.gravity,
             &self.integration_parameters,
@@ -56,8 +64,12 @@ impl RapierUnityWorld {
             &mut self.multibody_joints,
             &mut self.ccd_solver,
             &(),
-            &(),
+            &collector,
         );
+
+        // Replace the previous step's events with those captured this step.
+        self.collision_events = collector.collisions.into_inner().unwrap_or_default();
+        self.contact_force_events = collector.contact_forces.into_inner().unwrap_or_default();
     }
 
     pub fn set_gravity(&mut self, x: f32, y: f32, z: f32) {
