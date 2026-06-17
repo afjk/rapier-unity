@@ -22,6 +22,7 @@ automatically in the editor and standalone builds:
 - Windows: `Windows/rapier_unity_ffi.dll` (x86_64)
 - Linux: `Linux/librapier_unity_ffi.so` (x86_64)
 - macOS: `macOS/librapier_unity_ffi.dylib` (Apple Silicon / arm64)
+- Android: `Android/arm64-v8a/librapier_unity_ffi.so` (arm64-v8a)
 
 To rebuild from source (for example to target an Intel mac or refresh the
 binary), build the crate and copy the platform library into the matching
