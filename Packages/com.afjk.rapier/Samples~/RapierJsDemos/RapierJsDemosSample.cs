@@ -21,7 +21,8 @@ namespace AFJK.Rapier.Samples
             Platform,
             Pyramid,
             TriangleMesh,
-            Voxels
+            Voxels,
+            PidController
         }
 
         [SerializeField] private DemoKind demo = DemoKind.Pyramid;
@@ -42,6 +43,7 @@ namespace AFJK.Rapier.Samples
             DemoKind.Joints,
             DemoKind.KevaTower,
             DemoKind.LockedRotations,
+            DemoKind.PidController,
             DemoKind.Platform,
             DemoKind.Pyramid,
             DemoKind.TriangleMesh,
@@ -60,6 +62,7 @@ namespace AFJK.Rapier.Samples
             "joints",
             "keva tower",
             "locked rotations",
+            "PID controller",
             "platform",
             "pyramid",
             "triangle mesh",
@@ -96,6 +99,11 @@ namespace AFJK.Rapier.Samples
         private VisualBody characterBody;
         private RapierQueryShape characterShape;
         private Vector3 characterMovementDirection;
+
+        // PID controller demo state.
+        private VisualBody pidCharacterBody;
+        private RapierPidControllerHandle pidController = RapierPidControllerHandle.Invalid;
+        private Vector3 pidMovementDirection;
 
         private void Start()
         {
@@ -134,6 +142,9 @@ namespace AFJK.Rapier.Samples
                     break;
                 case DemoKind.CharacterController:
                     PreStepCharacter();
+                    break;
+                case DemoKind.PidController:
+                    PreStepPidController();
                     break;
             }
 
@@ -184,7 +195,7 @@ namespace AFJK.Rapier.Samples
             }
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("All entries are ported from the Rapier JS 3D demo catalog.");
+            GUILayout.Label("Runtime-generated entries are ported from the Rapier JS 3D demo catalog.");
             GUILayout.EndArea();
         }
 
@@ -204,6 +215,14 @@ namespace AFJK.Rapier.Samples
             lastHash = 0;
             nextBodyId = 0;
             fountainSpawnCounter = 0;
+            platformBody = null;
+            platformPhase = 0f;
+            characterBody = null;
+            characterShape = default;
+            characterMovementDirection = Vector3.zero;
+            pidCharacterBody = null;
+            pidController = RapierPidControllerHandle.Invalid;
+            pidMovementDirection = Vector3.zero;
 
             if (!TryProbeNative(out var nativeError))
             {
@@ -261,6 +280,9 @@ namespace AFJK.Rapier.Samples
                         break;
                     case DemoKind.CharacterController:
                         BuildCharacterController();
+                        break;
+                    case DemoKind.PidController:
+                        BuildPidController();
                         break;
                     default:
                         BuildUnsupportedDemo(UnsupportedReason(demo));
@@ -1192,6 +1214,105 @@ namespace AFJK.Rapier.Samples
 
                 offset -= 0.05f * radius * (columns - 1f);
             }
+        }
+
+        private void BuildPidController()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("floor", RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, new Vector3(15f, 0.1f, 15f), 0f, ColorFor("floor"));
+
+            const float radius = 0.5f;
+            const int count = 5;
+            var shift = radius * 2.5f;
+            var center = count * radius;
+            const float height = 5f;
+
+            for (var layer = 0; layer < count; layer++)
+            {
+                for (var row = layer; row < count; row++)
+                {
+                    for (var column = layer; column < count; column++)
+                    {
+                        var position = new Vector3(
+                            layer * shift * 0.5f + (column - layer) * shift - center,
+                            layer * shift * 0.5f + height,
+                            layer * shift * 0.5f + (row - layer) * shift - center);
+                        CreateBox(
+                            NextId("pid-block"),
+                            RapierRigidBodyType.Dynamic,
+                            position,
+                            Quaternion.identity,
+                            new Vector3(radius, radius * 0.5f, radius),
+                            1f,
+                            ColorFor("box"));
+                    }
+                }
+            }
+
+            pidCharacterBody = CreateConvexCylinderBody("pid-character", new Vector3(-10f, 4f, -10f), 0.6f, ColorFor("capsule"), Vector3.zero, 1.2f);
+            world.SetGravityScale(pidCharacterBody.Body, 10f);
+            world.SetSoftCcdPrediction(pidCharacterBody.Body, 10f);
+            pidController = world.CreatePidController(60f, 0f, 1f, RapierPidAxesMask.AllAng);
+            pidMovementDirection = Vector3.zero;
+
+            LookAt(new Vector3(-40f, 19.73f, 0f), new Vector3(0f, -0.4126f, 0f));
+        }
+
+        private void PreStepPidController()
+        {
+            if (pidCharacterBody == null || !pidCharacterBody.Body.IsValid || !pidController.IsValid)
+            {
+                return;
+            }
+
+            const float speed = 0.2f;
+            pidMovementDirection = Vector3.zero;
+
+            if (Input.GetKey(KeyCode.UpArrow))
+            {
+                pidMovementDirection.x = speed;
+            }
+            else if (Input.GetKey(KeyCode.DownArrow))
+            {
+                pidMovementDirection.x = -speed;
+            }
+
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                pidMovementDirection.z = -speed;
+            }
+            else if (Input.GetKey(KeyCode.RightArrow))
+            {
+                pidMovementDirection.z = speed;
+            }
+
+            if (Input.GetKey(KeyCode.Space))
+            {
+                pidMovementDirection.y = speed;
+            }
+
+            if (pidMovementDirection == Vector3.zero)
+            {
+                world.SetPidControllerAxes(pidController, RapierPidAxesMask.AllAng);
+            }
+            else if (Mathf.Approximately(pidMovementDirection.y, 0f))
+            {
+                world.SetPidControllerAxes(pidController, RapierPidAxesMask.AllAng | RapierPidAxesMask.LinX | RapierPidAxesMask.LinZ);
+            }
+            else
+            {
+                world.SetPidControllerAxes(pidController, RapierPidAxesMask.All);
+            }
+
+            if (!world.TryGetTransform(pidCharacterBody.Body, out var current))
+            {
+                return;
+            }
+
+            var targetPoint = current.Position + pidMovementDirection;
+            var targetVelocity = Vector3.zero;
+            world.ApplyPidLinearCorrection(pidController, pidCharacterBody.Body, targetPoint, targetVelocity);
+            world.ApplyPidAngularCorrection(pidController, pidCharacterBody.Body, Quaternion.identity, targetVelocity);
         }
 
         private void BuildCharacterController()

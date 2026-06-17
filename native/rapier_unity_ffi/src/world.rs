@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{LazyLock, Mutex};
 
+use rapier3d::control::PidController;
 use rapier3d::prelude::*;
 
 use crate::events::{EventCollector, RapierUnityCollisionEvent, RapierUnityContactForceEvent};
@@ -23,6 +24,8 @@ pub struct RapierUnityWorld {
     pub body_can_sleep: HashMap<RigidBodyHandle, bool>,
     pub collision_events: Vec<RapierUnityCollisionEvent>,
     pub contact_force_events: Vec<RapierUnityContactForceEvent>,
+    pub pid_controllers: HashMap<u64, PidController>,
+    pub next_pid_controller_id: u64,
 }
 
 impl Default for RapierUnityWorld {
@@ -44,6 +47,8 @@ impl Default for RapierUnityWorld {
             body_can_sleep: HashMap::new(),
             collision_events: Vec::new(),
             contact_force_events: Vec::new(),
+            pid_controllers: HashMap::new(),
+            next_pid_controller_id: 1,
         }
     }
 }

@@ -1,6 +1,7 @@
 mod body;
 mod character;
 mod collider;
+mod control;
 mod debug;
 mod events;
 mod handles;
@@ -21,7 +22,10 @@ pub use collider::{
 };
 pub use debug::{RapierUnityDebugColor, RapierUnityDebugVertex};
 pub use events::{RapierUnityCollisionEvent, RapierUnityContactForceEvent};
-pub use handles::{RapierUnityColliderHandle, RapierUnityJointHandle, RapierUnityRigidBodyHandle};
+pub use handles::{
+    RapierUnityColliderHandle, RapierUnityJointHandle, RapierUnityPidControllerHandle,
+    RapierUnityRigidBodyHandle,
+};
 pub use query::{
     RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityQueryShape, RapierUnityRay,
     RapierUnityRaycastHit, RapierUnityShapeCastHit,
@@ -128,6 +132,94 @@ pub extern "C" fn rapier_unity_world_set_timestep(world_id: u64, dt: f32) -> boo
 #[no_mangle]
 pub extern "C" fn rapier_unity_world_step(world_id: u64) -> bool {
     world::with_world_mut(world_id, |world| world.step()).is_some()
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_create(
+    world_id: u64,
+    kp: f32,
+    ki: f32,
+    kd: f32,
+    axes: u8,
+) -> RapierUnityPidControllerHandle {
+    world::with_world_mut(world_id, |world| {
+        control::create_pid_controller(world, kp, ki, kd, axes)
+    })
+    .unwrap_or(RapierUnityPidControllerHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_destroy(
+    world_id: u64,
+    controller: RapierUnityPidControllerHandle,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        control::destroy_pid_controller(world, controller)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_set_axes(
+    world_id: u64,
+    controller: RapierUnityPidControllerHandle,
+    axes: u8,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        control::set_pid_controller_axes(world, controller, axes)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_reset_integrals(
+    world_id: u64,
+    controller: RapierUnityPidControllerHandle,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        control::reset_pid_controller_integrals(world, controller)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_apply_linear_correction(
+    world_id: u64,
+    controller: RapierUnityPidControllerHandle,
+    body: RapierUnityRigidBodyHandle,
+    target_position: RapierUnityVector3,
+    target_linear_velocity: RapierUnityVector3,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        control::apply_pid_linear_correction(
+            world,
+            controller,
+            body,
+            target_position,
+            target_linear_velocity,
+        )
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_pid_controller_apply_angular_correction(
+    world_id: u64,
+    controller: RapierUnityPidControllerHandle,
+    body: RapierUnityRigidBodyHandle,
+    target_rotation: RapierUnityTransform,
+    target_angular_velocity: RapierUnityVector3,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        control::apply_pid_angular_correction(
+            world,
+            controller,
+            body,
+            target_rotation,
+            target_angular_velocity,
+        )
+    })
+    .unwrap_or(false)
 }
 
 #[no_mangle]
@@ -380,6 +472,35 @@ pub extern "C" fn rapier_unity_body_set_ccd_enabled(
 ) -> bool {
     world::with_world_mut(world_id, |world| {
         body::set_body_ccd_enabled(world, body, enabled)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_prediction` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_soft_ccd_prediction(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_prediction: *mut f32,
+) -> bool {
+    write_value(out_prediction, || {
+        world::with_world(world_id, |world| {
+            body::get_body_soft_ccd_prediction(world, body)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_soft_ccd_prediction(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    prediction: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_soft_ccd_prediction(world, body, prediction)
     })
     .unwrap_or(false)
 }
@@ -2043,12 +2164,16 @@ mod tests {
             world_id, body, 2.0, true
         ));
         assert!(rapier_unity_body_set_ccd_enabled(world_id, body, true));
+        assert!(rapier_unity_body_set_soft_ccd_prediction(
+            world_id, body, 10.0
+        ));
         assert!(rapier_unity_body_set_enabled(world_id, body, false));
 
         let mut linear_damping = 0.0_f32;
         let mut angular_damping = 0.0_f32;
         let mut gravity_scale = 0.0_f32;
         let mut ccd_enabled = false;
+        let mut soft_ccd_prediction = 0.0_f32;
         let mut enabled = true;
         assert!(unsafe {
             rapier_unity_body_get_linear_damping(world_id, body, &mut linear_damping)
@@ -2058,14 +2183,100 @@ mod tests {
         });
         assert!(unsafe { rapier_unity_body_get_gravity_scale(world_id, body, &mut gravity_scale) });
         assert!(unsafe { rapier_unity_body_get_ccd_enabled(world_id, body, &mut ccd_enabled) });
+        assert!(unsafe {
+            rapier_unity_body_get_soft_ccd_prediction(world_id, body, &mut soft_ccd_prediction)
+        });
         assert!(unsafe { rapier_unity_body_get_enabled(world_id, body, &mut enabled) });
 
         assert_eq!(linear_damping, 0.5);
         assert_eq!(angular_damping, 0.25);
         assert_eq!(gravity_scale, 2.0);
         assert!(ccd_enabled);
+        assert_eq!(soft_ccd_prediction, 10.0);
         assert!(!enabled);
 
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn pid_controller_applies_velocity_corrections() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+        let body = create_test_body(world_id);
+        let controller = rapier_unity_pid_controller_create(world_id, 60.0, 0.0, 1.0, 1);
+        assert!(controller.is_valid());
+
+        assert!(rapier_unity_pid_controller_apply_linear_correction(
+            world_id,
+            controller,
+            body,
+            RapierUnityVector3 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            RapierUnityVector3::default(),
+        ));
+
+        let mut linvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_linvel(world_id, body, &mut linvel) });
+        assert!(linvel.x > 0.0);
+        assert_eq!(linvel.y, 0.0);
+        assert_eq!(linvel.z, 0.0);
+
+        assert!(rapier_unity_pid_controller_set_axes(
+            world_id,
+            controller,
+            0b0011_1000
+        ));
+        assert!(rapier_unity_pid_controller_apply_angular_correction(
+            world_id,
+            controller,
+            body,
+            RapierUnityTransform::default(),
+            RapierUnityVector3::default(),
+        ));
+
+        let snapshot_size = rapier_unity_world_snapshot_size(world_id);
+        assert!(snapshot_size > 0);
+        let mut snapshot = vec![0_u8; snapshot_size];
+        assert!(unsafe {
+            rapier_unity_world_snapshot_write(world_id, snapshot.as_mut_ptr(), snapshot.len())
+        });
+
+        let stale_controller = rapier_unity_pid_controller_create(world_id, 10.0, 0.0, 0.5, 1);
+        assert!(stale_controller.is_valid());
+        assert_ne!(stale_controller.id, controller.id);
+        assert!(unsafe {
+            rapier_unity_world_snapshot_read(world_id, snapshot.as_ptr(), snapshot.len())
+        });
+        assert!(!rapier_unity_pid_controller_destroy(
+            world_id,
+            stale_controller
+        ));
+        assert!(rapier_unity_pid_controller_apply_linear_correction(
+            world_id,
+            controller,
+            body,
+            RapierUnityVector3 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            RapierUnityVector3::default(),
+        ));
+
+        let replacement_controller =
+            rapier_unity_pid_controller_create(world_id, 10.0, 0.0, 0.5, 1);
+        assert!(replacement_controller.is_valid());
+        assert_ne!(replacement_controller.id, stale_controller.id);
+
+        assert!(rapier_unity_pid_controller_destroy(world_id, controller));
+        assert!(rapier_unity_pid_controller_destroy(
+            world_id,
+            replacement_controller
+        ));
+        assert!(!rapier_unity_pid_controller_destroy(world_id, controller));
         assert!(rapier_unity_world_destroy(world_id));
     }
 

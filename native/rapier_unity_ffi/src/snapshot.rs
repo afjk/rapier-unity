@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::ptr;
 use std::slice;
 
+use rapier3d::control::PidController;
 use rapier3d::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +11,7 @@ use crate::world::RapierUnityWorld;
 
 const SNAPSHOT_FORMAT: &str = "rapier-unity-native-snapshot";
 const SNAPSHOT_FORMAT_VERSION: u32 = 1;
-const FFI_SCHEMA_VERSION: u32 = 2;
+const FFI_SCHEMA_VERSION: u32 = 3;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 struct StableIdEntry {
@@ -24,6 +25,20 @@ struct BodyCanSleepEntry {
     index: u32,
     generation: u32,
     can_sleep: bool,
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
+struct PidControllerEntry {
+    id: u64,
+    axes: u8,
+    lin_kp: [f32; 3],
+    lin_kd: [f32; 3],
+    ang_kp: [f32; 3],
+    ang_kd: [f32; 3],
+    lin_integral: [f32; 3],
+    ang_integral: [f32; 3],
+    lin_ki: [f32; 3],
+    ang_ki: [f32; 3],
 }
 
 #[derive(Serialize)]
@@ -45,6 +60,8 @@ struct NativeSnapshotRef<'a> {
     body_stable_ids: Vec<StableIdEntry>,
     collider_stable_ids: Vec<StableIdEntry>,
     body_can_sleep: Vec<BodyCanSleepEntry>,
+    pid_controllers: Vec<PidControllerEntry>,
+    next_pid_controller_id: u64,
 }
 
 #[derive(Deserialize)]
@@ -66,6 +83,8 @@ struct NativeSnapshot {
     body_stable_ids: Vec<StableIdEntry>,
     collider_stable_ids: Vec<StableIdEntry>,
     body_can_sleep: Vec<BodyCanSleepEntry>,
+    pid_controllers: Vec<PidControllerEntry>,
+    next_pid_controller_id: u64,
 }
 
 fn rigid_body_stable_entries(world: &RapierUnityWorld) -> Vec<StableIdEntry> {
@@ -132,6 +151,42 @@ fn body_can_sleep_entries(world: &RapierUnityWorld) -> Vec<BodyCanSleepEntry> {
     entries
 }
 
+fn vector_to_array(vector: &Vector<Real>) -> [f32; 3] {
+    [vector.x, vector.y, vector.z]
+}
+
+fn vector_from_array(values: [f32; 3]) -> Vector<Real> {
+    Vector::new(values[0], values[1], values[2])
+}
+
+fn pid_controller_entries(world: &RapierUnityWorld) -> Vec<PidControllerEntry> {
+    let mut entries: Vec<_> = world
+        .pid_controllers
+        .iter()
+        .filter_map(|(id, controller)| {
+            if *id == 0 {
+                return None;
+            }
+
+            Some(PidControllerEntry {
+                id: *id,
+                axes: controller.axes().bits(),
+                lin_kp: vector_to_array(&controller.pd.lin_kp),
+                lin_kd: vector_to_array(&controller.pd.lin_kd),
+                ang_kp: vector_to_array(&controller.pd.ang_kp),
+                ang_kd: vector_to_array(&controller.pd.ang_kd),
+                lin_integral: vector_to_array(&controller.lin_integral),
+                ang_integral: vector_to_array(&controller.ang_integral),
+                lin_ki: vector_to_array(&controller.lin_ki),
+                ang_ki: vector_to_array(&controller.ang_ki),
+            })
+        })
+        .collect();
+
+    entries.sort_by_key(|entry| entry.id);
+    entries
+}
+
 fn serialize_snapshot(world: &RapierUnityWorld) -> Option<Vec<u8>> {
     let snapshot = NativeSnapshotRef {
         format: SNAPSHOT_FORMAT,
@@ -151,6 +206,8 @@ fn serialize_snapshot(world: &RapierUnityWorld) -> Option<Vec<u8>> {
         body_stable_ids: rigid_body_stable_entries(world),
         collider_stable_ids: collider_stable_entries(world),
         body_can_sleep: body_can_sleep_entries(world),
+        pid_controllers: pid_controller_entries(world),
+        next_pid_controller_id: world.next_pid_controller_id,
     };
 
     bincode::serialize(&snapshot).ok()
@@ -164,6 +221,7 @@ fn validate_snapshot(snapshot: &NativeSnapshot) -> bool {
         && valid_body_stable_entries(snapshot)
         && valid_collider_stable_entries(snapshot)
         && valid_body_can_sleep_entries(snapshot)
+        && valid_pid_controller_entries(snapshot)
 }
 
 fn valid_stable_entry(
@@ -205,6 +263,16 @@ fn valid_body_can_sleep_entries(snapshot: &NativeSnapshot) -> bool {
         let handle = RigidBodyHandle::from_raw_parts(entry.index, entry.generation);
         snapshot.bodies.get(handle).is_some()
             && seen_handles.insert((entry.index, entry.generation))
+    })
+}
+
+fn valid_pid_controller_entries(snapshot: &NativeSnapshot) -> bool {
+    let mut seen_ids = HashSet::new();
+    snapshot.pid_controllers.iter().all(|entry| {
+        entry.id != 0
+            && entry.id < snapshot.next_pid_controller_id
+            && AxesMask::from_bits(entry.axes).is_some()
+            && seen_ids.insert(entry.id)
     })
 }
 
@@ -258,6 +326,26 @@ fn restore_body_can_sleep(snapshot: &NativeSnapshot) -> HashMap<RigidBodyHandle,
         .collect()
 }
 
+fn restore_pid_controllers(snapshot: &NativeSnapshot) -> HashMap<u64, PidController> {
+    snapshot
+        .pid_controllers
+        .iter()
+        .filter_map(|entry| {
+            let axes = AxesMask::from_bits(entry.axes)?;
+            let mut controller = PidController::new(0.0, 0.0, 0.0, axes);
+            controller.pd.lin_kp = vector_from_array(entry.lin_kp);
+            controller.pd.lin_kd = vector_from_array(entry.lin_kd);
+            controller.pd.ang_kp = vector_from_array(entry.ang_kp);
+            controller.pd.ang_kd = vector_from_array(entry.ang_kd);
+            controller.lin_integral = vector_from_array(entry.lin_integral);
+            controller.ang_integral = vector_from_array(entry.ang_integral);
+            controller.lin_ki = vector_from_array(entry.lin_ki);
+            controller.ang_ki = vector_from_array(entry.ang_ki);
+            Some((entry.id, controller))
+        })
+        .collect()
+}
+
 pub fn snapshot_size(world: &RapierUnityWorld) -> usize {
     serialize_snapshot(world).map_or(0, |bytes| bytes.len())
 }
@@ -302,6 +390,18 @@ pub fn snapshot_read(world: &mut RapierUnityWorld, bytes: *const u8, len: usize)
     let body_stable_ids = restore_body_stable_ids(&snapshot);
     let collider_stable_ids = restore_collider_stable_ids(&snapshot);
     let body_can_sleep = restore_body_can_sleep(&snapshot);
+    let pid_controllers = restore_pid_controllers(&snapshot);
+    let next_pid_controller_id = world
+        .next_pid_controller_id
+        .max(snapshot.next_pid_controller_id)
+        .max(
+            pid_controllers
+                .keys()
+                .max()
+                .copied()
+                .unwrap_or(0)
+                .saturating_add(1),
+        );
 
     *world = RapierUnityWorld {
         gravity: Vector::new(
@@ -324,6 +424,8 @@ pub fn snapshot_read(world: &mut RapierUnityWorld, bytes: *const u8, len: usize)
         body_can_sleep,
         collision_events: Vec::new(),
         contact_force_events: Vec::new(),
+        pid_controllers,
+        next_pid_controller_id,
     };
 
     true

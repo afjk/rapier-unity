@@ -116,5 +116,37 @@ namespace AFJK.Rapier
             return IsValid ? $"Joint({Index}:{Generation})" : "Joint(Invalid)";
         }
     }
-}
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RapierPidControllerHandle : IEquatable<RapierPidControllerHandle>
+    {
+        public ulong Id;
+
+        public static readonly RapierPidControllerHandle Invalid = new RapierPidControllerHandle
+        {
+            Id = 0
+        };
+
+        public bool IsValid => Id != 0;
+
+        public bool Equals(RapierPidControllerHandle other)
+        {
+            return Id == other.Id;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is RapierPidControllerHandle other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return IsValid ? $"PidController({Id})" : "PidController(Invalid)";
+        }
+    }
+}

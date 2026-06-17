@@ -210,6 +210,51 @@ namespace AFJK.Rapier
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool WorldStep(ulong world);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_create")]
+        internal static extern RapierPidControllerHandle PidControllerCreate(
+            ulong world,
+            float kp,
+            float ki,
+            float kd,
+            byte axes);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_destroy")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool PidControllerDestroy(
+            ulong world,
+            RapierPidControllerHandle controller);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_set_axes")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool PidControllerSetAxes(
+            ulong world,
+            RapierPidControllerHandle controller,
+            byte axes);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_reset_integrals")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool PidControllerResetIntegrals(
+            ulong world,
+            RapierPidControllerHandle controller);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_apply_linear_correction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool PidControllerApplyLinearCorrection(
+            ulong world,
+            RapierPidControllerHandle controller,
+            RapierRigidBodyHandle body,
+            Vector3 targetPosition,
+            Vector3 targetLinearVelocity);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_pid_controller_apply_angular_correction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool PidControllerApplyAngularCorrection(
+            ulong world,
+            RapierPidControllerHandle controller,
+            RapierRigidBodyHandle body,
+            RapierTransform targetRotation,
+            Vector3 targetAngularVelocity);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_create")]
         internal static extern RapierRigidBodyHandle BodyCreate(ulong world, RigidBodyDescNative desc);
 
@@ -331,6 +376,20 @@ namespace AFJK.Rapier
             ulong world,
             RapierRigidBodyHandle body,
             [MarshalAs(UnmanagedType.I1)] bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_soft_ccd_prediction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetSoftCcdPrediction(
+            ulong world,
+            RapierRigidBodyHandle body,
+            out float prediction);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_soft_ccd_prediction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetSoftCcdPrediction(
+            ulong world,
+            RapierRigidBodyHandle body,
+            float prediction);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_enabled")]
         [return: MarshalAs(UnmanagedType.I1)]

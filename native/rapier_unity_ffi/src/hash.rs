@@ -205,6 +205,26 @@ fn hash_collider_shape(hasher: &mut StableHasher, collider: &Collider) {
     }
 }
 
+fn hash_pid_controllers(hasher: &mut StableHasher, world: &RapierUnityWorld) {
+    let mut controllers: Vec<_> = world.pid_controllers.iter().collect();
+    controllers.sort_by_key(|(id, _)| **id);
+
+    hasher.write_u64(world.next_pid_controller_id);
+    hasher.write_u64(controllers.len() as u64);
+    for (id, controller) in controllers {
+        hasher.write_u64(*id);
+        hasher.write_u8(controller.axes().bits());
+        hasher.write_vec3(&controller.pd.lin_kp);
+        hasher.write_vec3(&controller.pd.lin_kd);
+        hasher.write_vec3(&controller.pd.ang_kp);
+        hasher.write_vec3(&controller.pd.ang_kd);
+        hasher.write_vec3(&controller.lin_integral);
+        hasher.write_vec3(&controller.ang_integral);
+        hasher.write_vec3(&controller.lin_ki);
+        hasher.write_vec3(&controller.ang_ki);
+    }
+}
+
 pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
     let mut hasher = StableHasher::new();
 
@@ -215,6 +235,7 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
     hasher.write_f32(world.gravity.y);
     hasher.write_f32(world.gravity.z);
     hasher.write_f32(world.integration_parameters.dt);
+    hash_pid_controllers(&mut hasher, world);
 
     let mut bodies: Vec<_> = world.bodies.iter().collect();
     bodies.sort_by_key(|(handle, _)| body_sort_key(world, *handle));
@@ -223,10 +244,12 @@ pub fn world_state_hash(world: &RapierUnityWorld) -> u64 {
     for (handle, body) in bodies {
         hasher.write_body_identity(world, handle);
         hasher.write_u8(body_type_id(body.body_type()));
+        hasher.write_f32(body.gravity_scale());
         hasher.write_f32(body.linear_damping());
         hasher.write_f32(body.angular_damping());
         hasher.write_u64(body.additional_solver_iterations() as u64);
         hasher.write_u8(u8::from(body.is_ccd_enabled()));
+        hasher.write_f32(body.soft_ccd_prediction());
         hasher.write_u8(u8::from(
             world.body_can_sleep.get(&handle).copied().unwrap_or(true),
         ));
