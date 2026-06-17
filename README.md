@@ -6,6 +6,11 @@ This project is maintained as part of the Scene Sync ecosystem, but is designed 
 
 This is not an official Rapier project.
 
+## Getting Started
+
+New here? See the [Getting Started guide](docs/getting-started.md) for
+installation (UPM git URL), a low-level API walkthrough, and the component API.
+
 ## Goals
 
 - Provide explicit Rapier world ownership from Unity and C#.
