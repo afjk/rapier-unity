@@ -1243,8 +1243,8 @@ namespace AFJK.Rapier.Samples
             {
                 for (var c = 0; c < columns; c++)
                 {
-                    var x = ((float)r / (rows - 1) - 0.5f) * scale.x;
-                    var z = ((float)c / (columns - 1) - 0.5f) * scale.z;
+                    var x = ((float)c / (columns - 1) - 0.5f) * scale.x;
+                    var z = ((float)r / (rows - 1) - 0.5f) * scale.z;
                     var y = heights[r * columns + c] * scale.y;
                     vertices[r * columns + c] = new Vector3(x, y, z);
                 }
