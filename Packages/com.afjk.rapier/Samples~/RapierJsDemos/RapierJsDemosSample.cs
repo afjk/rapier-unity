@@ -23,7 +23,8 @@ namespace AFJK.Rapier.Samples
             TriangleMesh,
             Voxels,
             PidController,
-            GlbToTrimesh
+            GlbToTrimesh,
+            GlbToConvexHull
         }
 
         [SerializeField] private DemoKind demo = DemoKind.Pyramid;
@@ -40,6 +41,7 @@ namespace AFJK.Rapier.Samples
             DemoKind.Ccd,
             DemoKind.Damping,
             DemoKind.Fountain,
+            DemoKind.GlbToConvexHull,
             DemoKind.GlbToTrimesh,
             DemoKind.Heightfield,
             DemoKind.Joints,
@@ -60,6 +62,7 @@ namespace AFJK.Rapier.Samples
             "CCD",
             "damping",
             "fountain",
+            "GLB to convex hull",
             "GLB to trimesh",
             "heightfield",
             "joints",
@@ -253,6 +256,9 @@ namespace AFJK.Rapier.Samples
                         break;
                     case DemoKind.GlbToTrimesh:
                         BuildGlbToTrimesh();
+                        break;
+                    case DemoKind.GlbToConvexHull:
+                        BuildGlbToConvexHull();
                         break;
                     case DemoKind.KevaTower:
                         BuildKevaTower();
@@ -522,6 +528,18 @@ namespace AFJK.Rapier.Samples
             var vertices = RapierJsDemosSuzanneMesh.CreateVertices();
             var indices = RapierJsDemosSuzanneMesh.CreateIndices();
             CreateTrimeshGround("glb-trimesh-suzanne", vertices, indices, ColorFor("keva"));
+
+            LookAt(new Vector3(10f, 5f, 10f), Vector3.zero);
+        }
+
+        private void BuildGlbToConvexHull()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("glb-convex-ground", RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, new Vector3(5f, 0.1f, 5f), 0f, ColorFor("floor"));
+
+            var vertices = RapierJsDemosSuzanneMesh.CreateVertices();
+            var indices = RapierJsDemosSuzanneMesh.CreateIndices();
+            CreateConvexHullVisual("glb-convex-suzanne", vertices, indices, ColorFor("keva"));
 
             LookAt(new Vector3(10f, 5f, 10f), Vector3.zero);
         }
@@ -1439,6 +1457,15 @@ namespace AFJK.Rapier.Samples
         {
             var body = CreateRigidBody(id, RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
             var collider = world.CreateTrimeshCollider(body, vertices, indices, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            TrackBody(id, body, visual, false);
+        }
+
+        private void CreateConvexHullVisual(string id, Vector3[] vertices, int[] indices, Color color)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateConvexHullCollider(body, vertices, RapierMeshColliderDesc.Default);
             RegisterCollider(id, collider);
             var visual = CreateMeshVisual(id, vertices, indices, color);
             TrackBody(id, body, visual, false);
