@@ -16,7 +16,8 @@ pub use collider::{
 };
 pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 pub use query::{
-    RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityRay, RapierUnityRaycastHit,
+    RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityQueryShape, RapierUnityRay,
+    RapierUnityRaycastHit, RapierUnityShapeCastHit,
 };
 
 /// # Safety
@@ -74,6 +75,27 @@ unsafe fn raw_slice<'a, T>(ptr: *const T, len: usize) -> Option<&'a [T]> {
     }
 
     Some(unsafe { std::slice::from_raw_parts(ptr, len) })
+}
+
+/// Builds a mutable slice from a raw pointer/length pair.
+///
+/// Returns `Some(&mut [])` for a zero length (ignoring the pointer) and `None`
+/// when the pointer is null but a non-zero length was requested.
+///
+/// # Safety
+///
+/// When `len > 0`, `ptr` must be valid for writes of `len` elements of `T` and
+/// must not alias any other live reference.
+unsafe fn raw_slice_mut<'a, T>(ptr: *mut T, len: usize) -> Option<&'a mut [T]> {
+    if len == 0 {
+        return Some(&mut []);
+    }
+
+    if ptr.is_null() {
+        return None;
+    }
+
+    Some(unsafe { std::slice::from_raw_parts_mut(ptr, len) })
 }
 
 #[no_mangle]
@@ -959,6 +981,83 @@ pub unsafe extern "C" fn rapier_unity_intersection_with_point(
         })
         .flatten()
     })
+}
+
+/// # Safety
+///
+/// `out_hits` must be valid for writes of `max_hits` `RapierUnityRaycastHit`
+/// values when `max_hits` is non-zero.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_raycast_all(
+    world_id: u64,
+    ray: RapierUnityRay,
+    max_toi: f32,
+    solid: bool,
+    filter: RapierUnityQueryFilter,
+    out_hits: *mut RapierUnityRaycastHit,
+    max_hits: usize,
+) -> usize {
+    let Some(out) = (unsafe { raw_slice_mut(out_hits, max_hits) }) else {
+        return 0;
+    };
+
+    world::with_world(world_id, |world| {
+        query::raycast_all(world, ray, max_toi, solid, filter, out)
+    })
+    .unwrap_or(0)
+}
+
+/// # Safety
+///
+/// `out_hit` must be valid for writes of one `RapierUnityShapeCastHit`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_cast_shape(
+    world_id: u64,
+    shape_pos: RapierUnityTransform,
+    shape_vel: RapierUnityVector3,
+    shape: RapierUnityQueryShape,
+    max_toi: f32,
+    stop_at_penetration: bool,
+    filter: RapierUnityQueryFilter,
+    out_hit: *mut RapierUnityShapeCastHit,
+) -> bool {
+    write_value(out_hit, || {
+        world::with_world(world_id, |world| {
+            query::cast_shape(
+                world,
+                shape_pos,
+                shape_vel,
+                shape,
+                max_toi,
+                stop_at_penetration,
+                filter,
+            )
+        })
+        .flatten()
+    })
+}
+
+/// # Safety
+///
+/// `out_colliders` must be valid for writes of `max_colliders`
+/// `RapierUnityColliderHandle` values when `max_colliders` is non-zero.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_intersect_shape(
+    world_id: u64,
+    shape_pos: RapierUnityTransform,
+    shape: RapierUnityQueryShape,
+    filter: RapierUnityQueryFilter,
+    out_colliders: *mut RapierUnityColliderHandle,
+    max_colliders: usize,
+) -> usize {
+    let Some(out) = (unsafe { raw_slice_mut(out_colliders, max_colliders) }) else {
+        return 0;
+    };
+
+    world::with_world(world_id, |world| {
+        query::intersect_shape(world, shape_pos, shape, filter, out)
+    })
+    .unwrap_or(0)
 }
 
 #[no_mangle]
@@ -1910,6 +2009,177 @@ mod tests {
                 &mut found,
             )
         });
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn raycast_all_collects_multiple_colliders() {
+        let world_id = rapier_unity_world_create();
+
+        // Two stacked static boxes along the ray path.
+        for y in [0.0_f32, 3.0_f32] {
+            let body = rapier_unity_body_create(
+                world_id,
+                RapierUnityRigidBodyDesc {
+                    body_type: RapierUnityRigidBodyType::Fixed as u32,
+                    position_y: y,
+                    ..RapierUnityRigidBodyDesc::default()
+                },
+            );
+            assert!(rapier_unity_collider_create_box(
+                world_id,
+                body,
+                RapierUnityBoxColliderDesc::default()
+            )
+            .is_valid());
+        }
+        assert!(rapier_unity_world_step(world_id));
+
+        let ray = RapierUnityRay {
+            origin_x: 0.0,
+            origin_y: 10.0,
+            origin_z: 0.0,
+            direction_x: 0.0,
+            direction_y: -1.0,
+            direction_z: 0.0,
+        };
+        let mut hits = [RapierUnityRaycastHit::default(); 8];
+        let count = unsafe {
+            rapier_unity_raycast_all(
+                world_id,
+                ray,
+                20.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                hits.as_mut_ptr(),
+                hits.len(),
+            )
+        };
+        assert_eq!(count, 2);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn cast_shape_hits_collider_along_velocity() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, body).is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        // A ball starting above the box, cast downward, should hit it.
+        let shape = RapierUnityQueryShape {
+            shape_type: 0,
+            half_extents_x: 0.0,
+            half_extents_y: 0.0,
+            half_extents_z: 0.0,
+            radius: 0.5,
+            half_height: 0.0,
+        };
+        let mut hit = RapierUnityShapeCastHit {
+            collider: RapierUnityColliderHandle::INVALID,
+            time_of_impact: -1.0,
+            witness1_x: 0.0,
+            witness1_y: 0.0,
+            witness1_z: 0.0,
+            witness2_x: 0.0,
+            witness2_y: 0.0,
+            witness2_z: 0.0,
+            normal1_x: 0.0,
+            normal1_y: 0.0,
+            normal1_z: 0.0,
+            normal2_x: 0.0,
+            normal2_y: 0.0,
+            normal2_z: 0.0,
+            status: 0,
+        };
+        let pose = RapierUnityTransform {
+            position_y: 5.0,
+            ..RapierUnityTransform::default()
+        };
+        let velocity = RapierUnityVector3 {
+            x: 0.0,
+            y: -1.0,
+            z: 0.0,
+        };
+        assert!(unsafe {
+            rapier_unity_cast_shape(
+                world_id,
+                pose,
+                velocity,
+                shape,
+                10.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                &mut hit,
+            )
+        });
+        assert!(hit.time_of_impact > 0.0);
+
+        // An unknown shape type is rejected.
+        let bad_shape = RapierUnityQueryShape {
+            shape_type: 99,
+            ..shape
+        };
+        assert!(!unsafe {
+            rapier_unity_cast_shape(
+                world_id,
+                pose,
+                velocity,
+                bad_shape,
+                10.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                &mut hit,
+            )
+        });
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn intersect_shape_reports_overlapping_colliders() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        // A cuboid overlapping the origin box.
+        let shape = RapierUnityQueryShape {
+            shape_type: 1,
+            half_extents_x: 0.5,
+            half_extents_y: 0.5,
+            half_extents_z: 0.5,
+            radius: 0.0,
+            half_height: 0.0,
+        };
+        let mut found = [RapierUnityColliderHandle::INVALID; 4];
+        let count = unsafe {
+            rapier_unity_intersect_shape(
+                world_id,
+                RapierUnityTransform::default(),
+                shape,
+                RapierUnityQueryFilter::default(),
+                found.as_mut_ptr(),
+                found.len(),
+            )
+        };
+        assert_eq!(count, 1);
+        assert_eq!(found[0].index, collider.index);
 
         assert!(rapier_unity_world_destroy(world_id));
     }

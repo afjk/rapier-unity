@@ -630,6 +630,139 @@ namespace AFJK.Rapier
             return RapierNative.IntersectionWithPoint(world, point.x, point.y, point.z, filter.ToNative(), out collider);
         }
 
+        /// <summary>
+        /// Casts a ray and writes every intersecting collider into <paramref name="results"/>,
+        /// returning the number of hits written (capped at the array length).
+        /// </summary>
+        public int RaycastAll(
+            Ray ray,
+            float maxDistance,
+            bool solid,
+            RapierQueryFilter filter,
+            RapierRaycastHit[] results)
+        {
+            ThrowIfDisposed();
+            if (results == null || results.Length == 0 || maxDistance < 0f)
+            {
+                return 0;
+            }
+
+            var direction = ray.direction;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return 0;
+            }
+
+            var nativeRay = new RapierNative.RayNative
+            {
+                Origin = ray.origin,
+                Direction = direction.normalized
+            };
+
+            var buffer = new RapierNative.RaycastHitNative[results.Length];
+            var handle = default(GCHandle);
+            int count;
+            try
+            {
+                handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                count = (int)RapierNative.RaycastAll(
+                    world,
+                    nativeRay,
+                    maxDistance,
+                    solid,
+                    filter.ToNative(),
+                    handle.AddrOfPinnedObject(),
+                    (UIntPtr)buffer.Length).ToUInt64();
+            }
+            finally
+            {
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var native = buffer[i];
+                results[i] = new RapierRaycastHit(native.Collider, native.Point, native.Normal, native.Toi);
+            }
+
+            return count;
+        }
+
+        public bool CastShape(
+            RapierTransform shapePosition,
+            Vector3 shapeVelocity,
+            RapierQueryShape shape,
+            float maxDistance,
+            bool stopAtPenetration,
+            RapierQueryFilter filter,
+            out RapierShapeCastHit hit)
+        {
+            ThrowIfDisposed();
+            hit = default;
+
+            if (maxDistance < 0f)
+            {
+                return false;
+            }
+
+            if (RapierNative.CastShape(
+                world,
+                shapePosition,
+                shapeVelocity,
+                shape.ToNative(),
+                maxDistance,
+                stopAtPenetration,
+                filter.ToNative(),
+                out var native))
+            {
+                hit = new RapierShapeCastHit(native);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Writes the handles of every collider intersecting <paramref name="shape"/> at
+        /// <paramref name="shapePosition"/> into <paramref name="results"/>, returning the
+        /// number written (capped at the array length).
+        /// </summary>
+        public int IntersectShape(
+            RapierTransform shapePosition,
+            RapierQueryShape shape,
+            RapierQueryFilter filter,
+            RapierColliderHandle[] results)
+        {
+            ThrowIfDisposed();
+            if (results == null || results.Length == 0)
+            {
+                return 0;
+            }
+
+            var handle = default(GCHandle);
+            try
+            {
+                handle = GCHandle.Alloc(results, GCHandleType.Pinned);
+                return (int)RapierNative.IntersectShape(
+                    world,
+                    shapePosition,
+                    shape.ToNative(),
+                    filter.ToNative(),
+                    handle.AddrOfPinnedObject(),
+                    (UIntPtr)results.Length).ToUInt64();
+            }
+            finally
+            {
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();
