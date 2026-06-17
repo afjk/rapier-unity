@@ -573,6 +573,60 @@ namespace AFJK.Rapier
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_drain_contact_force_events")]
         internal static extern UIntPtr DrainContactForceEvents(ulong world, IntPtr outEvents, UIntPtr maxEvents);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_fixed")]
+        internal static extern RapierJointHandle JointCreateFixed(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_spherical")]
+        internal static extern RapierJointHandle JointCreateSpherical(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_revolute")]
+        internal static extern RapierJointHandle JointCreateRevolute(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            Vector3 axis);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_prismatic")]
+        internal static extern RapierJointHandle JointCreatePrismatic(
+            ulong world,
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            Vector3 axis);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_remove")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool JointRemove(ulong world, RapierJointHandle joint);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_set_limits")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool JointSetLimits(ulong world, RapierJointHandle joint, uint axis, float min, float max);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_set_motor_position")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool JointSetMotorPosition(ulong world, RapierJointHandle joint, uint axis, float targetPosition, float stiffness, float damping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_set_motor_velocity")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool JointSetMotorVelocity(ulong world, RapierJointHandle joint, uint axis, float targetVelocity, float factor);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_set_motor_max_force")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool JointSetMotorMaxForce(ulong world, RapierJointHandle joint, uint axis, float maxForce);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast_all")]
         internal static extern UIntPtr RaycastAll(
             ulong world,

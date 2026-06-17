@@ -891,6 +891,87 @@ namespace AFJK.Rapier
             return count;
         }
 
+        public RapierJointHandle CreateFixedJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreateFixed(world, body1, body2, anchor1, anchor2);
+        }
+
+        public RapierJointHandle CreateSphericalJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreateSpherical(world, body1, body2, anchor1, anchor2);
+        }
+
+        public RapierJointHandle CreateRevoluteJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            Vector3 axis)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreateRevolute(world, body1, body2, anchor1, anchor2, axis);
+        }
+
+        public RapierJointHandle CreatePrismaticJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            Vector3 axis)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreatePrismatic(world, body1, body2, anchor1, anchor2, axis);
+        }
+
+        public bool RemoveJoint(RapierJointHandle joint)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointRemove(world, joint);
+        }
+
+        public bool SetJointLimits(RapierJointHandle joint, RapierJointAxis axis, float min, float max)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointSetLimits(world, joint, (uint)axis, min, max);
+        }
+
+        public bool SetJointMotorPosition(
+            RapierJointHandle joint,
+            RapierJointAxis axis,
+            float targetPosition,
+            float stiffness,
+            float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointSetMotorPosition(world, joint, (uint)axis, targetPosition, stiffness, damping);
+        }
+
+        public bool SetJointMotorVelocity(
+            RapierJointHandle joint,
+            RapierJointAxis axis,
+            float targetVelocity,
+            float factor)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointSetMotorVelocity(world, joint, (uint)axis, targetVelocity, factor);
+        }
+
+        public bool SetJointMotorMaxForce(RapierJointHandle joint, RapierJointAxis axis, float maxForce)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointSetMotorMaxForce(world, joint, (uint)axis, maxForce);
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();
