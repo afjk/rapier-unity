@@ -1,6 +1,7 @@
 name: Native
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "native/**"
@@ -48,3 +49,32 @@ jobs:
       - name: Release build
         run: cargo build --release -p rapier_unity_ffi
         working-directory: native
+
+      - name: Stage macOS binary
+        if: matrix.os == 'macos-latest'
+        working-directory: native
+        run: |
+          mkdir -p dist
+          cp target/release/librapier_unity_ffi.dylib dist/
+
+      - name: Stage Linux binary
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: native
+        run: |
+          mkdir -p dist
+          cp target/release/librapier_unity_ffi.so dist/
+
+      - name: Stage Windows binary
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        working-directory: native
+        run: |
+          mkdir -p dist
+          cp target/release/rapier_unity_ffi.dll dist/
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}
+          path: native/dist/*
+          if-no-files-found: error
