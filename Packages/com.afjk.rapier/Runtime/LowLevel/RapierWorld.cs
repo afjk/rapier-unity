@@ -270,6 +270,149 @@ namespace AFJK.Rapier
             return RapierNative.ColliderSetStableId(world, collider, stableId);
         }
 
+        public bool TryGetColliderFriction(RapierColliderHandle collider, out float friction)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetFriction(world, collider, out friction);
+        }
+
+        public bool SetColliderFriction(RapierColliderHandle collider, float friction)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetFriction(world, collider, friction);
+        }
+
+        public bool TryGetColliderRestitution(RapierColliderHandle collider, out float restitution)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetRestitution(world, collider, out restitution);
+        }
+
+        public bool SetColliderRestitution(RapierColliderHandle collider, float restitution)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetRestitution(world, collider, restitution);
+        }
+
+        public bool TryGetColliderFrictionCombineRule(RapierColliderHandle collider, out RapierCoefficientCombineRule rule)
+        {
+            ThrowIfDisposed();
+            if (RapierNative.ColliderGetFrictionCombineRule(world, collider, out var raw))
+            {
+                rule = (RapierCoefficientCombineRule)raw;
+                return true;
+            }
+
+            rule = default;
+            return false;
+        }
+
+        public bool SetColliderFrictionCombineRule(RapierColliderHandle collider, RapierCoefficientCombineRule rule)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetFrictionCombineRule(world, collider, (uint)rule);
+        }
+
+        public bool TryGetColliderRestitutionCombineRule(RapierColliderHandle collider, out RapierCoefficientCombineRule rule)
+        {
+            ThrowIfDisposed();
+            if (RapierNative.ColliderGetRestitutionCombineRule(world, collider, out var raw))
+            {
+                rule = (RapierCoefficientCombineRule)raw;
+                return true;
+            }
+
+            rule = default;
+            return false;
+        }
+
+        public bool SetColliderRestitutionCombineRule(RapierColliderHandle collider, RapierCoefficientCombineRule rule)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetRestitutionCombineRule(world, collider, (uint)rule);
+        }
+
+        public bool TryGetColliderCollisionGroups(RapierColliderHandle collider, out uint groups)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetCollisionGroups(world, collider, out groups);
+        }
+
+        public bool SetColliderCollisionGroups(RapierColliderHandle collider, uint groups)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetCollisionGroups(world, collider, groups);
+        }
+
+        public bool TryGetColliderSolverGroups(RapierColliderHandle collider, out uint groups)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetSolverGroups(world, collider, out groups);
+        }
+
+        public bool SetColliderSolverGroups(RapierColliderHandle collider, uint groups)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetSolverGroups(world, collider, groups);
+        }
+
+        public bool TryGetColliderSensor(RapierColliderHandle collider, out bool isSensor)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetSensor(world, collider, out isSensor);
+        }
+
+        public bool SetColliderSensor(RapierColliderHandle collider, bool isSensor)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetSensor(world, collider, isSensor);
+        }
+
+        public bool TryGetColliderEnabled(RapierColliderHandle collider, out bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetEnabled(world, collider, out enabled);
+        }
+
+        public bool SetColliderEnabled(RapierColliderHandle collider, bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetEnabled(world, collider, enabled);
+        }
+
+        public bool TryGetColliderDensity(RapierColliderHandle collider, out float density)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetDensity(world, collider, out density);
+        }
+
+        public bool SetColliderDensity(RapierColliderHandle collider, float density)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetDensity(world, collider, density);
+        }
+
+        public bool SetColliderTranslationWrtParent(RapierColliderHandle collider, Vector3 translation)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetTranslationWrtParent(world, collider, translation);
+        }
+
+        public bool SetColliderPositionWrtParent(RapierColliderHandle collider, RapierTransform transform)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetPositionWrtParent(world, collider, transform);
+        }
+
+        /// <summary>
+        /// Packs membership and filter group masks into Rapier's collision-groups
+        /// encoding (memberships in the high 16 bits, filter in the low 16 bits).
+        /// </summary>
+        public static uint InteractionGroups(ushort memberships, ushort filter)
+        {
+            return ((uint)memberships << 16) | filter;
+        }
+
         public bool Raycast(Ray ray, float maxDistance, out RapierRaycastHit hit)
         {
             ThrowIfDisposed();

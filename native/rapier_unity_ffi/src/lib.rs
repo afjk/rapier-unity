@@ -495,6 +495,291 @@ pub extern "C" fn rapier_unity_collider_set_stable_id(
 
 /// # Safety
 ///
+/// `out_friction` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_friction(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_friction: *mut f32,
+) -> bool {
+    write_value(out_friction, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_friction(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_friction(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    friction: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_friction(world, collider, friction)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_restitution` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_restitution(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_restitution: *mut f32,
+) -> bool {
+    write_value(out_restitution, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_restitution(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_restitution(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    restitution: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_restitution(world, collider, restitution)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_rule` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_friction_combine_rule(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_rule: *mut u32,
+) -> bool {
+    write_value(out_rule, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_friction_combine_rule(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_friction_combine_rule(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    rule: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_friction_combine_rule(world, collider, rule)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_rule` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_restitution_combine_rule(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_rule: *mut u32,
+) -> bool {
+    write_value(out_rule, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_restitution_combine_rule(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_restitution_combine_rule(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    rule: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_restitution_combine_rule(world, collider, rule)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_groups` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_collision_groups(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_groups: *mut u32,
+) -> bool {
+    write_value(out_groups, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_collision_groups(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_collision_groups(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    groups: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_collision_groups(world, collider, groups)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_groups` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_solver_groups(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_groups: *mut u32,
+) -> bool {
+    write_value(out_groups, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_solver_groups(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_solver_groups(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    groups: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_solver_groups(world, collider, groups)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_sensor` must be valid for writes of one `bool`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_sensor(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_sensor: *mut bool,
+) -> bool {
+    write_value(out_sensor, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_sensor(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_sensor(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    is_sensor: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_sensor(world, collider, is_sensor)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_enabled` must be valid for writes of one `bool`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_enabled(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_enabled: *mut bool,
+) -> bool {
+    write_value(out_enabled, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_enabled(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_enabled(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    enabled: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_enabled(world, collider, enabled)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_density` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_density(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_density: *mut f32,
+) -> bool {
+    write_value(out_density, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_density(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_density(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    density: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_density(world, collider, density)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_translation_wrt_parent(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    translation: RapierUnityVector3,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_translation_wrt_parent(world, collider, translation)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_position_wrt_parent(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    transform: RapierUnityTransform,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_position_wrt_parent(world, collider, transform)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
 /// `out_hit` must be valid for writes of one `RapierUnityRaycastHit`.
 #[no_mangle]
 pub unsafe extern "C" fn rapier_unity_raycast(
@@ -1055,6 +1340,136 @@ mod tests {
             missing,
             RapierUnityVector3::default(),
             true
+        ));
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collider_material_setters_roundtrip() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+
+        assert!(rapier_unity_collider_set_friction(world_id, collider, 0.8));
+        assert!(rapier_unity_collider_set_restitution(
+            world_id, collider, 0.3
+        ));
+        assert!(rapier_unity_collider_set_density(world_id, collider, 2.5));
+        assert!(rapier_unity_collider_set_friction_combine_rule(
+            world_id, collider, 3
+        ));
+        assert!(rapier_unity_collider_set_restitution_combine_rule(
+            world_id, collider, 1
+        ));
+
+        let mut friction = 0.0_f32;
+        let mut restitution = 0.0_f32;
+        let mut density = 0.0_f32;
+        let mut friction_rule = 0_u32;
+        let mut restitution_rule = 0_u32;
+        assert!(unsafe { rapier_unity_collider_get_friction(world_id, collider, &mut friction) });
+        assert!(unsafe {
+            rapier_unity_collider_get_restitution(world_id, collider, &mut restitution)
+        });
+        assert!(unsafe { rapier_unity_collider_get_density(world_id, collider, &mut density) });
+        assert!(unsafe {
+            rapier_unity_collider_get_friction_combine_rule(world_id, collider, &mut friction_rule)
+        });
+        assert!(unsafe {
+            rapier_unity_collider_get_restitution_combine_rule(
+                world_id,
+                collider,
+                &mut restitution_rule,
+            )
+        });
+
+        assert_eq!(friction, 0.8);
+        assert_eq!(restitution, 0.3);
+        assert_eq!(density, 2.5);
+        assert_eq!(friction_rule, 3);
+        assert_eq!(restitution_rule, 1);
+
+        // Out-of-range combine rules are rejected without mutating state.
+        assert!(!rapier_unity_collider_set_friction_combine_rule(
+            world_id, collider, 99
+        ));
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collider_filtering_and_flags_roundtrip() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+
+        // Memberships in the high 16 bits, filter in the low 16 bits.
+        let groups = (0x0005_u32 << 16) | 0x00FF_u32;
+        assert!(rapier_unity_collider_set_collision_groups(
+            world_id, collider, groups
+        ));
+        assert!(rapier_unity_collider_set_solver_groups(
+            world_id, collider, groups
+        ));
+        assert!(rapier_unity_collider_set_sensor(world_id, collider, true));
+        assert!(rapier_unity_collider_set_enabled(world_id, collider, false));
+
+        let mut collision_groups = 0_u32;
+        let mut solver_groups = 0_u32;
+        let mut sensor = false;
+        let mut enabled = true;
+        assert!(unsafe {
+            rapier_unity_collider_get_collision_groups(world_id, collider, &mut collision_groups)
+        });
+        assert!(unsafe {
+            rapier_unity_collider_get_solver_groups(world_id, collider, &mut solver_groups)
+        });
+        assert!(unsafe { rapier_unity_collider_get_sensor(world_id, collider, &mut sensor) });
+        assert!(unsafe { rapier_unity_collider_get_enabled(world_id, collider, &mut enabled) });
+
+        assert_eq!(collision_groups, groups);
+        assert_eq!(solver_groups, groups);
+        assert!(sensor);
+        assert!(!enabled);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collider_position_wrt_parent_setters() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+
+        assert!(rapier_unity_collider_set_translation_wrt_parent(
+            world_id,
+            collider,
+            RapierUnityVector3 {
+                x: 1.0,
+                y: 2.0,
+                z: 3.0,
+            },
+        ));
+        assert!(rapier_unity_collider_set_position_wrt_parent(
+            world_id,
+            collider,
+            RapierUnityTransform {
+                position_x: -1.0,
+                position_y: 0.5,
+                position_z: 0.0,
+                ..RapierUnityTransform::default()
+            },
+        ));
+
+        // Missing collider returns false.
+        assert!(!rapier_unity_collider_set_translation_wrt_parent(
+            world_id,
+            RapierUnityColliderHandle::INVALID,
+            RapierUnityVector3::default(),
         ));
 
         assert!(rapier_unity_world_destroy(world_id));

@@ -324,6 +324,86 @@ namespace AFJK.Rapier
             RapierColliderHandle collider,
             ulong stableId);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_friction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetFriction(ulong world, RapierColliderHandle collider, out float friction);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_friction")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetFriction(ulong world, RapierColliderHandle collider, float friction);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_restitution")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetRestitution(ulong world, RapierColliderHandle collider, out float restitution);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_restitution")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetRestitution(ulong world, RapierColliderHandle collider, float restitution);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_friction_combine_rule")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetFrictionCombineRule(ulong world, RapierColliderHandle collider, out uint rule);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_friction_combine_rule")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetFrictionCombineRule(ulong world, RapierColliderHandle collider, uint rule);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_restitution_combine_rule")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetRestitutionCombineRule(ulong world, RapierColliderHandle collider, out uint rule);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_restitution_combine_rule")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetRestitutionCombineRule(ulong world, RapierColliderHandle collider, uint rule);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_collision_groups")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetCollisionGroups(ulong world, RapierColliderHandle collider, out uint groups);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_collision_groups")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetCollisionGroups(ulong world, RapierColliderHandle collider, uint groups);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_solver_groups")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetSolverGroups(ulong world, RapierColliderHandle collider, out uint groups);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_solver_groups")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetSolverGroups(ulong world, RapierColliderHandle collider, uint groups);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_sensor")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetSensor(ulong world, RapierColliderHandle collider, [MarshalAs(UnmanagedType.I1)] out bool isSensor);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_sensor")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetSensor(ulong world, RapierColliderHandle collider, [MarshalAs(UnmanagedType.I1)] bool isSensor);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetEnabled(ulong world, RapierColliderHandle collider, [MarshalAs(UnmanagedType.I1)] out bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_enabled")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetEnabled(ulong world, RapierColliderHandle collider, [MarshalAs(UnmanagedType.I1)] bool enabled);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_density")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetDensity(ulong world, RapierColliderHandle collider, out float density);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_density")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetDensity(ulong world, RapierColliderHandle collider, float density);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_translation_wrt_parent")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetTranslationWrtParent(ulong world, RapierColliderHandle collider, Vector3 translation);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_position_wrt_parent")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetPositionWrtParent(ulong world, RapierColliderHandle collider, RapierTransform transform);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool Raycast(
