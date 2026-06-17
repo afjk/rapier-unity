@@ -20,7 +20,8 @@ namespace AFJK.Rapier.Samples
             LockedRotations,
             Platform,
             Pyramid,
-            TriangleMesh
+            TriangleMesh,
+            Voxels
         }
 
         [SerializeField] private DemoKind demo = DemoKind.Pyramid;
@@ -43,7 +44,8 @@ namespace AFJK.Rapier.Samples
             DemoKind.LockedRotations,
             DemoKind.Platform,
             DemoKind.Pyramid,
-            DemoKind.TriangleMesh
+            DemoKind.TriangleMesh,
+            DemoKind.Voxels
         };
 
         private static readonly string[] DemoNames =
@@ -60,7 +62,8 @@ namespace AFJK.Rapier.Samples
             "locked rotations",
             "platform",
             "pyramid",
-            "triangle mesh"
+            "triangle mesh",
+            "voxels"
         };
 
         private sealed class VisualBody
@@ -252,6 +255,9 @@ namespace AFJK.Rapier.Samples
                         break;
                     case DemoKind.Heightfield:
                         BuildHeightfield();
+                        break;
+                    case DemoKind.Voxels:
+                        BuildVoxels();
                         break;
                     case DemoKind.CharacterController:
                         BuildCharacterController();
@@ -1149,6 +1155,45 @@ namespace AFJK.Rapier.Samples
             LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
         }
 
+        private void BuildVoxels()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+
+            var voxelSize = new Vector3(1f, 1.2f, 1.5f);
+            var points = GenerateVoxelPoints(100);
+            CreateVoxelsGround("voxels-ground", points, voxelSize, ColorFor("floor"));
+            CreateVoxelShapeGrid();
+
+            LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
+        }
+
+        private void CreateVoxelShapeGrid()
+        {
+            const int columns = 10;
+            const int layers = 4;
+            const float radius = 1f;
+            var shift = radius * 3f;
+            var centerY = shift * 0.5f;
+            var offset = -columns * shift * 0.5f;
+
+            for (var layer = 0; layer < layers; layer++)
+            {
+                for (var xIndex = 0; xIndex < columns; xIndex++)
+                {
+                    for (var zIndex = 0; zIndex < columns; zIndex++)
+                    {
+                        var position = new Vector3(
+                            xIndex * shift + offset,
+                            layer * shift + centerY + 10f,
+                            zIndex * shift + offset);
+                        CreatePlatformStackBody(NextId("voxels-body"), layer % 5, position, radius);
+                    }
+                }
+
+                offset -= 0.05f * radius * (columns - 1f);
+            }
+        }
+
         private void BuildCharacterController()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
@@ -1268,6 +1313,107 @@ namespace AFJK.Rapier.Samples
             BuildHeightfieldMesh(heights, rows, columns, scale, out var vertices, out var indices);
             var visual = CreateMeshVisual(id, vertices, indices, color);
             TrackBody(id, body, visual, false);
+        }
+
+        private void CreateVoxelsGround(string id, Vector3[] points, Vector3 voxelSize, Color color)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateVoxelsCollider(body, points, voxelSize, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+            BuildVoxelMesh(points, voxelSize, out var vertices, out var indices);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            TrackBody(id, body, visual, false);
+        }
+
+        private static Vector3[] GenerateVoxelPoints(int subdivisions)
+        {
+            var points = new Vector3[(subdivisions + 1) * (subdivisions + 1)];
+            var index = 0;
+            for (var i = 0; i <= subdivisions; i++)
+            {
+                for (var j = 0; j <= subdivisions; j++)
+                {
+                    var wave = Mathf.Sin((float)i / subdivisions * 10f) * Mathf.Cos((float)j / subdivisions * 10f);
+                    var y = Mathf.Clamp(wave, -0.8f, 0.8f) * 8f;
+                    points[index++] = new Vector3(i - subdivisions * 0.5f, y, j - subdivisions * 0.5f);
+                }
+            }
+
+            return points;
+        }
+
+        private static void BuildVoxelMesh(Vector3[] points, Vector3 voxelSize, out Vector3[] vertices, out int[] indices)
+        {
+            var gridKeys = new List<Vector3Int>(points.Length);
+            var seen = new HashSet<Vector3Int>();
+            for (var i = 0; i < points.Length; i++)
+            {
+                var key = new Vector3Int(
+                    Mathf.FloorToInt(points[i].x / voxelSize.x),
+                    Mathf.FloorToInt(points[i].y / voxelSize.y),
+                    Mathf.FloorToInt(points[i].z / voxelSize.z));
+                if (seen.Add(key))
+                {
+                    gridKeys.Add(key);
+                }
+            }
+
+            gridKeys.Sort(CompareVoxelKeys);
+
+            var half = voxelSize * 0.5f;
+            var faceOffsets = new[]
+            {
+                new[] { new Vector3(-half.x, -half.y, half.z), new Vector3(half.x, -half.y, half.z), new Vector3(half.x, half.y, half.z), new Vector3(-half.x, half.y, half.z) },
+                new[] { new Vector3(half.x, -half.y, -half.z), new Vector3(-half.x, -half.y, -half.z), new Vector3(-half.x, half.y, -half.z), new Vector3(half.x, half.y, -half.z) },
+                new[] { new Vector3(half.x, -half.y, half.z), new Vector3(half.x, -half.y, -half.z), new Vector3(half.x, half.y, -half.z), new Vector3(half.x, half.y, half.z) },
+                new[] { new Vector3(-half.x, -half.y, -half.z), new Vector3(-half.x, -half.y, half.z), new Vector3(-half.x, half.y, half.z), new Vector3(-half.x, half.y, -half.z) },
+                new[] { new Vector3(-half.x, half.y, half.z), new Vector3(half.x, half.y, half.z), new Vector3(half.x, half.y, -half.z), new Vector3(-half.x, half.y, -half.z) },
+                new[] { new Vector3(-half.x, -half.y, -half.z), new Vector3(half.x, -half.y, -half.z), new Vector3(half.x, -half.y, half.z), new Vector3(-half.x, -half.y, half.z) }
+            };
+
+            vertices = new Vector3[gridKeys.Count * 24];
+            indices = new int[gridKeys.Count * 36];
+            var vertex = 0;
+            var index = 0;
+            for (var i = 0; i < gridKeys.Count; i++)
+            {
+                var center = VoxelCenter(gridKeys[i], voxelSize);
+                for (var face = 0; face < faceOffsets.Length; face++)
+                {
+                    var baseVertex = vertex;
+                    for (var corner = 0; corner < 4; corner++)
+                    {
+                        vertices[vertex++] = center + faceOffsets[face][corner];
+                    }
+
+                    indices[index++] = baseVertex;
+                    indices[index++] = baseVertex + 1;
+                    indices[index++] = baseVertex + 2;
+                    indices[index++] = baseVertex;
+                    indices[index++] = baseVertex + 2;
+                    indices[index++] = baseVertex + 3;
+                }
+            }
+        }
+
+        private static int CompareVoxelKeys(Vector3Int a, Vector3Int b)
+        {
+            var x = a.x.CompareTo(b.x);
+            if (x != 0)
+            {
+                return x;
+            }
+
+            var y = a.y.CompareTo(b.y);
+            return y != 0 ? y : a.z.CompareTo(b.z);
+        }
+
+        private static Vector3 VoxelCenter(Vector3Int key, Vector3 voxelSize)
+        {
+            return new Vector3(
+                (key.x + 0.5f) * voxelSize.x,
+                (key.y + 0.5f) * voxelSize.y,
+                (key.z + 0.5f) * voxelSize.z);
         }
 
         private static void BuildHeightfieldMesh(float[] heights, int rows, int columns, Vector3 scale, out Vector3[] vertices, out int[] indices)

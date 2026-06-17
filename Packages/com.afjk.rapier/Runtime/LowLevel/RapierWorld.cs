@@ -443,6 +443,39 @@ namespace AFJK.Rapier
             }
         }
 
+        public RapierColliderHandle CreateVoxelsCollider(
+            RapierRigidBodyHandle body,
+            Vector3[] points,
+            Vector3 voxelSize,
+            RapierMeshColliderDesc desc)
+        {
+            ThrowIfDisposed();
+            if (points == null || points.Length == 0)
+            {
+                return RapierColliderHandle.Invalid;
+            }
+
+            var pointHandle = default(GCHandle);
+            try
+            {
+                pointHandle = GCHandle.Alloc(points, GCHandleType.Pinned);
+                return RapierNative.ColliderCreateVoxels(
+                    world,
+                    body,
+                    pointHandle.AddrOfPinnedObject(),
+                    (UIntPtr)points.Length,
+                    voxelSize,
+                    desc.ToNative());
+            }
+            finally
+            {
+                if (pointHandle.IsAllocated)
+                {
+                    pointHandle.Free();
+                }
+            }
+        }
+
         public bool DestroyCollider(RapierColliderHandle collider)
         {
             ThrowIfDisposed();
