@@ -473,21 +473,65 @@ namespace AFJK.Rapier.Samples
         private void BuildCollisionGroups()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
-            // Floor is a member of both groups so either set of boxes can land on it.
-            world.SetColliderCollisionGroups(lastCollider, RapierWorld.InteractionGroups(0x0003, 0x0003));
+            CreateCollisionGroupsGround();
 
-            for (var i = 0; i < 8; i++)
+            var group1 = RapierWorld.InteractionGroups(0x0001, 0x0001);
+            var group2 = RapierWorld.InteractionGroups(0x0002, 0x0002);
+            var color1 = new Color(0.37f, 0.73f, 0.38f);
+            var color2 = new Color(0.16f, 0.52f, 0.92f);
+
+            const int count = 8;
+            const float radius = 0.1f;
+            const int layers = 4;
+            var shift = radius * 2f;
+            var center = shift * (count / 2f);
+
+            for (var layer = 0; layer < layers; layer++)
             {
-                var groupBit = i % 2 == 0 ? (ushort)0x0001 : (ushort)0x0002;
-                var color = i % 2 == 0 ? new Color(0.9f, 0.4f, 0.3f) : new Color(0.3f, 0.5f, 0.9f);
-                var x = i % 2 == 0 ? -0.2f : 0.2f;
-                CreateBox(NextId("group-box"), RapierRigidBodyType.Dynamic, new Vector3(x, 2f + i * 1.2f, 0f), Quaternion.identity, Vector3.one * 0.5f, 1f, color);
-                // Each box only collides with members of its own group (plus the floor).
-                world.SetColliderCollisionGroups(lastCollider, RapierWorld.InteractionGroups(groupBit, groupBit));
+                for (var xIndex = 0; xIndex < count; xIndex++)
+                {
+                    for (var zIndex = 0; zIndex < count; zIndex++)
+                    {
+                        var group = zIndex % 2 == 0 ? group1 : group2;
+                        var color = zIndex % 2 == 0 ? color1 : color2;
+                        var position = new Vector3(
+                            xIndex * shift - center,
+                            layer * shift + 2.5f,
+                            zIndex * shift - center);
+
+                        CreateBox(
+                            NextId("group-box"),
+                            RapierRigidBodyType.Dynamic,
+                            position,
+                            Quaternion.identity,
+                            Vector3.one * radius,
+                            1f,
+                            color);
+                        world.SetColliderCollisionGroups(lastCollider, group);
+                    }
+                }
             }
 
-            LookAt(new Vector3(0f, 6f, 16f), new Vector3(0f, 4f, 0f));
+            LookAt(new Vector3(10f, 5f, 10f), Vector3.zero);
+        }
+
+        private void CreateCollisionGroupsGround()
+        {
+            var body = CreateRigidBody("collision-groups-ground", RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            CreateBoxCollider("collision-groups-floor", body, new Vector3(5f, 0.1f, 5f), Vector3.zero);
+
+            var group1Collider = CreateBoxCollider("collision-groups-floor-1", body, new Vector3(1f, 0.1f, 1f), new Vector3(0f, 1f, 0f));
+            world.SetColliderCollisionGroups(group1Collider, RapierWorld.InteractionGroups(0x0001, 0x0001));
+
+            var group2Collider = CreateBoxCollider("collision-groups-floor-2", body, new Vector3(1f, 0.1f, 1f), new Vector3(0f, 2f, 0f));
+            world.SetColliderCollisionGroups(group2Collider, RapierWorld.InteractionGroups(0x0002, 0x0002));
+
+            var visual = new GameObject("collision-groups-ground");
+            visual.transform.SetParent(generatedRoot.transform, false);
+            CreateBoxVisualChild(visual, "collision-groups-floor", new Vector3(5f, 0.1f, 5f), Vector3.zero, ColorFor("floor"));
+            CreateBoxVisualChild(visual, "collision-groups-floor-1", new Vector3(1f, 0.1f, 1f), new Vector3(0f, 1f, 0f), new Color(0.37f, 0.73f, 0.38f));
+            CreateBoxVisualChild(visual, "collision-groups-floor-2", new Vector3(1f, 0.1f, 1f), new Vector3(0f, 2f, 0f), new Color(0.16f, 0.52f, 0.92f));
+            TrackBody("collision-groups-ground", body, visual, false);
         }
 
         private void BuildJoints()
@@ -782,7 +826,7 @@ namespace AFJK.Rapier.Samples
             return TrackBody(id, body, visual, true);
         }
 
-        private void CreateBoxCollider(string id, RapierRigidBodyHandle body, Vector3 halfExtents, Vector3 localPosition)
+        private RapierColliderHandle CreateBoxCollider(string id, RapierRigidBodyHandle body, Vector3 halfExtents, Vector3 localPosition)
         {
             var collider = world.CreateBoxCollider(
                 body,
@@ -797,6 +841,7 @@ namespace AFJK.Rapier.Samples
                     LocalRotation = Quaternion.identity
                 });
             RegisterCollider(id, collider);
+            return collider;
         }
 
         private static void CreateBoxVisualChild(GameObject parent, string id, Vector3 halfExtents, Vector3 localPosition, Color color)
