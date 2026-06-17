@@ -392,6 +392,26 @@ namespace AFJK.Rapier
             RapierRigidBodyHandle body,
             RapierTransform rotation);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_enabled_rotations")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetEnabledRotations(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] bool allowX,
+            [MarshalAs(UnmanagedType.I1)] bool allowY,
+            [MarshalAs(UnmanagedType.I1)] bool allowZ,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_enabled_translations")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetEnabledTranslations(
+            ulong world,
+            RapierRigidBodyHandle body,
+            [MarshalAs(UnmanagedType.I1)] bool allowX,
+            [MarshalAs(UnmanagedType.I1)] bool allowY,
+            [MarshalAs(UnmanagedType.I1)] bool allowZ,
+            [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_box")]
         internal static extern RapierColliderHandle ColliderCreateBox(
             ulong world,

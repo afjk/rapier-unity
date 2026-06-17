@@ -234,6 +234,28 @@ namespace AFJK.Rapier
             return RapierNative.BodySetNextKinematicRotation(world, body, transform);
         }
 
+        public bool SetEnabledRotations(
+            RapierRigidBodyHandle body,
+            bool allowX,
+            bool allowY,
+            bool allowZ,
+            bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetEnabledRotations(world, body, allowX, allowY, allowZ, wakeUp);
+        }
+
+        public bool SetEnabledTranslations(
+            RapierRigidBodyHandle body,
+            bool allowX,
+            bool allowY,
+            bool allowZ,
+            bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetEnabledTranslations(world, body, allowX, allowY, allowZ, wakeUp);
+        }
+
         public RapierColliderHandle CreateBoxCollider(
             RapierRigidBodyHandle body,
             RapierBoxColliderDesc desc)

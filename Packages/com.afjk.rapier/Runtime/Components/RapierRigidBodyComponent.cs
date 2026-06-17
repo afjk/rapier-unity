@@ -230,6 +230,16 @@ namespace AFJK.Rapier
             return TryGetActiveWorld(out var w) && w.SetNextKinematicRotation(BodyHandle, rotation);
         }
 
+        public bool SetEnabledRotations(bool allowX, bool allowY, bool allowZ, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.SetEnabledRotations(BodyHandle, allowX, allowY, allowZ, wakeUp);
+        }
+
+        public bool SetEnabledTranslations(bool allowX, bool allowY, bool allowZ, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.SetEnabledTranslations(BodyHandle, allowX, allowY, allowZ, wakeUp);
+        }
+
         internal void RegisterCollider(RapierColliderComponent collider)
         {
             if (collider == null || colliders.Contains(collider))

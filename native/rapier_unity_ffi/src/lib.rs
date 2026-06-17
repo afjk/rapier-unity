@@ -487,6 +487,36 @@ pub extern "C" fn rapier_unity_body_set_next_kinematic_rotation(
 }
 
 #[no_mangle]
+pub extern "C" fn rapier_unity_body_set_enabled_rotations(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    allow_x: bool,
+    allow_y: bool,
+    allow_z: bool,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_enabled_rotations(world, body, allow_x, allow_y, allow_z, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_enabled_translations(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    allow_x: bool,
+    allow_y: bool,
+    allow_z: bool,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_enabled_translations(world, body, allow_x, allow_y, allow_z, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
 pub extern "C" fn rapier_unity_collider_create_box(
     world_id: u64,
     body: RapierUnityRigidBodyHandle,
@@ -2830,6 +2860,70 @@ mod tests {
             rapier_unity_debug_render(world_id, std::ptr::null_mut(), 0, std::ptr::null_mut(), 0)
         };
         assert_eq!(empty, 0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn locked_rotations_keep_body_upright() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, -9.81, 0.0));
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_y: 5.0,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, body).is_valid());
+
+        // Lock all rotations: applied torque cannot spin the body.
+        assert!(rapier_unity_body_set_enabled_rotations(
+            world_id, body, false, false, false, true,
+        ));
+        // Lock translation on X and Z: applied side force cannot move it sideways.
+        assert!(rapier_unity_body_set_enabled_translations(
+            world_id, body, false, true, false, true,
+        ));
+
+        for _ in 0..30 {
+            assert!(rapier_unity_body_apply_torque_impulse(
+                world_id,
+                body,
+                RapierUnityVector3 {
+                    x: 10.0,
+                    y: 0.0,
+                    z: 10.0,
+                },
+                true,
+            ));
+            assert!(rapier_unity_body_apply_impulse(
+                world_id,
+                body,
+                RapierUnityVector3 {
+                    x: 10.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                true,
+            ));
+            assert!(rapier_unity_world_step(world_id));
+        }
+
+        let mut angvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_angvel(world_id, body, &mut angvel) });
+        assert!(angvel.x.abs() < 1.0e-4);
+        assert!(angvel.z.abs() < 1.0e-4);
+
+        let mut transform = RapierUnityTransform::default();
+        assert!(unsafe { rapier_unity_body_get_transform(world_id, body, &mut transform) });
+        assert!(transform.position_x.abs() < 1.0e-4);
+        assert!(transform.position_z.abs() < 1.0e-4);
+        assert!(transform.position_y < 5.0);
 
         assert!(rapier_unity_world_destroy(world_id));
     }
