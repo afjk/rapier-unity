@@ -113,6 +113,127 @@ namespace AFJK.Rapier
             return RapierNative.BodySetTransform(world, body, transform);
         }
 
+        public bool TryGetLinearVelocity(RapierRigidBodyHandle body, out Vector3 velocity)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetLinvel(world, body, out velocity);
+        }
+
+        public bool SetLinearVelocity(RapierRigidBodyHandle body, Vector3 velocity, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetLinvel(world, body, velocity, wakeUp);
+        }
+
+        public bool TryGetAngularVelocity(RapierRigidBodyHandle body, out Vector3 velocity)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetAngvel(world, body, out velocity);
+        }
+
+        public bool SetAngularVelocity(RapierRigidBodyHandle body, Vector3 velocity, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetAngvel(world, body, velocity, wakeUp);
+        }
+
+        public bool TryGetLinearDamping(RapierRigidBodyHandle body, out float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetLinearDamping(world, body, out damping);
+        }
+
+        public bool SetLinearDamping(RapierRigidBodyHandle body, float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetLinearDamping(world, body, damping);
+        }
+
+        public bool TryGetAngularDamping(RapierRigidBodyHandle body, out float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetAngularDamping(world, body, out damping);
+        }
+
+        public bool SetAngularDamping(RapierRigidBodyHandle body, float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetAngularDamping(world, body, damping);
+        }
+
+        public bool TryGetGravityScale(RapierRigidBodyHandle body, out float scale)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetGravityScale(world, body, out scale);
+        }
+
+        public bool SetGravityScale(RapierRigidBodyHandle body, float scale, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetGravityScale(world, body, scale, wakeUp);
+        }
+
+        public bool TryGetCcdEnabled(RapierRigidBodyHandle body, out bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetCcdEnabled(world, body, out enabled);
+        }
+
+        public bool SetCcdEnabled(RapierRigidBodyHandle body, bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetCcdEnabled(world, body, enabled);
+        }
+
+        public bool TryGetBodyEnabled(RapierRigidBodyHandle body, out bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetEnabled(world, body, out enabled);
+        }
+
+        public bool SetBodyEnabled(RapierRigidBodyHandle body, bool enabled)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetEnabled(world, body, enabled);
+        }
+
+        public bool AddForce(RapierRigidBodyHandle body, Vector3 force, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyAddForce(world, body, force, wakeUp);
+        }
+
+        public bool AddTorque(RapierRigidBodyHandle body, Vector3 torque, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyAddTorque(world, body, torque, wakeUp);
+        }
+
+        public bool ApplyImpulse(RapierRigidBodyHandle body, Vector3 impulse, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyApplyImpulse(world, body, impulse, wakeUp);
+        }
+
+        public bool ApplyTorqueImpulse(RapierRigidBodyHandle body, Vector3 impulse, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyApplyTorqueImpulse(world, body, impulse, wakeUp);
+        }
+
+        public bool SetNextKinematicTranslation(RapierRigidBodyHandle body, Vector3 translation)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetNextKinematicTranslation(world, body, translation);
+        }
+
+        public bool SetNextKinematicRotation(RapierRigidBodyHandle body, Quaternion rotation)
+        {
+            ThrowIfDisposed();
+            var transform = new RapierTransform(Vector3.zero, rotation);
+            return RapierNative.BodySetNextKinematicRotation(world, body, transform);
+        }
+
         public RapierColliderHandle CreateBoxCollider(
             RapierRigidBodyHandle body,
             RapierBoxColliderDesc desc)

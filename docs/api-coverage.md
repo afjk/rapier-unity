@@ -58,28 +58,28 @@ Coverage is tracked separately for:
 |---|---|---|---|---|
 | create fixed body | Supported | Supported | Supported | S |
 | create dynamic body | Supported | Supported | Supported | S |
-| create kinematic position-based body | Missing | Missing | Missing | A |
-| create kinematic velocity-based body | Missing | Missing | Missing | A |
+| create kinematic position-based body | Supported | Missing | Supported | A |
+| create kinematic velocity-based body | Supported | Missing | Supported | A |
 | destroy body | Supported | Supported | Supported | S |
 | get / set translation | Supported | Supported | Supported | S |
 | get / set rotation | Supported | Supported | Supported | S |
-| get / set linvel | Missing | Missing | Missing | S |
-| get / set angvel | Missing | Missing | Missing | S |
-| get / set gravity scale | Missing | Missing | Missing | A |
-| get / set linear damping | Missing | Missing | Missing | A |
-| get / set angular damping | Missing | Missing | Missing | A |
+| get / set linvel | Supported | Missing | Supported | S |
+| get / set angvel | Supported | Missing | Supported | S |
+| get / set gravity scale | Supported | Missing | Supported | A |
+| get / set linear damping | Supported | Missing | Supported | A |
+| get / set angular damping | Supported | Missing | Supported | A |
 | get / set additional solver iterations | Missing | Missing | Missing | B |
-| get / set CCD enabled | Missing | Missing | Missing | A |
-| get / set enabled | Missing | Missing | Missing | A |
+| get / set CCD enabled | Supported | Missing | Supported | A |
+| get / set enabled | Supported | Missing | Supported | A |
 | sleep / wake | Missing | Missing | Missing | B |
-| add force | Missing | Missing | Missing | A |
-| add torque | Missing | Missing | Missing | A |
-| apply impulse | Missing | Missing | Missing | A |
-| apply torque impulse | Missing | Missing | Missing | A |
+| add force | Supported | Missing | Supported | A |
+| add torque | Supported | Missing | Supported | A |
+| apply impulse | Supported | Missing | Supported | A |
+| apply torque impulse | Supported | Missing | Supported | A |
 | add force at point | Missing | Missing | Missing | B |
 | apply impulse at point | Missing | Missing | Missing | B |
-| set next kinematic translation | Missing | Missing | Missing | A |
-| set next kinematic rotation | Missing | Missing | Missing | A |
+| set next kinematic translation | Supported | Missing | Supported | A |
+| set next kinematic rotation | Supported | Missing | Supported | A |
 | mass / mass properties getters | Missing | Missing | Missing | B |
 | dominance group | Missing | Missing | Missing | C |
 | user data / stable id | Supported | Supported | Supported | S |
@@ -201,7 +201,10 @@ Coverage is tracked separately for:
 
 ## Recommended Implementation Order
 
-### Phase 1 — Expand RigidBody low-level API
+### Phase 1 — Expand RigidBody low-level API ✅ done
+
+Implemented at the native FFI and low-level C# (`RapierWorld`) layers. Component API
+wrappers are still pending.
 
 - get / set linear velocity, angular velocity
 - get / set linear damping, angular damping
