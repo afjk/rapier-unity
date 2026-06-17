@@ -7,8 +7,8 @@ simulation with both the low-level API and the opt-in component API.
 
 - Unity **2022.3** or newer.
 - A platform with a bundled native plugin: **Windows (x86_64)**, **Linux
-  (x86_64)**, or **macOS (Apple Silicon / arm64)**. Other targets require a
-  local native build (see [Native plugin](#native-plugin)).
+  (x86_64)**, **macOS (Apple Silicon / arm64)**, or **Android (arm64-v8a)**.
+  Other targets require a local native build (see [Native plugin](#native-plugin)).
 
 ## Install
 
@@ -51,15 +51,17 @@ Packages/com.afjk.rapier/package.json
 
 ### Native plugin
 
-Prebuilt native plugins for Windows, Linux, and macOS (arm64) ship inside the
-package under `Runtime/Plugins`, so no extra setup is needed on those targets.
+Prebuilt native plugins for Windows, Linux, macOS (arm64), and Android
+(arm64-v8a) ship inside the package under `Runtime/Plugins`, so no extra setup
+is needed on those targets.
 
-For an unsupported target (for example an Intel mac) build the crate and copy
-the platform library into the matching plugin folder:
+For an unsupported target (for example an Intel mac, or another Android ABI)
+build the crate and copy the platform library into the matching plugin folder:
 
 ```sh
 cd native
 cargo build --release -p rapier_unity_ffi
+# Android: cargo ndk -t arm64-v8a -o ./dist build --release -p rapier_unity_ffi
 ```
 
 | Platform | Output file | Plugin folder |
@@ -67,6 +69,7 @@ cargo build --release -p rapier_unity_ffi
 | Windows | `rapier_unity_ffi.dll` | `Runtime/Plugins/Windows` |
 | Linux | `librapier_unity_ffi.so` | `Runtime/Plugins/Linux` |
 | macOS | `librapier_unity_ffi.dylib` | `Runtime/Plugins/macOS` |
+| Android (arm64-v8a) | `librapier_unity_ffi.so` | `Runtime/Plugins/Android/arm64-v8a` |
 
 ## Quick start: low-level API
 

@@ -19,7 +19,7 @@ Support status uses these labels:
 | macOS Standalone | Native Rust FFI | Planned | Supported | Needs plugin import settings and packaging |
 | Windows Standalone | Native Rust FFI | Planned | Supported | Needs DLL packaging |
 | Linux Standalone | Native Rust FFI | Planned | Supported | Needs .so packaging |
-| Android | Native Rust FFI | Not implemented | Planned | Needs NDK cross-build and ABI layout |
+| Android | Native Rust FFI | Bundled (arm64-v8a) | Supported | NDK cross-build via cargo-ndk; arm64-v8a only, needs on-device validation |
 | iOS | Native Rust FFI staticlib | Not implemented | Planned | Needs static library, `__Internal`, Xcode integration |
 | visionOS | Native Rust FFI staticlib | Not implemented | Planned | Similar to iOS but must be validated separately |
 | Unity WebGL | rapier.js wasm backend | Not implemented | Planned | Should use JS/Wasm route, not native FFI |
