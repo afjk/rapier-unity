@@ -493,20 +493,172 @@ namespace AFJK.Rapier.Samples
         private void BuildJoints()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            var anchor = CreateBox("joint-anchor", RapierRigidBodyType.Fixed, new Vector3(0f, 10f, 0f), Quaternion.identity, Vector3.one * 0.25f, 0f, ColorFor("floor"));
+            CreatePrismaticJointChain(new Vector3(20f, 10f, 0f), 5);
+            CreateFixedJointGrid(new Vector3(0f, 10f, 0f), 5);
+            CreateRevoluteJointChain(new Vector3(20f, 0f, 0f), 3);
+            CreateSphericalJointGrid(15);
 
-            var prev = anchor;
-            const int links = 8;
-            for (var i = 0; i < links; i++)
+            LookAt(new Vector3(15f, 5f, 42f), new Vector3(13f, 1f, 1f));
+        }
+
+        private void CreatePrismaticJointChain(Vector3 origin, int count)
+        {
+            const float radius = 0.4f;
+            const float shift = 1.0f;
+
+            var parent = CreateBox(
+                NextId("prismatic-anchor"),
+                RapierRigidBodyType.Fixed,
+                origin,
+                Quaternion.identity,
+                Vector3.one * radius,
+                0f,
+                ColorFor("floor"));
+
+            for (var i = 0; i < count; i++)
             {
-                var position = new Vector3((i + 1) * 1.1f, 10f, 0f);
-                var link = CreateBox(NextId("joint-link"), RapierRigidBodyType.Dynamic, position, Quaternion.identity, new Vector3(0.5f, 0.2f, 0.2f), 1f, ColorFor("box"));
-                var anchorA = i == 0 ? Vector3.zero : new Vector3(0.55f, 0f, 0f);
-                world.CreateSphericalJoint(prev.Body, link.Body, anchorA, new Vector3(-0.55f, 0f, 0f));
-                prev = link;
+                var position = new Vector3(origin.x, origin.y, origin.z + (i + 1) * shift);
+                var child = CreateBox(
+                    NextId("prismatic-link"),
+                    RapierRigidBodyType.Dynamic,
+                    position,
+                    Quaternion.identity,
+                    Vector3.one * radius,
+                    1f,
+                    ColorFor("box"));
+                var axis = i % 2 == 0 ? new Vector3(1f, 1f, 0f) : new Vector3(-1f, 1f, 0f);
+                var joint = world.CreatePrismaticJoint(parent.Body, child.Body, Vector3.zero, new Vector3(0f, 0f, -shift), axis);
+                world.SetJointLimits(joint, RapierJointAxis.LinearX, -2f, 2f);
+                parent = child;
             }
+        }
 
-            LookAt(new Vector3(4f, 12f, 14f), new Vector3(4f, 8f, 0f));
+        private void CreateRevoluteJointChain(Vector3 origin, int count)
+        {
+            const float radius = 0.4f;
+            const float shift = 2.0f;
+
+            var parent = CreateBox(
+                NextId("revolute-anchor"),
+                RapierRigidBodyType.Fixed,
+                new Vector3(origin.x, origin.y, 0f),
+                Quaternion.identity,
+                Vector3.one * radius,
+                0f,
+                ColorFor("floor"));
+
+            for (var i = 0; i < count; i++)
+            {
+                var z = origin.z + i * shift * 2f + shift;
+                var positions = new[]
+                {
+                    new Vector3(origin.x, origin.y, z),
+                    new Vector3(origin.x + shift, origin.y, z),
+                    new Vector3(origin.x + shift, origin.y, z + shift),
+                    new Vector3(origin.x, origin.y, z + shift)
+                };
+
+                var links = new VisualBody[4];
+                for (var k = 0; k < links.Length; k++)
+                {
+                    links[k] = CreateBox(
+                        NextId("revolute-link"),
+                        RapierRigidBodyType.Dynamic,
+                        positions[k],
+                        Quaternion.identity,
+                        Vector3.one * radius,
+                        1f,
+                        ColorFor("box"));
+                }
+
+                world.CreateRevoluteJoint(parent.Body, links[0].Body, Vector3.zero, new Vector3(0f, 0f, -shift), Vector3.forward);
+                world.CreateRevoluteJoint(links[0].Body, links[1].Body, Vector3.zero, new Vector3(-shift, 0f, 0f), Vector3.right);
+                world.CreateRevoluteJoint(links[1].Body, links[2].Body, Vector3.zero, new Vector3(0f, 0f, -shift), Vector3.forward);
+                world.CreateRevoluteJoint(links[2].Body, links[3].Body, Vector3.zero, new Vector3(shift, 0f, 0f), Vector3.right);
+                parent = links[3];
+            }
+        }
+
+        private void CreateFixedJointGrid(Vector3 origin, int count)
+        {
+            const float radius = 0.4f;
+            const float shift = 1.0f;
+            var parents = new List<VisualBody>(count * count);
+
+            for (var k = 0; k < count; k++)
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var fixedBody = i == 0 && ((k % 4 == 0 && k != count - 2) || k == count - 1);
+                    var child = CreateSphere(
+                        NextId("fixed-joint-node"),
+                        fixedBody ? RapierRigidBodyType.Fixed : RapierRigidBodyType.Dynamic,
+                        new Vector3(origin.x + k * shift, origin.y, origin.z + i * shift),
+                        radius,
+                        fixedBody ? 0f : 1f,
+                        fixedBody ? ColorFor("floor") : ColorFor("sphere"),
+                        Vector3.zero,
+                        Vector3.zero,
+                        0f,
+                        0f,
+                        false);
+
+                    if (i > 0)
+                    {
+                        var parent = parents[parents.Count - 1];
+                        world.CreateFixedJoint(parent.Body, child.Body, Vector3.zero, new Vector3(0f, 0f, -shift));
+                    }
+
+                    if (k > 0)
+                    {
+                        var parent = parents[parents.Count - count];
+                        world.CreateFixedJoint(parent.Body, child.Body, Vector3.zero, new Vector3(-shift, 0f, 0f));
+                    }
+
+                    parents.Add(child);
+                }
+            }
+        }
+
+        private void CreateSphericalJointGrid(int count)
+        {
+            const float radius = 0.4f;
+            const float shift = 1.0f;
+            var parents = new List<VisualBody>(count * count);
+
+            for (var k = 0; k < count; k++)
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var fixedBody = i == 0 && (k % 4 == 0 || k == count - 1);
+                    var child = CreateSphere(
+                        NextId("spherical-joint-node"),
+                        fixedBody ? RapierRigidBodyType.Fixed : RapierRigidBodyType.Dynamic,
+                        new Vector3(k * shift, 0f, i * shift),
+                        radius,
+                        fixedBody ? 0f : 1f,
+                        fixedBody ? ColorFor("floor") : ColorFor("sphere"),
+                        Vector3.zero,
+                        Vector3.zero,
+                        0f,
+                        0f,
+                        false);
+
+                    if (i > 0)
+                    {
+                        var parent = parents[parents.Count - 1];
+                        world.CreateSphericalJoint(parent.Body, child.Body, Vector3.zero, new Vector3(0f, 0f, -shift));
+                    }
+
+                    if (k > 0)
+                    {
+                        var parent = parents[parents.Count - count];
+                        world.CreateSphericalJoint(parent.Body, child.Body, Vector3.zero, new Vector3(-shift, 0f, 0f));
+                    }
+
+                    parents.Add(child);
+                }
+            }
         }
 
         private void BuildPlatform()
