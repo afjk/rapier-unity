@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-18
+
 ### Added
 - Android (arm64-v8a) native plugin, cross-built with cargo-ndk and bundled
-  under `Runtime/Plugins/Android/arm64-v8a`.
+  under `Runtime/Plugins/Android/arm64-v8a`. No C# change is required;
+  `DllImport` already resolves the library on Android.
+- Getting Started guide (`docs/getting-started.md`) covering UPM git-URL /
+  manifest / local installation and both the low-level and component APIs.
+
+### Changed
+- Native CI now builds pull requests on Linux only and runs the full
+  cross-platform matrix, Android build, and artifact uploads on `main` and
+  manual dispatch, with cargo build caching for faster runs.
 
 ## [0.1.0] - 2026-06-18
 
