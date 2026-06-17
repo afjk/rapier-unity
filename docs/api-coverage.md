@@ -305,3 +305,17 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
 - expose Rapier debug render vertices/colors
 - Unity Gizmo draw pass in Editor
 - optional debug overlay component
+
+### Phase 8 — Component API parity & JS demos 🚧 in progress
+
+- Component layer: `RapierRigidBodyComponent` and `RapierColliderComponent` now
+  wrap the Phase 1–4 runtime APIs (velocities, damping, gravity scale, CCD,
+  enabled, forces/impulses, kinematic next-position, axis locks; collider
+  friction/restitution/density, sensor, enabled, combine rules, collision/solver
+  groups, active events/collision-types, contact-force threshold).
+- Samples: the `RapierJsDemos` sample now ports the full Rapier JS 3D demo
+  catalog — pyramid, keva tower, damping, CCD, fountain, collision groups,
+  joints, platform, locked rotations, convex polyhedron, triangle mesh,
+  heightfield, and character controller.
+- Pending: editor Gizmo overlay component, joints/character/query Component-layer
+  wrappers, and Unity Editor playmode validation of the ported demos.
