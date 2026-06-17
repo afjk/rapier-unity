@@ -563,6 +563,73 @@ namespace AFJK.Rapier
             return true;
         }
 
+        public bool RaycastFiltered(
+            Ray ray,
+            float maxDistance,
+            bool solid,
+            RapierQueryFilter filter,
+            out RapierRaycastHit hit)
+        {
+            ThrowIfDisposed();
+            hit = default;
+
+            if (maxDistance < 0f)
+            {
+                return false;
+            }
+
+            var direction = ray.direction;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            var nativeRay = new RapierNative.RayNative
+            {
+                Origin = ray.origin,
+                Direction = direction.normalized
+            };
+
+            if (!RapierNative.RaycastFiltered(world, nativeRay, maxDistance, solid, filter.ToNative(), out var nativeHit))
+            {
+                return false;
+            }
+
+            hit = new RapierRaycastHit(
+                nativeHit.Collider,
+                nativeHit.Point,
+                nativeHit.Normal,
+                nativeHit.Toi);
+            return true;
+        }
+
+        public bool TryProjectPoint(
+            Vector3 point,
+            bool solid,
+            RapierQueryFilter filter,
+            out RapierPointProjection projection)
+        {
+            ThrowIfDisposed();
+
+            if (RapierNative.ProjectPoint(world, point.x, point.y, point.z, solid, filter.ToNative(), out var native))
+            {
+                projection = new RapierPointProjection(native.Collider, native.Point, native.IsInside != 0);
+                return true;
+            }
+
+            projection = default;
+            return false;
+        }
+
+        public bool TryIntersectionWithPoint(
+            Vector3 point,
+            RapierQueryFilter filter,
+            out RapierColliderHandle collider)
+        {
+            ThrowIfDisposed();
+            return RapierNative.IntersectionWithPoint(world, point.x, point.y, point.z, filter.ToNative(), out collider);
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();

@@ -102,6 +102,26 @@ namespace AFJK.Rapier
             public float Toi;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct QueryFilterNative
+        {
+            public uint Flags;
+            public byte UseGroups;
+            public uint Groups;
+            public byte UseExcludeCollider;
+            public RapierColliderHandle ExcludeCollider;
+            public byte UseExcludeBody;
+            public RapierRigidBodyHandle ExcludeBody;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PointProjectionNative
+        {
+            public RapierColliderHandle Collider;
+            public Vector3 Point;
+            public byte IsInside;
+        }
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_create")]
         internal static extern ulong WorldCreate();
 
@@ -450,6 +470,37 @@ namespace AFJK.Rapier
             RayNative ray,
             float maxToi,
             out RaycastHitNative hit);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast_filtered")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool RaycastFiltered(
+            ulong world,
+            RayNative ray,
+            float maxToi,
+            [MarshalAs(UnmanagedType.I1)] bool solid,
+            QueryFilterNative filter,
+            out RaycastHitNative hit);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_project_point")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ProjectPoint(
+            ulong world,
+            float pointX,
+            float pointY,
+            float pointZ,
+            [MarshalAs(UnmanagedType.I1)] bool solid,
+            QueryFilterNative filter,
+            out PointProjectionNative projection);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_intersection_with_point")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool IntersectionWithPoint(
+            ulong world,
+            float pointX,
+            float pointY,
+            float pointZ,
+            QueryFilterNative filter,
+            out RapierColliderHandle collider);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_state_hash")]
         internal static extern ulong WorldStateHash(ulong world);

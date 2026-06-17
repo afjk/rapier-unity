@@ -15,7 +15,9 @@ pub use collider::{
     RapierUnitySphereColliderDesc,
 };
 pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
-pub use query::{RapierUnityRay, RapierUnityRaycastHit};
+pub use query::{
+    RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityRay, RapierUnityRaycastHit,
+};
 
 /// # Safety
 ///
@@ -898,6 +900,67 @@ pub unsafe extern "C" fn rapier_unity_raycast(
     }
 }
 
+/// # Safety
+///
+/// `out_hit` must be valid for writes of one `RapierUnityRaycastHit`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_raycast_filtered(
+    world_id: u64,
+    ray: RapierUnityRay,
+    max_toi: f32,
+    solid: bool,
+    filter: RapierUnityQueryFilter,
+    out_hit: *mut RapierUnityRaycastHit,
+) -> bool {
+    write_value(out_hit, || {
+        world::with_world(world_id, |world| {
+            query::raycast_filtered(world, ray, max_toi, solid, filter)
+        })
+        .flatten()
+    })
+}
+
+/// # Safety
+///
+/// `out_projection` must be valid for writes of one `RapierUnityPointProjection`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_project_point(
+    world_id: u64,
+    point_x: f32,
+    point_y: f32,
+    point_z: f32,
+    solid: bool,
+    filter: RapierUnityQueryFilter,
+    out_projection: *mut RapierUnityPointProjection,
+) -> bool {
+    write_value(out_projection, || {
+        world::with_world(world_id, |world| {
+            query::project_point(world, point_x, point_y, point_z, solid, filter)
+        })
+        .flatten()
+    })
+}
+
+/// # Safety
+///
+/// `out_collider` must be valid for writes of one `RapierUnityColliderHandle`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_intersection_with_point(
+    world_id: u64,
+    point_x: f32,
+    point_y: f32,
+    point_z: f32,
+    filter: RapierUnityQueryFilter,
+    out_collider: *mut RapierUnityColliderHandle,
+) -> bool {
+    write_value(out_collider, || {
+        world::with_world(world_id, |world| {
+            query::intersection_with_point(world, point_x, point_y, point_z, filter)
+        })
+        .flatten()
+    })
+}
+
 #[no_mangle]
 pub extern "C" fn rapier_unity_world_state_hash(world_id: u64) -> u64 {
     world::with_world(world_id, hash::world_state_hash).unwrap_or(0)
@@ -1695,6 +1758,158 @@ mod tests {
             )
         };
         assert!(!bad.is_valid());
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn filtered_raycast_can_exclude_a_collider() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+        // Scene queries read the broad-phase BVH from the most recent step.
+        assert!(rapier_unity_world_step(world_id));
+
+        // Ray travelling down the -Y axis toward the box at the origin.
+        let ray = RapierUnityRay {
+            origin_x: 0.0,
+            origin_y: 5.0,
+            origin_z: 0.0,
+            direction_x: 0.0,
+            direction_y: -1.0,
+            direction_z: 0.0,
+        };
+
+        let mut hit = RapierUnityRaycastHit::default();
+        assert!(unsafe {
+            rapier_unity_raycast_filtered(
+                world_id,
+                ray,
+                10.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                &mut hit,
+            )
+        });
+        assert_eq!(hit.collider.index, collider.index);
+
+        // Excluding that collider yields no hit.
+        let filter = RapierUnityQueryFilter {
+            use_exclude_collider: 1,
+            exclude_collider: collider,
+            ..RapierUnityQueryFilter::default()
+        };
+        assert!(!unsafe {
+            rapier_unity_raycast_filtered(world_id, ray, 10.0, true, filter, &mut hit)
+        });
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn project_point_finds_nearest_surface() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        // Default box collider is a 1m cube centred at the origin (half extent 0.5).
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        let mut projection = RapierUnityPointProjection::default();
+        assert!(unsafe {
+            rapier_unity_project_point(
+                world_id,
+                0.0,
+                2.0,
+                0.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                &mut projection,
+            )
+        });
+        assert_eq!(projection.collider.index, collider.index);
+        assert!((projection.point_y - 0.5).abs() < 1e-4);
+        assert_eq!(projection.is_inside, 0);
+
+        // A point inside the cube reports is_inside with solid projection.
+        assert!(unsafe {
+            rapier_unity_project_point(
+                world_id,
+                0.0,
+                0.0,
+                0.0,
+                true,
+                RapierUnityQueryFilter::default(),
+                &mut projection,
+            )
+        });
+        assert_eq!(projection.is_inside, 1);
+
+        // A filter that excludes the only collider must return no projection
+        // (and must not abort the process via parry's internal unwrap).
+        let exclude_all = RapierUnityQueryFilter {
+            use_exclude_collider: 1,
+            exclude_collider: collider,
+            ..RapierUnityQueryFilter::default()
+        };
+        assert!(!unsafe {
+            rapier_unity_project_point(world_id, 0.0, 2.0, 0.0, true, exclude_all, &mut projection)
+        });
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn intersection_with_point_reports_containing_collider() {
+        let world_id = rapier_unity_world_create();
+        let body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        let mut found = RapierUnityColliderHandle::INVALID;
+        assert!(unsafe {
+            rapier_unity_intersection_with_point(
+                world_id,
+                0.0,
+                0.0,
+                0.0,
+                RapierUnityQueryFilter::default(),
+                &mut found,
+            )
+        });
+        assert_eq!(found.index, collider.index);
+
+        // A point well outside the cube finds nothing.
+        assert!(!unsafe {
+            rapier_unity_intersection_with_point(
+                world_id,
+                10.0,
+                10.0,
+                10.0,
+                RapierUnityQueryFilter::default(),
+                &mut found,
+            )
+        });
 
         assert!(rapier_unity_world_destroy(world_id));
     }
