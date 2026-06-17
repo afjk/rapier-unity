@@ -144,6 +144,31 @@ namespace AFJK.Rapier
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        internal struct CharacterControllerDescNative
+        {
+            public Vector3 Up;
+            public float Offset;
+            public byte Slide;
+            public byte AutostepEnabled;
+            public float AutostepMaxHeight;
+            public float AutostepMinWidth;
+            public byte AutostepIncludeDynamic;
+            public float MaxSlopeClimbAngle;
+            public float MinSlopeSlideAngle;
+            public byte SnapToGroundEnabled;
+            public float SnapToGroundDistance;
+            public float NormalNudgeFactor;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct CharacterMovementNative
+        {
+            public Vector3 Translation;
+            public byte Grounded;
+            public byte IsSlidingDownSlope;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         internal struct CollisionEventNative
         {
             public RapierColliderHandle Collider1;
@@ -572,6 +597,18 @@ namespace AFJK.Rapier
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_drain_contact_force_events")]
         internal static extern UIntPtr DrainContactForceEvents(ulong world, IntPtr outEvents, UIntPtr maxEvents);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_character_controller_move")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool CharacterControllerMove(
+            ulong world,
+            QueryShapeNative shape,
+            RapierTransform position,
+            Vector3 desiredTranslation,
+            float dt,
+            CharacterControllerDescNative desc,
+            QueryFilterNative filter,
+            out CharacterMovementNative movement);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_joint_create_fixed")]
         internal static extern RapierJointHandle JointCreateFixed(

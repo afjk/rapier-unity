@@ -170,16 +170,16 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| create controller | Missing | Missing | Missing | A |
-| compute collider movement | Missing | Missing | Missing | A |
-| computed movement result | Missing | Missing | Missing | A |
+| create controller | Supported | Missing | Supported | A |
+| compute collider movement | Supported | Missing | Supported | A |
+| computed movement result | Supported | Missing | Supported | A |
 | collisions output | Missing | Missing | Missing | A |
-| autostep | Missing | Missing | Missing | B |
-| snap to ground | Missing | Missing | Missing | B |
-| slope settings | Missing | Missing | Missing | B |
-| up vector | Missing | Missing | Missing | A |
+| autostep | Supported | Missing | Supported | B |
+| snap to ground | Supported | Missing | Supported | B |
+| slope settings | Supported | Missing | Supported | B |
+| up vector | Supported | Missing | Supported | A |
 | apply impulses to dynamic bodies | Missing | Missing | Missing | B |
-| query filters | Missing | Missing | Missing | A |
+| query filters | Supported | Missing | Supported | A |
 
 ---
 
@@ -276,7 +276,15 @@ remain pending.
 - joint motor API
 - remove joint
 
-### Phase 6 — Character controller
+### Phase 6 — Character controller ✅ done
+
+A kinematic character controller is exposed as a single stateless
+`move_character` FFI: it computes collision-constrained movement for a ball /
+cuboid / capsule shape given a desired translation, configurable up vector,
+offset, slide, autostep, snap-to-ground, and slope angles, plus a `QueryFilter`.
+It returns the effective translation and grounded / sliding flags without moving
+any body. Per-collision output and dynamic-body impulses remain pending.
+Component-API wrappers remain pending.
 
 - controller create / destroy
 - compute collider movement
