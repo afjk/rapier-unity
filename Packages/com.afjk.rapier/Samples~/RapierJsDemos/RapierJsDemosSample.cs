@@ -963,67 +963,85 @@ namespace AFJK.Rapier.Samples
 
         private static void BuildCylinderMesh(float halfHeight, float radius, int segments, out Vector3[] vertices, out int[] indices)
         {
-            vertices = new Vector3[segments * 2 + 2];
-            vertices[0] = new Vector3(0f, halfHeight, 0f);
-            vertices[1] = new Vector3(0f, -halfHeight, 0f);
+            // The side wall shares ring vertices so its curvature stays smooth, while the
+            // caps use their own duplicated vertices so they render flat instead of inheriting
+            // the wall's averaged normals (which would make the caps look bulged).
+            vertices = new Vector3[segments * 4 + 2];
+            var topCenter = segments * 4;
+            var bottomCenter = segments * 4 + 1;
+            vertices[topCenter] = new Vector3(0f, halfHeight, 0f);
+            vertices[bottomCenter] = new Vector3(0f, -halfHeight, 0f);
 
             for (var i = 0; i < segments; i++)
             {
                 var angle = Mathf.PI * 2f * i / segments;
                 var x = Mathf.Cos(angle) * radius;
                 var z = Mathf.Sin(angle) * radius;
-                vertices[i + 2] = new Vector3(x, halfHeight, z);
-                vertices[i + segments + 2] = new Vector3(x, -halfHeight, z);
+                var top = new Vector3(x, halfHeight, z);
+                var bottom = new Vector3(x, -halfHeight, z);
+                vertices[i] = top;                   // wall top ring
+                vertices[segments + i] = bottom;     // wall bottom ring
+                vertices[segments * 2 + i] = top;    // top cap ring
+                vertices[segments * 3 + i] = bottom; // bottom cap ring
             }
 
             indices = new int[segments * 12];
             var t = 0;
             for (var i = 0; i < segments; i++)
             {
-                var topCurrent = i + 2;
-                var topNext = (i + 1) % segments + 2;
-                var bottomCurrent = i + segments + 2;
-                var bottomNext = (i + 1) % segments + segments + 2;
+                var next = (i + 1) % segments;
+                var topCurrent = i;
+                var topNext = next;
+                var bottomCurrent = segments + i;
+                var bottomNext = segments + next;
 
                 indices[t++] = topCurrent;
-                indices[t++] = bottomCurrent;
-                indices[t++] = topNext;
                 indices[t++] = topNext;
                 indices[t++] = bottomCurrent;
+                indices[t++] = topNext;
                 indices[t++] = bottomNext;
-                indices[t++] = 0;
-                indices[t++] = topNext;
-                indices[t++] = topCurrent;
-                indices[t++] = 1;
                 indices[t++] = bottomCurrent;
-                indices[t++] = bottomNext;
+
+                indices[t++] = topCenter;
+                indices[t++] = segments * 2 + next;
+                indices[t++] = segments * 2 + i;
+
+                indices[t++] = bottomCenter;
+                indices[t++] = segments * 3 + i;
+                indices[t++] = segments * 3 + next;
             }
         }
 
         private static void BuildConeMesh(float radius, int segments, out Vector3[] vertices, out int[] indices)
         {
-            vertices = new Vector3[segments + 2];
-            vertices[0] = new Vector3(0f, radius, 0f);
-            vertices[1] = new Vector3(0f, -radius, 0f);
+            // The slope shares the side ring for smooth shading, while the base cap uses its
+            // own ring so it stays flat instead of bulging from the wall's averaged normals.
+            vertices = new Vector3[segments * 2 + 2];
+            var apex = segments * 2;
+            var baseCenter = segments * 2 + 1;
+            vertices[apex] = new Vector3(0f, radius, 0f);
+            vertices[baseCenter] = new Vector3(0f, -radius, 0f);
 
             for (var i = 0; i < segments; i++)
             {
                 var angle = Mathf.PI * 2f * i / segments;
-                vertices[i + 2] = new Vector3(Mathf.Cos(angle) * radius, -radius, Mathf.Sin(angle) * radius);
+                var ring = new Vector3(Mathf.Cos(angle) * radius, -radius, Mathf.Sin(angle) * radius);
+                vertices[i] = ring;            // side ring
+                vertices[segments + i] = ring; // base cap ring
             }
 
             indices = new int[segments * 6];
             var t = 0;
             for (var i = 0; i < segments; i++)
             {
-                var current = i + 2;
-                var next = (i + 1) % segments + 2;
-                indices[t++] = 0;
-                indices[t++] = current;
+                var next = (i + 1) % segments;
+                indices[t++] = apex;
                 indices[t++] = next;
-                indices[t++] = 1;
-                indices[t++] = next;
-                indices[t++] = current;
+                indices[t++] = i;
+
+                indices[t++] = baseCenter;
+                indices[t++] = segments + i;
+                indices[t++] = segments + next;
             }
         }
 
