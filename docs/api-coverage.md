@@ -95,8 +95,8 @@ Coverage is tracked separately for:
 | cuboid | Supported | Supported | Supported | S |
 | ball | Supported | Supported | Supported | S |
 | capsule | Supported | Supported | Supported | S |
-| trimesh | Supported | Missing | Supported | A |
-| convex hull | Supported | Missing | Supported | A |
+| trimesh | Supported | Supported | Supported | A |
+| convex hull | Supported | Supported | Supported | A |
 | heightfield | Supported | Missing | Supported | B |
 | round shapes | Missing | Missing | Missing | C |
 | sensor | Supported | Partial | Supported | A |
@@ -314,7 +314,8 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   wrap the Phase 1–4 runtime APIs (velocities, damping, gravity scale, CCD,
   enabled, forces/impulses, kinematic next-position, axis locks; collider
   friction/restitution/density, sensor, enabled, combine rules, collision/solver
-  groups, active events/collision-types, contact-force threshold).
+  groups, active events/collision-types, contact-force threshold; mesh collider
+  trimesh/convex-hull creation).
 - Joint Component wrappers now cover fixed, spherical, revolute, prismatic, rope,
   and spring joints with shared lifecycle management plus limit/motor APIs.
 - Samples: the `RapierJsDemos` sample now ports the full Rapier JS 3D demo
