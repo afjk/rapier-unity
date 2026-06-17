@@ -1,8 +1,91 @@
+use rapier3d::na::DMatrix;
 use rapier3d::prelude::*;
 
 use crate::body::{RapierUnityTransform, RapierUnityVector3};
 use crate::handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 use crate::world::RapierUnityWorld;
+
+/// Shared material and local-pose parameters for the mesh-based collider shapes
+/// (trimesh, convex hull, heightfield). Vertex/index/height buffers are passed
+/// separately because their length is variable.
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct RapierUnityMeshColliderDesc {
+    pub density: f32,
+    pub friction: f32,
+    pub restitution: f32,
+    pub is_sensor: u8,
+    pub local_position_x: f32,
+    pub local_position_y: f32,
+    pub local_position_z: f32,
+    pub local_rotation_x: f32,
+    pub local_rotation_y: f32,
+    pub local_rotation_z: f32,
+    pub local_rotation_w: f32,
+}
+
+impl Default for RapierUnityMeshColliderDesc {
+    fn default() -> Self {
+        Self {
+            density: 1.0,
+            friction: 0.5,
+            restitution: 0.0,
+            is_sensor: 0,
+            local_position_x: 0.0,
+            local_position_y: 0.0,
+            local_position_z: 0.0,
+            local_rotation_x: 0.0,
+            local_rotation_y: 0.0,
+            local_rotation_z: 0.0,
+            local_rotation_w: 1.0,
+        }
+    }
+}
+
+impl RapierUnityMeshColliderDesc {
+    fn apply(self, builder: ColliderBuilder) -> ColliderBuilder {
+        builder
+            .density(self.density.max(0.0))
+            .friction(self.friction.max(0.0))
+            .restitution(self.restitution.max(0.0))
+            .sensor(self.is_sensor != 0)
+            .position(
+                local_transform(
+                    self.local_position_x,
+                    self.local_position_y,
+                    self.local_position_z,
+                    self.local_rotation_x,
+                    self.local_rotation_y,
+                    self.local_rotation_z,
+                    self.local_rotation_w,
+                )
+                .to_pose(),
+            )
+    }
+}
+
+/// Converts a flat `[x, y, z, ...]` buffer into Rapier vertices.
+fn slice_to_points(vertices: &[f32]) -> Vec<Point<Real>> {
+    vertices
+        .chunks_exact(3)
+        .map(|chunk| Point::new(chunk[0], chunk[1], chunk[2]))
+        .collect()
+}
+
+/// Converts a flat index buffer into triangle index triples, returning `None`
+/// when the buffer length is not a multiple of three.
+fn slice_to_triangles(indices: &[u32]) -> Option<Vec<[u32; 3]>> {
+    if indices.len() % 3 != 0 {
+        return None;
+    }
+
+    Some(
+        indices
+            .chunks_exact(3)
+            .map(|chunk| [chunk[0], chunk[1], chunk[2]])
+            .collect(),
+    )
+}
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -233,6 +316,66 @@ pub fn create_capsule_collider(
         );
 
     attach_collider(world, body, collider)
+}
+
+pub fn create_trimesh_collider(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    vertices: &[f32],
+    indices: &[u32],
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let points = slice_to_points(vertices);
+    let Some(triangles) = slice_to_triangles(indices) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    if points.is_empty() || triangles.is_empty() {
+        return RapierUnityColliderHandle::INVALID;
+    }
+
+    let Ok(builder) = ColliderBuilder::trimesh(points, triangles) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    attach_collider(world, body, desc.apply(builder))
+}
+
+pub fn create_convex_hull_collider(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    vertices: &[f32],
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let points = slice_to_points(vertices);
+    if points.is_empty() {
+        return RapierUnityColliderHandle::INVALID;
+    }
+
+    let Some(builder) = ColliderBuilder::convex_hull(&points) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    attach_collider(world, body, desc.apply(builder))
+}
+
+pub fn create_heightfield_collider(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    heights: &[f32],
+    rows: usize,
+    columns: usize,
+    scale: RapierUnityVector3,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    if rows == 0 || columns == 0 || heights.len() != rows * columns {
+        return RapierUnityColliderHandle::INVALID;
+    }
+
+    let matrix = DMatrix::from_row_slice(rows, columns, heights);
+    let builder = ColliderBuilder::heightfield(matrix, Vector::new(scale.x, scale.y, scale.z));
+
+    attach_collider(world, body, desc.apply(builder))
 }
 
 pub fn destroy_collider(world: &mut RapierUnityWorld, collider: RapierUnityColliderHandle) -> bool {

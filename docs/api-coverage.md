@@ -93,9 +93,9 @@ Coverage is tracked separately for:
 | cuboid | Supported | Supported | Supported | S |
 | ball | Supported | Supported | Supported | S |
 | capsule | Supported | Supported | Supported | S |
-| trimesh | Missing | Missing | Missing | A |
-| convex hull | Missing | Missing | Missing | A |
-| heightfield | Missing | Missing | Missing | B |
+| trimesh | Supported | Missing | Supported | A |
+| convex hull | Supported | Missing | Supported | A |
+| heightfield | Supported | Missing | Supported | B |
 | round shapes | Missing | Missing | Missing | C |
 | sensor | Supported | Partial | Supported | A |
 | enabled | Supported | Missing | Supported | A |
@@ -219,9 +219,9 @@ wrappers are still pending.
 
 Runtime material/filtering setters and getters (friction, restitution, combine
 rules, collision/solver groups, sensor, enabled, density, translation/rotation
-wrt parent) are implemented at the native FFI and low-level C# layers. Mesh
-shapes (trimesh, convex hull, heightfield) and active-event flags are still
-pending.
+wrt parent) and mesh shapes (trimesh, convex hull, heightfield) are implemented
+at the native FFI and low-level C# layers. Active-event flags (collision/contact
+events) are deferred to Phase 4. Component-API wrappers remain pending.
 
 - friction and restitution combine rules
 - collision groups, solver groups

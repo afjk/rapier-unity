@@ -66,6 +66,17 @@ namespace AFJK.Rapier
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        internal struct MeshColliderDescNative
+        {
+            public float Density;
+            public float Friction;
+            public float Restitution;
+            public byte IsSensor;
+            public Vector3 LocalPosition;
+            public Quaternion LocalRotation;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         internal struct RigidBodyStateNative
         {
             public RapierTransform Transform;
@@ -312,6 +323,34 @@ namespace AFJK.Rapier
             ulong world,
             RapierRigidBodyHandle body,
             CapsuleColliderDescNative desc);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_trimesh")]
+        internal static extern RapierColliderHandle ColliderCreateTrimesh(
+            ulong world,
+            RapierRigidBodyHandle body,
+            IntPtr vertices,
+            UIntPtr vertexCount,
+            IntPtr indices,
+            UIntPtr indexCount,
+            MeshColliderDescNative desc);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_convex_hull")]
+        internal static extern RapierColliderHandle ColliderCreateConvexHull(
+            ulong world,
+            RapierRigidBodyHandle body,
+            IntPtr vertices,
+            UIntPtr vertexCount,
+            MeshColliderDescNative desc);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_heightfield")]
+        internal static extern RapierColliderHandle ColliderCreateHeightfield(
+            ulong world,
+            RapierRigidBodyHandle body,
+            IntPtr heights,
+            UIntPtr rows,
+            UIntPtr columns,
+            Vector3 scale,
+            MeshColliderDescNative desc);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_destroy")]
         [return: MarshalAs(UnmanagedType.I1)]

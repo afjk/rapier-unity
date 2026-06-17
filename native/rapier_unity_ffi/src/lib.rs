@@ -11,7 +11,8 @@ pub use body::{
     RapierUnityTransform, RapierUnityVector3,
 };
 pub use collider::{
-    RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnitySphereColliderDesc,
+    RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnityMeshColliderDesc,
+    RapierUnitySphereColliderDesc,
 };
 pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 pub use query::{RapierUnityRay, RapierUnityRaycastHit};
@@ -51,6 +52,26 @@ unsafe fn write_value<T>(out: *mut T, produce: impl FnOnce() -> Option<T>) -> bo
     } else {
         false
     }
+}
+
+/// Builds a slice from a raw pointer/length pair.
+///
+/// Returns `Some(&[])` for a zero length (ignoring the pointer) and `None` when
+/// the pointer is null but a non-zero length was requested.
+///
+/// # Safety
+///
+/// When `len > 0`, `ptr` must be valid for reads of `len` elements of `T`.
+unsafe fn raw_slice<'a, T>(ptr: *const T, len: usize) -> Option<&'a [T]> {
+    if len == 0 {
+        return Some(&[]);
+    }
+
+    if ptr.is_null() {
+        return None;
+    }
+
+    Some(unsafe { std::slice::from_raw_parts(ptr, len) })
 }
 
 #[no_mangle]
@@ -466,6 +487,79 @@ pub extern "C" fn rapier_unity_collider_create_capsule(
 ) -> RapierUnityColliderHandle {
     world::with_world_mut(world_id, |world| {
         collider::create_capsule_collider(world, body, desc)
+    })
+    .unwrap_or(RapierUnityColliderHandle::INVALID)
+}
+
+/// # Safety
+///
+/// `vertices` must be valid for reads of `vertex_count * 3` `f32` values and
+/// `indices` valid for reads of `index_count` `u32` values (when their length
+/// is non-zero).
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_create_trimesh(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    vertices: *const f32,
+    vertex_count: usize,
+    indices: *const u32,
+    index_count: usize,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let vertices = unsafe { raw_slice(vertices, vertex_count.saturating_mul(3)) };
+    let indices = unsafe { raw_slice(indices, index_count) };
+    let (Some(vertices), Some(indices)) = (vertices, indices) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    world::with_world_mut(world_id, |world| {
+        collider::create_trimesh_collider(world, body, vertices, indices, desc)
+    })
+    .unwrap_or(RapierUnityColliderHandle::INVALID)
+}
+
+/// # Safety
+///
+/// `vertices` must be valid for reads of `vertex_count * 3` `f32` values (when
+/// `vertex_count` is non-zero).
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_create_convex_hull(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    vertices: *const f32,
+    vertex_count: usize,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let Some(vertices) = (unsafe { raw_slice(vertices, vertex_count.saturating_mul(3)) }) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    world::with_world_mut(world_id, |world| {
+        collider::create_convex_hull_collider(world, body, vertices, desc)
+    })
+    .unwrap_or(RapierUnityColliderHandle::INVALID)
+}
+
+/// # Safety
+///
+/// `heights` must be valid for reads of `rows * columns` `f32` values (when
+/// that product is non-zero). Heights are interpreted in row-major order.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_create_heightfield(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    heights: *const f32,
+    rows: usize,
+    columns: usize,
+    scale: RapierUnityVector3,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let Some(heights) = (unsafe { raw_slice(heights, rows.saturating_mul(columns)) }) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    world::with_world_mut(world_id, |world| {
+        collider::create_heightfield_collider(world, body, heights, rows, columns, scale, desc)
     })
     .unwrap_or(RapierUnityColliderHandle::INVALID)
 }
@@ -1471,6 +1565,136 @@ mod tests {
             RapierUnityColliderHandle::INVALID,
             RapierUnityVector3::default(),
         ));
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn trimesh_collider_supports_ground_plane() {
+        let world_id = rapier_unity_world_create();
+        let ground = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(ground.is_valid());
+
+        // A flat quad on the XZ plane built from two triangles.
+        let vertices: [f32; 12] = [
+            -10.0, 0.0, -10.0, 10.0, 0.0, -10.0, 10.0, 0.0, 10.0, -10.0, 0.0, 10.0,
+        ];
+        let indices: [u32; 6] = [0, 1, 2, 0, 2, 3];
+        let collider = unsafe {
+            rapier_unity_collider_create_trimesh(
+                world_id,
+                ground,
+                vertices.as_ptr(),
+                4,
+                indices.as_ptr(),
+                6,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(collider.is_valid());
+
+        // Odd index count is rejected.
+        let bad = unsafe {
+            rapier_unity_collider_create_trimesh(
+                world_id,
+                ground,
+                vertices.as_ptr(),
+                4,
+                indices.as_ptr(),
+                5,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(!bad.is_valid());
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn convex_hull_collider_from_point_cloud() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+
+        // A unit cube's corners.
+        let vertices: [f32; 24] = [
+            -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5,
+            0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+        ];
+        let collider = unsafe {
+            rapier_unity_collider_create_convex_hull(
+                world_id,
+                body,
+                vertices.as_ptr(),
+                8,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(collider.is_valid());
+
+        // Empty point cloud is rejected.
+        let empty = unsafe {
+            rapier_unity_collider_create_convex_hull(
+                world_id,
+                body,
+                std::ptr::null(),
+                0,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(!empty.is_valid());
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn heightfield_collider_requires_consistent_dimensions() {
+        let world_id = rapier_unity_world_create();
+        let ground = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+
+        let heights: [f32; 9] = [0.0, 0.1, 0.0, 0.1, 0.2, 0.1, 0.0, 0.1, 0.0];
+        let scale = RapierUnityVector3 {
+            x: 10.0,
+            y: 1.0,
+            z: 10.0,
+        };
+        let collider = unsafe {
+            rapier_unity_collider_create_heightfield(
+                world_id,
+                ground,
+                heights.as_ptr(),
+                3,
+                3,
+                scale,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(collider.is_valid());
+
+        // Zero dimensions are rejected.
+        let bad = unsafe {
+            rapier_unity_collider_create_heightfield(
+                world_id,
+                ground,
+                std::ptr::null(),
+                0,
+                0,
+                scale,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(!bad.is_valid());
 
         assert!(rapier_unity_world_destroy(world_id));
     }
