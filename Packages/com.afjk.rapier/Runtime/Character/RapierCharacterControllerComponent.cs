@@ -84,14 +84,14 @@ namespace AFJK.Rapier
             set => ApplyShape(value);
         }
 
-        public RapierQueryFilter QueryFilter => CreateFilter();
+        public RapierQueryFilter QueryFilter => ApplyOwnBodyExclusion(CreateFilter());
 
         public bool ComputeMovement(
             Vector3 desiredTranslation,
             float deltaTime,
             out RapierCharacterMovement movement)
         {
-            return TryComputeMovement(desiredTranslation, deltaTime, CreateFilter(), out movement, out _);
+            return TryComputeMovement(desiredTranslation, deltaTime, CreateFilter(), true, out movement, out _);
         }
 
         public bool ComputeMovement(
@@ -100,7 +100,7 @@ namespace AFJK.Rapier
             RapierQueryFilter filter,
             out RapierCharacterMovement movement)
         {
-            return TryComputeMovement(desiredTranslation, deltaTime, filter, out movement, out _);
+            return TryComputeMovement(desiredTranslation, deltaTime, filter, true, out movement, out _);
         }
 
         public bool Move(
@@ -117,7 +117,13 @@ namespace AFJK.Rapier
             RapierQueryFilter filter,
             out RapierCharacterMovement movement)
         {
-            if (!TryComputeMovement(desiredTranslation, deltaTime, filter, out movement, out var current))
+            movement = default;
+            if (!EnsurePositionBasedKinematicBody())
+            {
+                return false;
+            }
+
+            if (!TryComputeMovement(desiredTranslation, deltaTime, filter, true, out movement, out var current))
             {
                 return false;
             }
@@ -136,6 +142,7 @@ namespace AFJK.Rapier
             Vector3 desiredTranslation,
             float deltaTime,
             RapierQueryFilter filter,
+            bool applyOwnBodyExclusion,
             out RapierCharacterMovement movement,
             out RapierTransform current)
         {
@@ -148,6 +155,11 @@ namespace AFJK.Rapier
                 !rigidBody.World.TryGetTransform(rigidBody.BodyHandle, out current))
             {
                 return false;
+            }
+
+            if (applyOwnBodyExclusion)
+            {
+                filter = ApplyOwnBodyExclusion(filter);
             }
 
             if (!rigidBody.World.MoveCharacter(
@@ -164,6 +176,16 @@ namespace AFJK.Rapier
 
             LastMovement = movement;
             return true;
+        }
+
+        private RapierQueryFilter ApplyOwnBodyExclusion(RapierQueryFilter filter)
+        {
+            if (excludeOwnBody && rigidBody != null && rigidBody.BodyHandle.IsValid)
+            {
+                filter = filter.ExcludingBody(rigidBody.BodyHandle);
+            }
+
+            return filter;
         }
 
         private bool EnsureBodyRegistered(bool warn)
@@ -184,6 +206,22 @@ namespace AFJK.Rapier
             }
 
             return rigidBody.IsRegistered || rigidBody.Register();
+        }
+
+        private bool EnsurePositionBasedKinematicBody()
+        {
+            if (!EnsureBodyRegistered(true))
+            {
+                return false;
+            }
+
+            if (rigidBody.BodyType == RapierRigidBodyType.KinematicPositionBased)
+            {
+                return true;
+            }
+
+            Debug.LogWarning($"{nameof(RapierCharacterControllerComponent)}.{nameof(Move)} requires a {nameof(RapierRigidBodyType.KinematicPositionBased)} body.", this);
+            return false;
         }
 
         private RapierQueryShape CreateShape()
@@ -248,11 +286,6 @@ namespace AFJK.Rapier
             if (useCollisionGroups)
             {
                 filter = filter.WithGroups(collisionGroups);
-            }
-
-            if (excludeOwnBody && rigidBody != null && rigidBody.BodyHandle.IsValid)
-            {
-                filter = filter.ExcludingBody(rigidBody.BodyHandle);
             }
 
             return filter;
