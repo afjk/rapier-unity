@@ -664,16 +664,36 @@ namespace AFJK.Rapier.Samples
         private void BuildPlatform()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
-            platformBody = CreateBox("platform", RapierRigidBodyType.KinematicPositionBased, new Vector3(0f, 1f, 0f), Quaternion.identity, new Vector3(3f, 0.25f, 3f), 0f, ColorFor("keva"));
+
+            BuildPlatformMesh(out var vertices, out var indices, 20, 70f, 4f, 70f);
+            platformBody = CreateTrimeshPlatform("platform-trimesh", vertices, indices, ColorFor("floor"));
             platformPhase = 0f;
 
-            for (var i = 0; i < 5; i++)
+            const int columns = 4;
+            const int layers = 10;
+            const float radius = 1f;
+            var shift = radius * 3f;
+            var centerY = shift * 0.5f;
+            var offset = -columns * shift * 0.5f;
+
+            for (var layer = 0; layer < layers; layer++)
             {
-                CreateBox(NextId("platform-box"), RapierRigidBodyType.Dynamic, new Vector3(0f, 3f + i * 1.1f, 0f), Quaternion.identity, Vector3.one * 0.4f, 1f, ColorFor("box"));
+                for (var xIndex = 0; xIndex < columns; xIndex++)
+                {
+                    for (var zIndex = 0; zIndex < columns; zIndex++)
+                    {
+                        var position = new Vector3(
+                            xIndex * shift + offset,
+                            layer * shift + centerY + 3f,
+                            zIndex * shift + offset);
+                        CreatePlatformStackBody(NextId("platform-body"), layer % 5, position, radius);
+                    }
+                }
+
+                offset -= 0.05f * radius * (columns - 1f);
             }
 
-            LookAt(new Vector3(0f, 6f, 16f), new Vector3(0f, 2f, 0f));
+            LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
         }
 
         private void PreStepPlatform()
@@ -683,9 +703,252 @@ namespace AFJK.Rapier.Samples
                 return;
             }
 
-            platformPhase += Mathf.Max(0.0001f, timestep);
-            var x = Mathf.Sin(platformPhase) * 4f;
-            world.SetNextKinematicTranslation(platformBody.Body, new Vector3(x, 1f, 0f));
+            platformPhase += 0.016f;
+            var dy = Mathf.Sin(platformPhase) * 10f;
+            var angularY = Mathf.Sin(platformPhase) * 0.2f;
+            world.SetLinearVelocity(platformBody.Body, new Vector3(0f, dy, 0f));
+            world.SetAngularVelocity(platformBody.Body, new Vector3(0f, angularY, 0f));
+        }
+
+        private VisualBody CreateTrimeshPlatform(string id, Vector3[] vertices, int[] indices, Color color)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.KinematicVelocityBased, Vector3.zero, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateTrimeshCollider(body, vertices, indices, RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            return TrackBody(id, body, visual, true);
+        }
+
+        private VisualBody CreatePlatformStackBody(string id, int shapeKind, Vector3 position, float radius)
+        {
+            switch (shapeKind)
+            {
+                case 0:
+                    return CreateBox(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.one * radius, 1f, ColorFor("box"));
+                case 1:
+                    return CreateSphere(id, RapierRigidBodyType.Dynamic, position, radius, 1f, ColorFor("sphere"), Vector3.zero, Vector3.zero, 0f, 0f, false);
+                case 2:
+                    return CreateConvexCylinderBody(id, position, radius, ColorFor("capsule"));
+                case 3:
+                    return CreateConvexConeBody(id, position, radius, ColorFor("keva"));
+                default:
+                    return CreateCompoundPlatformBody(id, position, radius);
+            }
+        }
+
+        private VisualBody CreateConvexCylinderBody(string id, Vector3 position, float radius, Color color)
+        {
+            const int segments = 16;
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateConvexHullCollider(body, CylinderHullPoints(radius, radius, segments), RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+
+            BuildCylinderMesh(radius, radius, segments, out var vertices, out var indices);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            visual.transform.SetPositionAndRotation(position, Quaternion.identity);
+            return TrackBody(id, body, visual, true);
+        }
+
+        private VisualBody CreateConvexConeBody(string id, Vector3 position, float radius, Color color)
+        {
+            const int segments = 16;
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var collider = world.CreateConvexHullCollider(body, ConeHullPoints(radius, segments), RapierMeshColliderDesc.Default);
+            RegisterCollider(id, collider);
+
+            BuildConeMesh(radius, segments, out var vertices, out var indices);
+            var visual = CreateMeshVisual(id, vertices, indices, color);
+            visual.transform.SetPositionAndRotation(position, Quaternion.identity);
+            return TrackBody(id, body, visual, true);
+        }
+
+        private VisualBody CreateCompoundPlatformBody(string id, Vector3 position, float radius)
+        {
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var core = Vector3.one * (radius * 0.5f);
+            var arm = new Vector3(radius * 0.5f, radius, radius * 0.5f);
+
+            CreateBoxCollider(id + "-core", body, core, Vector3.zero);
+            CreateBoxCollider(id + "-arm-positive-x", body, arm, new Vector3(radius, 0f, 0f));
+            CreateBoxCollider(id + "-arm-negative-x", body, arm, new Vector3(-radius, 0f, 0f));
+
+            var visual = new GameObject(id);
+            visual.transform.SetParent(generatedRoot.transform, false);
+            visual.transform.SetPositionAndRotation(position, Quaternion.identity);
+            CreateBoxVisualChild(visual, id + "-core", core, Vector3.zero, ColorFor("box"));
+            CreateBoxVisualChild(visual, id + "-arm-positive-x", arm, new Vector3(radius, 0f, 0f), ColorFor("box"));
+            CreateBoxVisualChild(visual, id + "-arm-negative-x", arm, new Vector3(-radius, 0f, 0f), ColorFor("box"));
+
+            return TrackBody(id, body, visual, true);
+        }
+
+        private void CreateBoxCollider(string id, RapierRigidBodyHandle body, Vector3 halfExtents, Vector3 localPosition)
+        {
+            var collider = world.CreateBoxCollider(
+                body,
+                new RapierBoxColliderDesc
+                {
+                    HalfExtents = halfExtents,
+                    Density = 1f,
+                    Friction = 0.5f,
+                    HasFriction = true,
+                    Restitution = 0f,
+                    LocalPosition = localPosition,
+                    LocalRotation = Quaternion.identity
+                });
+            RegisterCollider(id, collider);
+        }
+
+        private static void CreateBoxVisualChild(GameObject parent, string id, Vector3 halfExtents, Vector3 localPosition, Color color)
+        {
+            var child = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            child.name = id;
+            child.transform.SetParent(parent.transform, false);
+            child.transform.localPosition = localPosition;
+            child.transform.localRotation = Quaternion.identity;
+            child.transform.localScale = halfExtents * 2f;
+            RemoveUnityCollider(child);
+            SetColor(child, color);
+        }
+
+        private static Vector3[] CylinderHullPoints(float halfHeight, float radius, int segments)
+        {
+            var points = new Vector3[segments * 2];
+
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = Mathf.PI * 2f * i / segments;
+                var x = Mathf.Cos(angle) * radius;
+                var z = Mathf.Sin(angle) * radius;
+                points[i] = new Vector3(x, halfHeight, z);
+                points[i + segments] = new Vector3(x, -halfHeight, z);
+            }
+
+            return points;
+        }
+
+        private static Vector3[] ConeHullPoints(float radius, int segments)
+        {
+            var points = new Vector3[segments + 1];
+            points[0] = new Vector3(0f, radius, 0f);
+
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = Mathf.PI * 2f * i / segments;
+                points[i + 1] = new Vector3(Mathf.Cos(angle) * radius, -radius, Mathf.Sin(angle) * radius);
+            }
+
+            return points;
+        }
+
+        private static void BuildCylinderMesh(float halfHeight, float radius, int segments, out Vector3[] vertices, out int[] indices)
+        {
+            vertices = new Vector3[segments * 2 + 2];
+            vertices[0] = new Vector3(0f, halfHeight, 0f);
+            vertices[1] = new Vector3(0f, -halfHeight, 0f);
+
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = Mathf.PI * 2f * i / segments;
+                var x = Mathf.Cos(angle) * radius;
+                var z = Mathf.Sin(angle) * radius;
+                vertices[i + 2] = new Vector3(x, halfHeight, z);
+                vertices[i + segments + 2] = new Vector3(x, -halfHeight, z);
+            }
+
+            indices = new int[segments * 12];
+            var t = 0;
+            for (var i = 0; i < segments; i++)
+            {
+                var topCurrent = i + 2;
+                var topNext = (i + 1) % segments + 2;
+                var bottomCurrent = i + segments + 2;
+                var bottomNext = (i + 1) % segments + segments + 2;
+
+                indices[t++] = topCurrent;
+                indices[t++] = bottomCurrent;
+                indices[t++] = topNext;
+                indices[t++] = topNext;
+                indices[t++] = bottomCurrent;
+                indices[t++] = bottomNext;
+                indices[t++] = 0;
+                indices[t++] = topNext;
+                indices[t++] = topCurrent;
+                indices[t++] = 1;
+                indices[t++] = bottomCurrent;
+                indices[t++] = bottomNext;
+            }
+        }
+
+        private static void BuildConeMesh(float radius, int segments, out Vector3[] vertices, out int[] indices)
+        {
+            vertices = new Vector3[segments + 2];
+            vertices[0] = new Vector3(0f, radius, 0f);
+            vertices[1] = new Vector3(0f, -radius, 0f);
+
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = Mathf.PI * 2f * i / segments;
+                vertices[i + 2] = new Vector3(Mathf.Cos(angle) * radius, -radius, Mathf.Sin(angle) * radius);
+            }
+
+            indices = new int[segments * 6];
+            var t = 0;
+            for (var i = 0; i < segments; i++)
+            {
+                var current = i + 2;
+                var next = (i + 1) % segments + 2;
+                indices[t++] = 0;
+                indices[t++] = current;
+                indices[t++] = next;
+                indices[t++] = 1;
+                indices[t++] = next;
+                indices[t++] = current;
+            }
+        }
+
+        private static void BuildPlatformMesh(out Vector3[] vertices, out int[] indices, int subdivisions, float width, float height, float depth)
+        {
+            var vertexCount = subdivisions + 1;
+            vertices = new Vector3[vertexCount * vertexCount];
+            var elementWidth = 1f / subdivisions;
+            var randomState = 0x7472696du;
+
+            for (var row = 0; row <= subdivisions; row++)
+            {
+                for (var column = 0; column <= subdivisions; column++)
+                {
+                    var x = (column * elementWidth - 0.5f) * width;
+                    var y = NextPlatformRandom(ref randomState) * height;
+                    var z = (row * elementWidth - 0.5f) * depth;
+                    vertices[row * vertexCount + column] = new Vector3(x, y, z);
+                }
+            }
+
+            indices = new int[subdivisions * subdivisions * 6];
+            var t = 0;
+            for (var row = 0; row < subdivisions; row++)
+            {
+                for (var column = 0; column < subdivisions; column++)
+                {
+                    var i1 = row * vertexCount + column;
+                    var i2 = row * vertexCount + column + 1;
+                    var i3 = (row + 1) * vertexCount + column;
+                    var i4 = (row + 1) * vertexCount + column + 1;
+                    indices[t++] = i1;
+                    indices[t++] = i3;
+                    indices[t++] = i2;
+                    indices[t++] = i3;
+                    indices[t++] = i4;
+                    indices[t++] = i2;
+                }
+            }
+        }
+
+        private static float NextPlatformRandom(ref uint state)
+        {
+            state = state * 1664525u + 1013904223u;
+            return (state & 0x00ffffff) / 16777216f;
         }
 
         private void BuildLockedRotations()
