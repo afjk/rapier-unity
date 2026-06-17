@@ -50,18 +50,12 @@ jobs:
         run: cargo build --release -p rapier_unity_ffi
         working-directory: native
 
-      - name: Stage macOS universal binary
+      - name: Stage macOS binary
         if: matrix.os == 'macos-latest'
         working-directory: native
         run: |
-          rustup target add x86_64-apple-darwin aarch64-apple-darwin
-          cargo build --release -p rapier_unity_ffi --target x86_64-apple-darwin
-          cargo build --release -p rapier_unity_ffi --target aarch64-apple-darwin
           mkdir -p dist
-          lipo -create \
-            target/x86_64-apple-darwin/release/librapier_unity_ffi.dylib \
-            target/aarch64-apple-darwin/release/librapier_unity_ffi.dylib \
-            -output dist/librapier_unity_ffi.dylib
+          cp target/release/librapier_unity_ffi.dylib dist/
 
       - name: Stage Linux binary
         if: matrix.os == 'ubuntu-latest'
