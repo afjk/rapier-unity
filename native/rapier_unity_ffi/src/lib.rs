@@ -3,6 +3,7 @@ mod collider;
 mod events;
 mod handles;
 mod hash;
+mod joints;
 mod query;
 mod snapshot;
 mod world;
@@ -16,7 +17,7 @@ pub use collider::{
     RapierUnitySphereColliderDesc,
 };
 pub use events::{RapierUnityCollisionEvent, RapierUnityContactForceEvent};
-pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
+pub use handles::{RapierUnityColliderHandle, RapierUnityJointHandle, RapierUnityRigidBodyHandle};
 pub use query::{
     RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityQueryShape, RapierUnityRay,
     RapierUnityRaycastHit, RapierUnityShapeCastHit,
@@ -1020,6 +1021,125 @@ pub unsafe extern "C" fn rapier_unity_drain_contact_force_events(
         events::drain_contact_force_events(world, out)
     })
     .unwrap_or(0)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_fixed(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_fixed_joint(world, body1, body2, anchor1, anchor2)
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_spherical(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_spherical_joint(world, body1, body2, anchor1, anchor2)
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_revolute(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    axis: RapierUnityVector3,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_revolute_joint(world, body1, body2, anchor1, anchor2, axis)
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_create_prismatic(
+    world_id: u64,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    axis: RapierUnityVector3,
+) -> RapierUnityJointHandle {
+    world::with_world_mut(world_id, |world| {
+        joints::create_prismatic_joint(world, body1, body2, anchor1, anchor2, axis)
+    })
+    .unwrap_or(RapierUnityJointHandle::INVALID)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_remove(world_id: u64, joint: RapierUnityJointHandle) -> bool {
+    world::with_world_mut(world_id, |world| joints::remove_joint(world, joint)).unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_set_limits(
+    world_id: u64,
+    joint: RapierUnityJointHandle,
+    axis: u32,
+    min: f32,
+    max: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        joints::set_joint_limits(world, joint, axis, min, max)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_set_motor_position(
+    world_id: u64,
+    joint: RapierUnityJointHandle,
+    axis: u32,
+    target_position: f32,
+    stiffness: f32,
+    damping: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        joints::set_joint_motor_position(world, joint, axis, target_position, stiffness, damping)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_set_motor_velocity(
+    world_id: u64,
+    joint: RapierUnityJointHandle,
+    axis: u32,
+    target_velocity: f32,
+    factor: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        joints::set_joint_motor_velocity(world, joint, axis, target_velocity, factor)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_joint_set_motor_max_force(
+    world_id: u64,
+    joint: RapierUnityJointHandle,
+    axis: u32,
+    max_force: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        joints::set_joint_motor_max_force(world, joint, axis, max_force)
+    })
+    .unwrap_or(false)
 }
 
 /// # Safety
@@ -2405,6 +2525,119 @@ mod tests {
         }
 
         assert!(started_events >= 1);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn fixed_joint_keeps_bodies_together() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, -9.81, 0.0));
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+
+        let anchor_body = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                position_y: 5.0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let hanging = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_y: 5.0,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, hanging).is_valid());
+
+        let joint = rapier_unity_joint_create_fixed(
+            world_id,
+            anchor_body,
+            hanging,
+            RapierUnityVector3::default(),
+            RapierUnityVector3::default(),
+        );
+        assert!(joint.is_valid());
+
+        for _ in 0..120 {
+            assert!(rapier_unity_world_step(world_id));
+        }
+
+        // Without the joint the dynamic body would fall far under gravity; the
+        // fixed joint holds it near its initial height.
+        let mut transform = RapierUnityTransform::default();
+        assert!(unsafe { rapier_unity_body_get_transform(world_id, hanging, &mut transform) });
+        assert!(transform.position_y > 4.0);
+
+        assert!(rapier_unity_joint_remove(world_id, joint));
+        assert!(!rapier_unity_joint_remove(world_id, joint));
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn revolute_joint_motor_and_limits_configurable() {
+        let world_id = rapier_unity_world_create();
+        let base = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let arm = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_x: 1.0,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(attach_test_box(world_id, arm).is_valid());
+
+        let joint = rapier_unity_joint_create_revolute(
+            world_id,
+            base,
+            arm,
+            RapierUnityVector3::default(),
+            RapierUnityVector3 {
+                x: -1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            RapierUnityVector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 1.0,
+            },
+        );
+        assert!(joint.is_valid());
+
+        // AngZ axis is index 5; configure limits and a velocity motor.
+        assert!(rapier_unity_joint_set_limits(world_id, joint, 5, -1.0, 1.0));
+        assert!(rapier_unity_joint_set_motor_velocity(
+            world_id, joint, 5, 2.0, 0.5
+        ));
+        assert!(rapier_unity_joint_set_motor_max_force(
+            world_id, joint, 5, 100.0
+        ));
+        assert!(rapier_unity_joint_set_motor_position(
+            world_id, joint, 5, 0.5, 50.0, 5.0
+        ));
+
+        // An out-of-range axis index is rejected.
+        assert!(!rapier_unity_joint_set_limits(
+            world_id, joint, 9, -1.0, 1.0
+        ));
+
+        for _ in 0..30 {
+            assert!(rapier_unity_world_step(world_id));
+        }
 
         assert!(rapier_unity_world_destroy(world_id));
     }

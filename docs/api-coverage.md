@@ -153,16 +153,16 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| fixed joint | Missing | Missing | Missing | A |
-| spherical joint | Missing | Missing | Missing | A |
-| revolute joint | Missing | Missing | Missing | A |
-| prismatic joint | Missing | Missing | Missing | A |
+| fixed joint | Supported | Missing | Supported | A |
+| spherical joint | Supported | Missing | Supported | A |
+| revolute joint | Supported | Missing | Supported | A |
+| prismatic joint | Supported | Missing | Supported | A |
 | rope joint | Missing | Missing | Missing | B |
 | spring joint | Missing | Missing | Missing | B |
 | generic joint | Missing | Missing | Missing | C |
-| joint motors | Missing | Missing | Missing | B |
-| joint limits | Missing | Missing | Missing | A |
-| remove joint | Missing | Missing | Missing | A |
+| joint motors | Supported | Missing | Supported | B |
+| joint limits | Supported | Missing | Supported | A |
+| remove joint | Supported | Missing | Supported | A |
 
 ---
 
@@ -261,7 +261,13 @@ Component-API wrappers remain pending.
 - contact force events
 - event queue drain API
 
-### Phase 5 — Joints
+### Phase 5 — Joints ✅ done
+
+Fixed, spherical, revolute, and prismatic joints (impulse joints) are implemented
+at the native FFI and low-level C# layers, with per-axis limits and position /
+velocity motors (target, stiffness/factor, max force) and joint removal. Rope,
+spring, and generic joints remain pending (priority B/C). Component-API wrappers
+remain pending.
 
 - fixed joint
 - spherical joint
