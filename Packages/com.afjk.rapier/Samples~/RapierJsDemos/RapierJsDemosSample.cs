@@ -22,7 +22,8 @@ namespace AFJK.Rapier.Samples
             Pyramid,
             TriangleMesh,
             Voxels,
-            PidController
+            PidController,
+            GlbToTrimesh
         }
 
         [SerializeField] private DemoKind demo = DemoKind.Pyramid;
@@ -39,6 +40,7 @@ namespace AFJK.Rapier.Samples
             DemoKind.Ccd,
             DemoKind.Damping,
             DemoKind.Fountain,
+            DemoKind.GlbToTrimesh,
             DemoKind.Heightfield,
             DemoKind.Joints,
             DemoKind.KevaTower,
@@ -58,6 +60,7 @@ namespace AFJK.Rapier.Samples
             "CCD",
             "damping",
             "fountain",
+            "GLB to trimesh",
             "heightfield",
             "joints",
             "keva tower",
@@ -195,7 +198,7 @@ namespace AFJK.Rapier.Samples
             }
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Runtime-generated entries are ported from the Rapier JS 3D demo catalog.");
+            GUILayout.Label("Entries are ported from the Rapier JS 3D demo catalog.");
             GUILayout.EndArea();
         }
 
@@ -247,6 +250,9 @@ namespace AFJK.Rapier.Samples
                         break;
                     case DemoKind.Fountain:
                         BuildFountain();
+                        break;
+                    case DemoKind.GlbToTrimesh:
+                        BuildGlbToTrimesh();
                         break;
                     case DemoKind.KevaTower:
                         BuildKevaTower();
@@ -506,6 +512,18 @@ namespace AFJK.Rapier.Samples
             {
                 RemoveBody(fountainBodies.Dequeue());
             }
+        }
+
+        private void BuildGlbToTrimesh()
+        {
+            CreateWorld(new Vector3(0f, -9.81f, 0f));
+            CreateBox("glb-ground", RapierRigidBodyType.Fixed, Vector3.zero, Quaternion.identity, new Vector3(5f, 0.1f, 5f), 0f, ColorFor("floor"));
+
+            var vertices = RapierJsDemosSuzanneMesh.CreateVertices();
+            var indices = RapierJsDemosSuzanneMesh.CreateIndices();
+            CreateTrimeshGround("glb-trimesh-suzanne", vertices, indices, ColorFor("keva"));
+
+            LookAt(new Vector3(10f, 5f, 10f), Vector3.zero);
         }
 
         private void BuildCollisionGroups()
