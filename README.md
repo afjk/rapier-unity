@@ -1,5 +1,10 @@
 # Rapier for Unity
 
+[![Latest release](https://img.shields.io/github/v/release/afjk/rapier-unity?sort=semver)](https://github.com/afjk/rapier-unity/releases/latest)
+[![Native CI](https://github.com/afjk/rapier-unity/actions/workflows/native.yml/badge.svg)](https://github.com/afjk/rapier-unity/actions/workflows/native.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
+[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black?logo=unity)](https://unity.com)
+
 Rapier for Unity is a general-purpose Unity integration for the Rapier physics engine.
 
 This project is maintained as part of the Scene Sync ecosystem, but is designed for any Unity project that needs deterministic, portable, replayable, or server-validatable physics.
@@ -8,8 +13,18 @@ This is not an official Rapier project.
 
 ## Getting Started
 
-New here? See the [Getting Started guide](docs/getting-started.md) for
-installation (UPM git URL), a low-level API walkthrough, and the component API.
+Install via Unity Package Manager (**+ → Add package from git URL…**):
+
+```text
+https://github.com/afjk/rapier-unity.git?path=Packages/com.afjk.rapier#v0.2.0
+```
+
+Prebuilt native plugins for **Windows, Linux, macOS (arm64), and Android
+(arm64-v8a)** ship in the package, so no local Rust build is required on those
+targets.
+
+New here? See the [Getting Started guide](docs/getting-started.md) for the full
+install options, a low-level API walkthrough, and the component API.
 
 ## Goals
 
