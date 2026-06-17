@@ -1033,16 +1033,36 @@ namespace AFJK.Rapier.Samples
         private void BuildConvexPolyhedron()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+            BuildPlatformMesh(out var vertices, out var indices, 20, 40f, 4f, 40f);
+            CreateTrimeshGround("convex-ground", vertices, indices, ColorFor("floor"));
 
-            var points = IcosahedronPoints(0.7f);
-            for (var i = 0; i < 12; i++)
+            const int columns = 5;
+            const int layers = 15;
+            const float scale = 2f;
+            const float borderRadius = 0.1f;
+            var shift = borderRadius * 2f + scale;
+            var centerX = shift * (columns / 2f);
+            var centerY = shift * 0.5f;
+            var centerZ = shift * (columns / 2f);
+            var randomState = 0x636f6e76u;
+
+            for (var layer = 0; layer < layers; layer++)
             {
-                var position = new Vector3(i % 4 * 1.5f - 2.25f, 3f + i / 4 * 1.6f, 0f);
-                CreateConvexBody(NextId("convex"), position, points, ColorFor("sphere"), 0.7f);
+                for (var xIndex = 0; xIndex < columns; xIndex++)
+                {
+                    for (var zIndex = 0; zIndex < columns; zIndex++)
+                    {
+                        var position = new Vector3(
+                            xIndex * shift - centerX,
+                            layer * shift + centerY + 3f,
+                            zIndex * shift - centerZ);
+                        var points = RandomConvexPoints(ref randomState, 10, scale);
+                        CreateConvexBody(NextId("convex"), position, points, ColorFor("sphere"), scale * 0.5f);
+                    }
+                }
             }
 
-            LookAt(new Vector3(0f, 6f, 14f), new Vector3(0f, 3f, 0f));
+            LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
         }
 
         private VisualBody CreateConvexBody(string id, Vector3 position, Vector3[] points, Color color, float visualRadius)
@@ -1054,6 +1074,20 @@ namespace AFJK.Rapier.Samples
             var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             ConfigureVisual(visual, id, position, Quaternion.identity, Vector3.one * visualRadius * 2f, color);
             return TrackBody(id, body, visual, true);
+        }
+
+        private static Vector3[] RandomConvexPoints(ref uint state, int count, float scale)
+        {
+            var points = new Vector3[count];
+            for (var i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vector3(
+                    NextPlatformRandom(ref state) * scale,
+                    NextPlatformRandom(ref state) * scale,
+                    NextPlatformRandom(ref state) * scale);
+            }
+
+            return points;
         }
 
         private void BuildTriangleMesh()
@@ -1307,24 +1341,6 @@ namespace AFJK.Rapier.Samples
             var material = new Material(shader);
             material.color = color;
             return material;
-        }
-
-        private static Vector3[] IcosahedronPoints(float radius)
-        {
-            var t = (1f + Mathf.Sqrt(5f)) / 2f;
-            var points = new[]
-            {
-                new Vector3(-1f, t, 0f), new Vector3(1f, t, 0f), new Vector3(-1f, -t, 0f), new Vector3(1f, -t, 0f),
-                new Vector3(0f, -1f, t), new Vector3(0f, 1f, t), new Vector3(0f, -1f, -t), new Vector3(0f, 1f, -t),
-                new Vector3(t, 0f, -1f), new Vector3(t, 0f, 1f), new Vector3(-t, 0f, -1f), new Vector3(-t, 0f, 1f)
-            };
-
-            for (var i = 0; i < points.Length; i++)
-            {
-                points[i] = points[i].normalized * radius;
-            }
-
-            return points;
         }
 
         private void CreateWorld(Vector3 gravity)
