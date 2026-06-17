@@ -258,6 +258,121 @@ namespace AFJK.Rapier
             return RapierNative.ColliderCreateCapsule(world, body, desc.ToNative());
         }
 
+        public RapierColliderHandle CreateTrimeshCollider(
+            RapierRigidBodyHandle body,
+            Vector3[] vertices,
+            int[] indices,
+            RapierMeshColliderDesc desc)
+        {
+            ThrowIfDisposed();
+            if (vertices == null || vertices.Length == 0 || indices == null || indices.Length == 0)
+            {
+                return RapierColliderHandle.Invalid;
+            }
+
+            var vertexHandle = default(GCHandle);
+            var indexHandle = default(GCHandle);
+            try
+            {
+                vertexHandle = GCHandle.Alloc(vertices, GCHandleType.Pinned);
+                indexHandle = GCHandle.Alloc(indices, GCHandleType.Pinned);
+                return RapierNative.ColliderCreateTrimesh(
+                    world,
+                    body,
+                    vertexHandle.AddrOfPinnedObject(),
+                    (UIntPtr)vertices.Length,
+                    indexHandle.AddrOfPinnedObject(),
+                    (UIntPtr)indices.Length,
+                    desc.ToNative());
+            }
+            finally
+            {
+                if (vertexHandle.IsAllocated)
+                {
+                    vertexHandle.Free();
+                }
+
+                if (indexHandle.IsAllocated)
+                {
+                    indexHandle.Free();
+                }
+            }
+        }
+
+        public RapierColliderHandle CreateConvexHullCollider(
+            RapierRigidBodyHandle body,
+            Vector3[] vertices,
+            RapierMeshColliderDesc desc)
+        {
+            ThrowIfDisposed();
+            if (vertices == null || vertices.Length == 0)
+            {
+                return RapierColliderHandle.Invalid;
+            }
+
+            var vertexHandle = default(GCHandle);
+            try
+            {
+                vertexHandle = GCHandle.Alloc(vertices, GCHandleType.Pinned);
+                return RapierNative.ColliderCreateConvexHull(
+                    world,
+                    body,
+                    vertexHandle.AddrOfPinnedObject(),
+                    (UIntPtr)vertices.Length,
+                    desc.ToNative());
+            }
+            finally
+            {
+                if (vertexHandle.IsAllocated)
+                {
+                    vertexHandle.Free();
+                }
+            }
+        }
+
+        public RapierColliderHandle CreateHeightfieldCollider(
+            RapierRigidBodyHandle body,
+            float[] heights,
+            int rows,
+            int columns,
+            Vector3 scale,
+            RapierMeshColliderDesc desc)
+        {
+            ThrowIfDisposed();
+            if (rows <= 0 || columns <= 0)
+            {
+                return RapierColliderHandle.Invalid;
+            }
+
+            if (heights == null || heights.Length != rows * columns)
+            {
+                throw new ArgumentException(
+                    $"Expected {rows * columns} height samples (rows*columns) but received {heights?.Length ?? 0}.",
+                    nameof(heights));
+            }
+
+            var heightHandle = default(GCHandle);
+            try
+            {
+                heightHandle = GCHandle.Alloc(heights, GCHandleType.Pinned);
+                return RapierNative.ColliderCreateHeightfield(
+                    world,
+                    body,
+                    heightHandle.AddrOfPinnedObject(),
+                    (UIntPtr)rows,
+                    (UIntPtr)columns,
+                    scale,
+                    desc.ToNative());
+            }
+            finally
+            {
+                if (heightHandle.IsAllocated)
+                {
+                    heightHandle.Free();
+                }
+            }
+        }
+
         public bool DestroyCollider(RapierColliderHandle collider)
         {
             ThrowIfDisposed();

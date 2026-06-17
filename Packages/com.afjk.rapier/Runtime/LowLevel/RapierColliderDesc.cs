@@ -78,6 +78,41 @@ namespace AFJK.Rapier
         }
     }
 
+    /// <summary>
+    /// Shared material and local-pose parameters for the mesh-based collider shapes
+    /// (trimesh, convex hull, heightfield). Geometry buffers are passed separately.
+    /// </summary>
+    public struct RapierMeshColliderDesc
+    {
+        public float Density;
+        public float Friction;
+        public float Restitution;
+        public bool IsSensor;
+        public Vector3 LocalPosition;
+        public Quaternion LocalRotation;
+
+        public static RapierMeshColliderDesc Default => new RapierMeshColliderDesc
+        {
+            Density = 1f,
+            Friction = 0.5f,
+            Restitution = 0f,
+            LocalRotation = Quaternion.identity
+        };
+
+        internal RapierNative.MeshColliderDescNative ToNative()
+        {
+            return new RapierNative.MeshColliderDescNative
+            {
+                Density = Density,
+                Friction = Mathf.Max(0f, Friction),
+                Restitution = Restitution,
+                IsSensor = IsSensor ? (byte)1 : (byte)0,
+                LocalPosition = LocalPosition,
+                LocalRotation = LocalRotation == default(Quaternion) ? Quaternion.identity : LocalRotation
+            };
+        }
+    }
+
     public struct RapierCapsuleColliderDesc
     {
         private const float DefaultFriction = 0.5f;
