@@ -1059,15 +1059,39 @@ namespace AFJK.Rapier.Samples
         private void BuildTriangleMesh()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            BuildGridSurface(out var vertices, out var indices, 16, 1.4f, 1.2f);
+            BuildPlatformMesh(out var vertices, out var indices, 20, 70f, 4f, 70f);
             CreateTrimeshGround("trimesh-ground", vertices, indices, ColorFor("floor"));
 
-            for (var i = 0; i < 12; i++)
-            {
-                CreateBox(NextId("trimesh-box"), RapierRigidBodyType.Dynamic, new Vector3(i % 4 * 2f - 3f, 8f + i / 4 * 1.4f, i / 4 * 1.5f - 1.5f), Quaternion.identity, Vector3.one * 0.5f, 1f, ColorFor("box"));
-            }
+            CreateStackedShapeGrid("trimesh-body");
 
-            LookAt(new Vector3(0f, 12f, 20f), new Vector3(0f, 2f, 0f));
+            LookAt(new Vector3(-88.48024f, 46.91133f, 83.56055f), Vector3.zero);
+        }
+
+        private void CreateStackedShapeGrid(string idPrefix)
+        {
+            const int columns = 4;
+            const int layers = 10;
+            const float radius = 1f;
+            var shift = radius * 3f;
+            var centerY = shift * 0.5f;
+            var offset = -columns * shift * 0.5f;
+
+            for (var layer = 0; layer < layers; layer++)
+            {
+                for (var xIndex = 0; xIndex < columns; xIndex++)
+                {
+                    for (var zIndex = 0; zIndex < columns; zIndex++)
+                    {
+                        var position = new Vector3(
+                            xIndex * shift + offset,
+                            layer * shift + centerY + 3f,
+                            zIndex * shift + offset);
+                        CreatePlatformStackBody(NextId(idPrefix), layer % 5, position, radius);
+                    }
+                }
+
+                offset -= 0.05f * radius * (columns - 1f);
+            }
         }
 
         private void BuildHeightfield()
@@ -1214,24 +1238,6 @@ namespace AFJK.Rapier.Samples
             BuildHeightfieldMesh(heights, rows, columns, scale, out var vertices, out var indices);
             var visual = CreateMeshVisual(id, vertices, indices, color);
             TrackBody(id, body, visual, false);
-        }
-
-        private static void BuildGridSurface(out Vector3[] vertices, out int[] indices, int n, float extent, float amplitude)
-        {
-            vertices = new Vector3[n * n];
-            var half = extent * (n - 1) / 2f;
-            for (var r = 0; r < n; r++)
-            {
-                for (var c = 0; c < n; c++)
-                {
-                    var x = c * extent - half;
-                    var z = r * extent - half;
-                    var y = Mathf.Sin(c * 0.5f) * Mathf.Cos(r * 0.5f) * amplitude;
-                    vertices[r * n + c] = new Vector3(x, y, z);
-                }
-            }
-
-            indices = BuildGridIndices(n, n);
         }
 
         private static void BuildHeightfieldMesh(float[] heights, int rows, int columns, Vector3 scale, out Vector3[] vertices, out int[] indices)
