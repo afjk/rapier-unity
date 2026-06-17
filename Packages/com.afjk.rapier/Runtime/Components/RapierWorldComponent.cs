@@ -99,6 +99,36 @@ namespace AFJK.Rapier
             return true;
         }
 
+        public ulong StateHash()
+        {
+            return EnsureWorld().StateHash();
+        }
+
+        public int SnapshotSize()
+        {
+            return EnsureWorld().SnapshotSize();
+        }
+
+        public bool TryCreateSnapshot(out RapierSnapshot snapshot)
+        {
+            return EnsureWorld().TryCreateSnapshot(out snapshot);
+        }
+
+        public bool TryReadSnapshot(RapierSnapshot snapshot)
+        {
+            return EnsureWorld().TryReadSnapshot(snapshot);
+        }
+
+        public int DrainCollisionEvents(RapierCollisionEvent[] results)
+        {
+            return EnsureWorld().DrainCollisionEvents(results);
+        }
+
+        public int DrainContactForceEvents(RapierContactForceEvent[] results)
+        {
+            return EnsureWorld().DrainContactForceEvents(results);
+        }
+
         internal void RegisterBody(RapierRigidBodyComponent body)
         {
             if (body == null || bodies.Contains(body))
