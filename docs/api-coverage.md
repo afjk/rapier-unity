@@ -155,16 +155,16 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| fixed joint | Supported | Missing | Supported | A |
-| spherical joint | Supported | Missing | Supported | A |
-| revolute joint | Supported | Missing | Supported | A |
-| prismatic joint | Supported | Missing | Supported | A |
-| rope joint | Supported | Missing | Supported | B |
-| spring joint | Supported | Missing | Supported | B |
+| fixed joint | Supported | Supported | Supported | A |
+| spherical joint | Supported | Supported | Supported | A |
+| revolute joint | Supported | Supported | Supported | A |
+| prismatic joint | Supported | Supported | Supported | A |
+| rope joint | Supported | Supported | Supported | B |
+| spring joint | Supported | Supported | Supported | B |
 | generic joint | Missing | Missing | Missing | C |
-| joint motors | Supported | Missing | Supported | B |
-| joint limits | Supported | Missing | Supported | A |
-| remove joint | Supported | Missing | Supported | A |
+| joint motors | Supported | Supported | Supported | B |
+| joint limits | Supported | Supported | Supported | A |
+| remove joint | Supported | Supported | Supported | A |
 
 ---
 
@@ -266,10 +266,9 @@ Component-API wrappers remain pending.
 ### Phase 5 — Joints ✅ done
 
 Fixed, spherical, revolute, prismatic, rope, and spring joints (impulse joints)
-are implemented at the native FFI and low-level C# layers, with per-axis limits
-and position / velocity motors (target, stiffness/factor, max force) and joint
-removal. Generic joints remain pending (priority C). Component-API wrappers
-remain pending.
+are implemented at the native FFI, low-level C#, and Component API layers, with
+per-axis limits and position / velocity motors (target, stiffness/factor, max
+force) and joint removal. Generic joints remain pending (priority C).
 
 - fixed joint
 - spherical joint
@@ -315,9 +314,11 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   enabled, forces/impulses, kinematic next-position, axis locks; collider
   friction/restitution/density, sensor, enabled, combine rules, collision/solver
   groups, active events/collision-types, contact-force threshold).
+- Joint Component wrappers now cover fixed, spherical, revolute, prismatic, rope,
+  and spring joints with shared lifecycle management plus limit/motor APIs.
 - Samples: the `RapierJsDemos` sample now ports the full Rapier JS 3D demo
   catalog — pyramid, keva tower, damping, CCD, fountain, collision groups,
   joints, platform, locked rotations, convex polyhedron, triangle mesh,
   heightfield, and character controller.
-- Pending: editor Gizmo overlay component, joints/character/query Component-layer
+- Pending: editor Gizmo overlay component, character/query Component-layer
   wrappers, and Unity Editor playmode validation of the ported demos.
