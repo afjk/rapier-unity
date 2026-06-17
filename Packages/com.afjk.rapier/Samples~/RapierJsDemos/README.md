@@ -13,6 +13,13 @@ Open `RapierJsDemos.unity` and enter Play Mode.
 The sample generates its world at runtime with the low-level `RapierWorld` API
 and visual-only Unity primitives. Switch demos from the on-screen menu.
 
+Toggle **Debug draw colliders** in the menu to overlay the world's native
+collider geometry (via `RapierWorld.DebugRender`) on top of the visuals. This
+makes shape differences visible — for example the `GLB to trimesh` collider
+follows the mesh surface, while `GLB to convex hull` wraps it in its convex
+envelope. The overlay uses immediate-mode `GL` and targets the Built-in Render
+Pipeline.
+
 ## Ported Demos
 
 All entries in the on-screen menu are ported and run with the Unity API:
