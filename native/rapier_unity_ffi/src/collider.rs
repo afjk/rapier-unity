@@ -429,7 +429,7 @@ fn map_collider<T>(
 
 /// Decodes the JS-style packed collision-groups value (memberships in the high
 /// 16 bits, filter in the low 16 bits) into Rapier `InteractionGroups`.
-fn decode_groups(value: u32) -> InteractionGroups {
+pub(crate) fn decode_groups(value: u32) -> InteractionGroups {
     InteractionGroups::new(
         Group::from_bits_retain(value >> 16),
         Group::from_bits_retain(value & 0xFFFF),
