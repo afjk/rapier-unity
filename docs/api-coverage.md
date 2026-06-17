@@ -159,8 +159,8 @@ Coverage is tracked separately for:
 | spherical joint | Supported | Missing | Supported | A |
 | revolute joint | Supported | Missing | Supported | A |
 | prismatic joint | Supported | Missing | Supported | A |
-| rope joint | Missing | Missing | Missing | B |
-| spring joint | Missing | Missing | Missing | B |
+| rope joint | Supported | Missing | Supported | B |
+| spring joint | Supported | Missing | Supported | B |
 | generic joint | Missing | Missing | Missing | C |
 | joint motors | Supported | Missing | Supported | B |
 | joint limits | Supported | Missing | Supported | A |
@@ -265,16 +265,18 @@ Component-API wrappers remain pending.
 
 ### Phase 5 — Joints ✅ done
 
-Fixed, spherical, revolute, and prismatic joints (impulse joints) are implemented
-at the native FFI and low-level C# layers, with per-axis limits and position /
-velocity motors (target, stiffness/factor, max force) and joint removal. Rope,
-spring, and generic joints remain pending (priority B/C). Component-API wrappers
+Fixed, spherical, revolute, prismatic, rope, and spring joints (impulse joints)
+are implemented at the native FFI and low-level C# layers, with per-axis limits
+and position / velocity motors (target, stiffness/factor, max force) and joint
+removal. Generic joints remain pending (priority C). Component-API wrappers
 remain pending.
 
 - fixed joint
 - spherical joint
 - revolute joint with limits
 - prismatic joint with limits
+- rope joint
+- spring joint
 - joint motor API
 - remove joint
 

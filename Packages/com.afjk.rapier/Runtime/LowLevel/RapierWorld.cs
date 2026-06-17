@@ -1003,6 +1003,30 @@ namespace AFJK.Rapier
             return RapierNative.JointCreatePrismatic(world, body1, body2, anchor1, anchor2, axis);
         }
 
+        public RapierJointHandle CreateRopeJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            float maxDistance)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreateRope(world, body1, body2, anchor1, anchor2, maxDistance);
+        }
+
+        public RapierJointHandle CreateSpringJoint(
+            RapierRigidBodyHandle body1,
+            RapierRigidBodyHandle body2,
+            Vector3 anchor1,
+            Vector3 anchor2,
+            float restLength,
+            float stiffness,
+            float damping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.JointCreateSpring(world, body1, body2, anchor1, anchor2, restLength, stiffness, damping);
+        }
+
         public bool RemoveJoint(RapierJointHandle joint)
         {
             ThrowIfDisposed();

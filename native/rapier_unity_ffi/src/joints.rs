@@ -1,6 +1,6 @@
 use rapier3d::dynamics::{
-    FixedJointBuilder, JointAxis, PrismaticJointBuilder, RevoluteJointBuilder,
-    SphericalJointBuilder,
+    FixedJointBuilder, JointAxis, PrismaticJointBuilder, RevoluteJointBuilder, RopeJointBuilder,
+    SphericalJointBuilder, SpringJointBuilder,
 };
 use rapier3d::na::Unit;
 use rapier3d::prelude::*;
@@ -99,6 +99,37 @@ pub fn create_prismatic_joint(
     axis: RapierUnityVector3,
 ) -> RapierUnityJointHandle {
     let joint = PrismaticJointBuilder::new(axis_unit(axis))
+        .local_anchor1(point(anchor1))
+        .local_anchor2(point(anchor2));
+    insert_joint(world, body1, body2, joint)
+}
+
+pub fn create_rope_joint(
+    world: &mut RapierUnityWorld,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    max_distance: f32,
+) -> RapierUnityJointHandle {
+    let joint = RopeJointBuilder::new(max_distance.max(0.0))
+        .local_anchor1(point(anchor1))
+        .local_anchor2(point(anchor2));
+    insert_joint(world, body1, body2, joint)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn create_spring_joint(
+    world: &mut RapierUnityWorld,
+    body1: RapierUnityRigidBodyHandle,
+    body2: RapierUnityRigidBodyHandle,
+    anchor1: RapierUnityVector3,
+    anchor2: RapierUnityVector3,
+    rest_length: f32,
+    stiffness: f32,
+    damping: f32,
+) -> RapierUnityJointHandle {
+    let joint = SpringJointBuilder::new(rest_length.max(0.0), stiffness.max(0.0), damping.max(0.0))
         .local_anchor1(point(anchor1))
         .local_anchor2(point(anchor2));
     insert_joint(world, body1, body2, joint)
