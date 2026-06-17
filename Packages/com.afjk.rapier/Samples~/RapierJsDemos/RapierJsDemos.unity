@@ -277,4 +277,4 @@ MonoBehaviour:
   timestep: 0.016666668
   runOnStart: 1
   running: 1
-  maxFountainBodies: 240
+  maxFountainBodies: 400
