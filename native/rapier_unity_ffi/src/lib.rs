@@ -2236,7 +2236,46 @@ mod tests {
             RapierUnityTransform::default(),
             RapierUnityVector3::default(),
         ));
+
+        let snapshot_size = rapier_unity_world_snapshot_size(world_id);
+        assert!(snapshot_size > 0);
+        let mut snapshot = vec![0_u8; snapshot_size];
+        assert!(unsafe {
+            rapier_unity_world_snapshot_write(world_id, snapshot.as_mut_ptr(), snapshot.len())
+        });
+
+        let stale_controller = rapier_unity_pid_controller_create(world_id, 10.0, 0.0, 0.5, 1);
+        assert!(stale_controller.is_valid());
+        assert_ne!(stale_controller.id, controller.id);
+        assert!(unsafe {
+            rapier_unity_world_snapshot_read(world_id, snapshot.as_ptr(), snapshot.len())
+        });
+        assert!(!rapier_unity_pid_controller_destroy(
+            world_id,
+            stale_controller
+        ));
+        assert!(rapier_unity_pid_controller_apply_linear_correction(
+            world_id,
+            controller,
+            body,
+            RapierUnityVector3 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            RapierUnityVector3::default(),
+        ));
+
+        let replacement_controller =
+            rapier_unity_pid_controller_create(world_id, 10.0, 0.0, 0.5, 1);
+        assert!(replacement_controller.is_valid());
+        assert_ne!(replacement_controller.id, stale_controller.id);
+
         assert!(rapier_unity_pid_controller_destroy(world_id, controller));
+        assert!(rapier_unity_pid_controller_destroy(
+            world_id,
+            replacement_controller
+        ));
         assert!(!rapier_unity_pid_controller_destroy(world_id, controller));
         assert!(rapier_unity_world_destroy(world_id));
     }

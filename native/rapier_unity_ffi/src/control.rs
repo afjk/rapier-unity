@@ -18,7 +18,11 @@ pub fn create_pid_controller(
     axes: u8,
 ) -> RapierUnityPidControllerHandle {
     let id = world.next_pid_controller_id;
-    world.next_pid_controller_id = world.next_pid_controller_id.saturating_add(1).max(1);
+    if id == 0 || id == u64::MAX {
+        return RapierUnityPidControllerHandle::INVALID;
+    }
+
+    world.next_pid_controller_id = id + 1;
     world
         .pid_controllers
         .insert(id, PidController::new(kp, ki, kd, axes_from_bits(axes)));
