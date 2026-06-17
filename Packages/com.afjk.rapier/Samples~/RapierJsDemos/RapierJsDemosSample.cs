@@ -790,14 +790,15 @@ namespace AFJK.Rapier.Samples
             }
         }
 
-        private VisualBody CreateConvexCylinderBody(string id, Vector3 position, float radius, Color color, Vector3 linearVelocity = default)
+        private VisualBody CreateConvexCylinderBody(string id, Vector3 position, float radius, Color color, Vector3 linearVelocity = default, float halfHeight = -1f)
         {
             const int segments = 16;
+            var cylinderHalfHeight = halfHeight > 0f ? halfHeight : radius;
             var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, linearVelocity, Vector3.zero, 0f, 0f, false);
-            var collider = world.CreateConvexHullCollider(body, CylinderHullPoints(radius, radius, segments), RapierMeshColliderDesc.Default);
+            var collider = world.CreateConvexHullCollider(body, CylinderHullPoints(cylinderHalfHeight, radius, segments), RapierMeshColliderDesc.Default);
             RegisterCollider(id, collider);
 
-            BuildCylinderMesh(radius, radius, segments, out var vertices, out var indices);
+            BuildCylinderMesh(cylinderHalfHeight, radius, segments, out var vertices, out var indices);
             var visual = CreateMeshVisual(id, vertices, indices, color);
             visual.transform.SetPositionAndRotation(position, Quaternion.identity);
             return TrackBody(id, body, visual, true);
@@ -1009,16 +1010,24 @@ namespace AFJK.Rapier.Samples
         private void BuildLockedRotations()
         {
             CreateWorld(new Vector3(0f, -9.81f, 0f));
-            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -0.1f, 0f), Quaternion.identity, new Vector3(20f, 0.1f, 20f), 0f, ColorFor("floor"));
+            const float groundHeight = 0.1f;
+            CreateBox("floor", RapierRigidBodyType.Fixed, new Vector3(0f, -groundHeight, 0f), Quaternion.identity, new Vector3(1.7f, groundHeight, 1.7f), 0f, ColorFor("floor"));
 
-            for (var i = 0; i < 6; i++)
-            {
-                var body = CreateBox(NextId("locked-box"), RapierRigidBodyType.Dynamic, new Vector3(i * 1.5f - 4f, 5f, 0f), Quaternion.Euler(0f, 0f, 25f), new Vector3(0.3f, 1.2f, 0.3f), 1f, ColorFor("box"));
-                // Locking rotations keeps the tall boxes upright as they settle.
-                world.SetEnabledRotations(body.Body, false, false, false);
-            }
+            var xRotor = CreateBox(
+                "locked-x-rotor",
+                RapierRigidBodyType.Dynamic,
+                new Vector3(0f, 3f, 0f),
+                Quaternion.identity,
+                new Vector3(0.2f, 0.6f, 2f),
+                1f,
+                ColorFor("box"));
+            world.SetEnabledTranslations(xRotor.Body, false, false, false);
+            world.SetEnabledRotations(xRotor.Body, true, false, false);
 
-            LookAt(new Vector3(0f, 5f, 16f), new Vector3(0f, 2f, 0f));
+            var lockedCylinder = CreateConvexCylinderBody("locked-cylinder", new Vector3(0.2f, 5f, 0.4f), 0.4f, ColorFor("capsule"), Vector3.zero, 0.6f);
+            world.SetEnabledRotations(lockedCylinder.Body, false, false, false);
+
+            LookAt(new Vector3(-10f, 3f, 0f), new Vector3(0f, 3f, 0f));
         }
 
         private void BuildConvexPolyhedron()
