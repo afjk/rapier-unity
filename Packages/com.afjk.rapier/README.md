@@ -14,14 +14,21 @@ or add a local package entry to your Unity project's `Packages/manifest.json`.
 
 ## Native Library
 
-Build the native plugin before entering play mode:
+Prebuilt native FFI plugins are bundled in `Runtime/Plugins` and load
+automatically in the editor and standalone builds:
+
+- Windows: `Windows/rapier_unity_ffi.dll` (x86_64)
+- Linux: `Linux/librapier_unity_ffi.so` (x86_64)
+- macOS: `macOS/librapier_unity_ffi.dylib` (Apple Silicon / arm64)
+
+To rebuild from source (for example to target an Intel mac or refresh the
+binary), build the crate and copy the platform library into the matching
+plugin folder:
 
 ```sh
 cd native
 cargo build --release -p rapier_unity_ffi
 ```
-
-Then copy the resulting platform library into your project's plugin folder, such as:
 
 ```text
 Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
