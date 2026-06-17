@@ -122,6 +122,27 @@ namespace AFJK.Rapier
             public byte IsInside;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct QueryShapeNative
+        {
+            public uint ShapeType;
+            public Vector3 HalfExtents;
+            public float Radius;
+            public float HalfHeight;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct ShapeCastHitNative
+        {
+            public RapierColliderHandle Collider;
+            public float TimeOfImpact;
+            public Vector3 Witness1;
+            public Vector3 Witness2;
+            public Vector3 Normal1;
+            public Vector3 Normal2;
+            public uint Status;
+        }
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_create")]
         internal static extern ulong WorldCreate();
 
@@ -501,6 +522,37 @@ namespace AFJK.Rapier
             float pointZ,
             QueryFilterNative filter,
             out RapierColliderHandle collider);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast_all")]
+        internal static extern UIntPtr RaycastAll(
+            ulong world,
+            RayNative ray,
+            float maxToi,
+            [MarshalAs(UnmanagedType.I1)] bool solid,
+            QueryFilterNative filter,
+            IntPtr outHits,
+            UIntPtr maxHits);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_cast_shape")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool CastShape(
+            ulong world,
+            RapierTransform shapePos,
+            Vector3 shapeVel,
+            QueryShapeNative shape,
+            float maxToi,
+            [MarshalAs(UnmanagedType.I1)] bool stopAtPenetration,
+            QueryFilterNative filter,
+            out ShapeCastHitNative hit);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_intersect_shape")]
+        internal static extern UIntPtr IntersectShape(
+            ulong world,
+            RapierTransform shapePos,
+            QueryShapeNative shape,
+            QueryFilterNative filter,
+            IntPtr outColliders,
+            UIntPtr maxColliders);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_state_hash")]
         internal static extern ulong WorldStateHash(ulong world);

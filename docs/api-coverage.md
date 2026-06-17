@@ -123,11 +123,11 @@ Coverage is tracked separately for:
 |---|---|---|---|---|
 | castRay | Supported | N/A | Supported | S |
 | castRayAndGetNormal | Supported | N/A | Supported | A |
-| intersectionsWithRay / raycast all | Missing | N/A | Missing | A |
+| intersectionsWithRay / raycast all | Supported | N/A | Supported | A |
 | projectPoint | Supported | N/A | Supported | A |
 | intersectionsWithPoint | Supported | N/A | Supported | B |
-| castShape | Missing | N/A | Missing | A |
-| intersectionsWithShape | Missing | N/A | Missing | B |
+| castShape | Supported | N/A | Supported | A |
+| intersectionsWithShape | Supported | N/A | Supported | B |
 | query filters | Supported | N/A | Supported | A |
 | exclude collider / body filter | Supported | N/A | Supported | A |
 | collision groups filter | Supported | N/A | Supported | A |
@@ -231,13 +231,14 @@ events) are deferred to Phase 4. Component-API wrappers remain pending.
 - trimesh collider (foundation for mesh shapes)
 - convex hull collider
 
-### Phase 3 — Scene queries 🚧 in progress
+### Phase 3 — Scene queries ✅ done
 
-Filtered raycast (with normal), point projection, and point intersection with full
-`QueryFilter` support (flags, collision-group mask, exclude collider/body) are
-implemented at the native FFI and low-level C# layers. Shape casting and multi-hit
-ray/shape intersections are deferred to Phase 3b. Scene queries read the
-broad-phase BVH from the most recent world step.
+Filtered raycast (with normal), point projection, point intersection, multi-hit
+raycast, shape casting, and shape intersection — all with full `QueryFilter`
+support (flags, collision-group mask, exclude collider/body) — are implemented at
+the native FFI and low-level C# layers. Shape queries support ball, cuboid, and
+capsule primitives. Scene queries read the broad-phase BVH from the most recent
+world step. Component-API wrappers remain pending.
 
 - castRay variants
 - castRayAndGetNormal
