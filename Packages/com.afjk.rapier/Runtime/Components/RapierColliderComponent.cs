@@ -93,6 +93,72 @@ namespace AFJK.Rapier
             }
         }
 
+        private bool TryGetActiveWorld(out RapierWorld activeWorld)
+        {
+            activeWorld = rigidBody != null ? rigidBody.World : null;
+            return IsRegistered && activeWorld != null && activeWorld.IsCreated;
+        }
+
+        public bool SetFriction(float value)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderFriction(ColliderHandle, value);
+        }
+
+        public bool SetRestitution(float value)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderRestitution(ColliderHandle, value);
+        }
+
+        public bool SetDensity(float value)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderDensity(ColliderHandle, value);
+        }
+
+        public bool SetSensor(bool value)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderSensor(ColliderHandle, value);
+        }
+
+        public bool SetColliderEnabled(bool value)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderEnabled(ColliderHandle, value);
+        }
+
+        public bool SetFrictionCombineRule(RapierCoefficientCombineRule rule)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderFrictionCombineRule(ColliderHandle, rule);
+        }
+
+        public bool SetRestitutionCombineRule(RapierCoefficientCombineRule rule)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderRestitutionCombineRule(ColliderHandle, rule);
+        }
+
+        public bool SetCollisionGroups(uint groups)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderCollisionGroups(ColliderHandle, groups);
+        }
+
+        public bool SetSolverGroups(uint groups)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderSolverGroups(ColliderHandle, groups);
+        }
+
+        public bool SetActiveEvents(RapierActiveEvents events)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderActiveEvents(ColliderHandle, events);
+        }
+
+        public bool SetActiveCollisionTypes(RapierActiveCollisionTypes types)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderActiveCollisionTypes(ColliderHandle, types);
+        }
+
+        public bool SetContactForceEventThreshold(float threshold)
+        {
+            return TryGetActiveWorld(out var w) && w.SetColliderContactForceEventThreshold(ColliderHandle, threshold);
+        }
+
         internal bool CreateInWorld(RapierRigidBodyComponent body)
         {
             if (IsRegistered)

@@ -137,6 +137,99 @@ namespace AFJK.Rapier
             return true;
         }
 
+        private bool TryGetActiveWorld(out RapierWorld activeWorld)
+        {
+            activeWorld = World;
+            return IsRegistered && activeWorld != null && activeWorld.IsCreated;
+        }
+
+        public bool TryGetLinearVelocity(out Vector3 velocity)
+        {
+            if (TryGetActiveWorld(out var w))
+            {
+                return w.TryGetLinearVelocity(BodyHandle, out velocity);
+            }
+
+            velocity = default;
+            return false;
+        }
+
+        public bool SetLinearVelocity(Vector3 velocity, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.SetLinearVelocity(BodyHandle, velocity, wakeUp);
+        }
+
+        public bool TryGetAngularVelocity(out Vector3 velocity)
+        {
+            if (TryGetActiveWorld(out var w))
+            {
+                return w.TryGetAngularVelocity(BodyHandle, out velocity);
+            }
+
+            velocity = default;
+            return false;
+        }
+
+        public bool SetAngularVelocity(Vector3 velocity, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.SetAngularVelocity(BodyHandle, velocity, wakeUp);
+        }
+
+        public bool SetLinearDamping(float damping)
+        {
+            return TryGetActiveWorld(out var w) && w.SetLinearDamping(BodyHandle, damping);
+        }
+
+        public bool SetAngularDamping(float damping)
+        {
+            return TryGetActiveWorld(out var w) && w.SetAngularDamping(BodyHandle, damping);
+        }
+
+        public bool SetGravityScale(float scale, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.SetGravityScale(BodyHandle, scale, wakeUp);
+        }
+
+        public bool SetCcdEnabled(bool enabled)
+        {
+            return TryGetActiveWorld(out var w) && w.SetCcdEnabled(BodyHandle, enabled);
+        }
+
+        public bool SetBodyEnabled(bool enabled)
+        {
+            return TryGetActiveWorld(out var w) && w.SetBodyEnabled(BodyHandle, enabled);
+        }
+
+        public bool AddForce(Vector3 force, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.AddForce(BodyHandle, force, wakeUp);
+        }
+
+        public bool AddTorque(Vector3 torque, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.AddTorque(BodyHandle, torque, wakeUp);
+        }
+
+        public bool ApplyImpulse(Vector3 impulse, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.ApplyImpulse(BodyHandle, impulse, wakeUp);
+        }
+
+        public bool ApplyTorqueImpulse(Vector3 impulse, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.ApplyTorqueImpulse(BodyHandle, impulse, wakeUp);
+        }
+
+        public bool SetNextKinematicTranslation(Vector3 translation)
+        {
+            return TryGetActiveWorld(out var w) && w.SetNextKinematicTranslation(BodyHandle, translation);
+        }
+
+        public bool SetNextKinematicRotation(Quaternion rotation)
+        {
+            return TryGetActiveWorld(out var w) && w.SetNextKinematicRotation(BodyHandle, rotation);
+        }
+
         internal void RegisterCollider(RapierColliderComponent collider)
         {
             if (collider == null || colliders.Contains(collider))
