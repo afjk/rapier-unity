@@ -2,6 +2,8 @@
 
 This Unity package exposes Rapier through an explicit-world API. It does not replace Unity Physics and does not scan Unity `Rigidbody` or built-in collider components automatically.
 
+For installation options and a step-by-step walkthrough, see the [Getting Started guide](https://github.com/afjk/rapier-unity/blob/main/docs/getting-started.md).
+
 ## Install Locally
 
 Add the package from disk in Unity Package Manager:
