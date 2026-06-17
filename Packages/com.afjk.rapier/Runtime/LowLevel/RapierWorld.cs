@@ -972,6 +972,39 @@ namespace AFJK.Rapier
             return RapierNative.JointSetMotorMaxForce(world, joint, (uint)axis, maxForce);
         }
 
+        /// <summary>
+        /// Computes the collision-constrained movement of a kinematic character shape,
+        /// without moving any body. Scene state reflects the most recent step.
+        /// </summary>
+        public bool MoveCharacter(
+            RapierQueryShape shape,
+            RapierTransform position,
+            Vector3 desiredTranslation,
+            float deltaTime,
+            RapierCharacterController controller,
+            RapierQueryFilter filter,
+            out RapierCharacterMovement movement)
+        {
+            ThrowIfDisposed();
+
+            if (RapierNative.CharacterControllerMove(
+                world,
+                shape.ToNative(),
+                position,
+                desiredTranslation,
+                deltaTime,
+                controller.ToNative(),
+                filter.ToNative(),
+                out var native))
+            {
+                movement = new RapierCharacterMovement(native);
+                return true;
+            }
+
+            movement = default;
+            return false;
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();

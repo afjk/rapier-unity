@@ -1,4 +1,5 @@
 mod body;
+mod character;
 mod collider;
 mod events;
 mod handles;
@@ -12,6 +13,7 @@ pub use body::{
     RapierUnityRigidBodyDesc, RapierUnityRigidBodyState, RapierUnityRigidBodyType,
     RapierUnityTransform, RapierUnityVector3,
 };
+pub use character::{RapierUnityCharacterControllerDesc, RapierUnityCharacterMovement};
 pub use collider::{
     RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnityMeshColliderDesc,
     RapierUnitySphereColliderDesc,
@@ -1140,6 +1142,36 @@ pub extern "C" fn rapier_unity_joint_set_motor_max_force(
         joints::set_joint_motor_max_force(world, joint, axis, max_force)
     })
     .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_movement` must be valid for writes of one `RapierUnityCharacterMovement`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_character_controller_move(
+    world_id: u64,
+    shape: RapierUnityQueryShape,
+    position: RapierUnityTransform,
+    desired_translation: RapierUnityVector3,
+    dt: f32,
+    desc: RapierUnityCharacterControllerDesc,
+    filter: RapierUnityQueryFilter,
+    out_movement: *mut RapierUnityCharacterMovement,
+) -> bool {
+    write_value(out_movement, || {
+        world::with_world(world_id, |world| {
+            character::move_character(
+                world,
+                shape,
+                position,
+                desired_translation,
+                dt,
+                desc,
+                filter,
+            )
+        })
+        .flatten()
+    })
 }
 
 /// # Safety
@@ -2638,6 +2670,105 @@ mod tests {
         for _ in 0..30 {
             assert!(rapier_unity_world_step(world_id));
         }
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn character_controller_stops_on_ground_and_slides_in_air() {
+        let world_id = rapier_unity_world_create();
+
+        // Fixed ground box at the origin (top surface at y = 0.5).
+        let ground = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(rapier_unity_collider_create_box(
+            world_id,
+            ground,
+            RapierUnityBoxColliderDesc::default()
+        )
+        .is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        let desc = RapierUnityCharacterControllerDesc {
+            up_x: 0.0,
+            up_y: 1.0,
+            up_z: 0.0,
+            offset: 0.01,
+            slide: 1,
+            autostep_enabled: 0,
+            autostep_max_height: 0.0,
+            autostep_min_width: 0.0,
+            autostep_include_dynamic: 0,
+            max_slope_climb_angle: 45.0_f32.to_radians(),
+            min_slope_slide_angle: 30.0_f32.to_radians(),
+            snap_to_ground_enabled: 0,
+            snap_to_ground_distance: 0.0,
+            normal_nudge_factor: 1.0e-4,
+        };
+        let shape = RapierUnityQueryShape {
+            shape_type: 0,
+            half_extents_x: 0.0,
+            half_extents_y: 0.0,
+            half_extents_z: 0.0,
+            radius: 0.5,
+            half_height: 0.0,
+        };
+
+        // A character resting just above the ground, trying to move down, is stopped.
+        let position = RapierUnityTransform {
+            position_y: 1.05,
+            ..RapierUnityTransform::default()
+        };
+        let mut movement = RapierUnityCharacterMovement::default();
+        assert!(unsafe {
+            rapier_unity_character_controller_move(
+                world_id,
+                shape,
+                position,
+                RapierUnityVector3 {
+                    x: 0.0,
+                    y: -1.0,
+                    z: 0.0,
+                },
+                1.0 / 60.0,
+                desc,
+                RapierUnityQueryFilter::default(),
+                &mut movement,
+            )
+        });
+        // The ground blocks most of the downward motion and reports grounded.
+        assert!(movement.translation_y > -1.0);
+        assert_eq!(movement.grounded, 1);
+
+        // High in the air the full desired translation is applied.
+        let airborne = RapierUnityTransform {
+            position_y: 20.0,
+            ..RapierUnityTransform::default()
+        };
+        let mut air_movement = RapierUnityCharacterMovement::default();
+        assert!(unsafe {
+            rapier_unity_character_controller_move(
+                world_id,
+                shape,
+                airborne,
+                RapierUnityVector3 {
+                    x: 0.0,
+                    y: -1.0,
+                    z: 0.0,
+                },
+                1.0 / 60.0,
+                desc,
+                RapierUnityQueryFilter::default(),
+                &mut air_movement,
+            )
+        });
+        assert!((air_movement.translation_y + 1.0).abs() < 1.0e-3);
+        assert_eq!(air_movement.grounded, 0);
 
         assert!(rapier_unity_world_destroy(world_id));
     }

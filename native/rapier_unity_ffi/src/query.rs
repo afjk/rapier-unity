@@ -20,7 +20,7 @@ pub struct RapierUnityQueryShape {
 }
 
 impl RapierUnityQueryShape {
-    fn to_shared_shape(self) -> Option<SharedShape> {
+    pub(crate) fn to_shared_shape(self) -> Option<SharedShape> {
         match self.shape_type {
             0 => Some(SharedShape::ball(self.radius.max(0.0))),
             1 => Some(SharedShape::cuboid(
@@ -88,7 +88,7 @@ impl Default for RapierUnityQueryFilter {
 }
 
 impl RapierUnityQueryFilter {
-    fn to_query_filter(self) -> QueryFilter<'static> {
+    pub(crate) fn to_query_filter(self) -> QueryFilter<'static> {
         let mut filter = QueryFilter {
             flags: QueryFilterFlags::from_bits_truncate(self.flags),
             ..QueryFilter::default()
