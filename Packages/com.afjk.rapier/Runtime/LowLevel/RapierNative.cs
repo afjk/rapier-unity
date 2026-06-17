@@ -143,6 +143,26 @@ namespace AFJK.Rapier
             public uint Status;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct CollisionEventNative
+        {
+            public RapierColliderHandle Collider1;
+            public RapierColliderHandle Collider2;
+            public byte Started;
+            public uint Flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct ContactForceEventNative
+        {
+            public RapierColliderHandle Collider1;
+            public RapierColliderHandle Collider2;
+            public Vector3 TotalForce;
+            public float TotalForceMagnitude;
+            public Vector3 MaxForceDirection;
+            public float MaxForceMagnitude;
+        }
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_world_create")]
         internal static extern ulong WorldCreate();
 
@@ -522,6 +542,36 @@ namespace AFJK.Rapier
             float pointZ,
             QueryFilterNative filter,
             out RapierColliderHandle collider);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_active_events")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetActiveEvents(ulong world, RapierColliderHandle collider, out uint flags);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_active_events")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetActiveEvents(ulong world, RapierColliderHandle collider, uint flags);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_active_collision_types")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetActiveCollisionTypes(ulong world, RapierColliderHandle collider, out uint types);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_active_collision_types")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetActiveCollisionTypes(ulong world, RapierColliderHandle collider, uint types);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_get_contact_force_event_threshold")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderGetContactForceEventThreshold(ulong world, RapierColliderHandle collider, out float threshold);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_set_contact_force_event_threshold")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool ColliderSetContactForceEventThreshold(ulong world, RapierColliderHandle collider, float threshold);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_drain_collision_events")]
+        internal static extern UIntPtr DrainCollisionEvents(ulong world, IntPtr outEvents, UIntPtr maxEvents);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_drain_contact_force_events")]
+        internal static extern UIntPtr DrainContactForceEvents(ulong world, IntPtr outEvents, UIntPtr maxEvents);
 
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_raycast_all")]
         internal static extern UIntPtr RaycastAll(

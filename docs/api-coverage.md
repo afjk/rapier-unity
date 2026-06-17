@@ -47,7 +47,7 @@ Coverage is tracked separately for:
 | state hash (native) | Supported | Missing | Supported | S |
 | canonical hash | Supported | Missing | Supported | S |
 | debug render | Missing | Missing | Missing | B |
-| event queue | Missing | Missing | Missing | A |
+| event queue | Supported | Missing | Supported | A |
 | integration parameters / solver settings | Partial | Missing | Partial | B |
 
 ---
@@ -107,8 +107,8 @@ Coverage is tracked separately for:
 | restitution combine rule | Supported | Missing | Supported | A |
 | collision groups | Supported | Missing | Supported | A |
 | solver groups | Supported | Missing | Supported | A |
-| active events | Missing | Missing | Missing | A |
-| active collision types | Missing | Missing | Missing | B |
+| active events | Supported | Missing | Supported | A |
+| active collision types | Supported | Missing | Supported | B |
 | active hooks | Missing | Missing | Missing | C |
 | parent body | Supported | Supported | Supported | S |
 | local translation | Supported | Partial | Supported | A |
@@ -138,14 +138,14 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| collision started | Missing | Missing | Missing | A |
-| collision stopped | Missing | Missing | Missing | A |
-| intersection started | Missing | Missing | Missing | A |
-| intersection stopped | Missing | Missing | Missing | A |
-| contact force events | Missing | Missing | Missing | B |
+| collision started | Supported | Missing | Supported | A |
+| collision stopped | Supported | Missing | Supported | A |
+| intersection started | Supported | Missing | Supported | A |
+| intersection stopped | Supported | Missing | Supported | A |
+| contact force events | Supported | Missing | Supported | B |
 | contact pairs | Missing | Missing | Missing | B |
 | contact manifolds | Missing | Missing | Missing | C |
-| event queue drain API | Missing | Missing | Missing | A |
+| event queue drain API | Supported | Missing | Supported | A |
 
 ---
 
@@ -248,7 +248,13 @@ world step. Component-API wrappers remain pending.
 - intersectionsWithShape
 - query filters: exclude collider/body, collision group mask
 
-### Phase 4 — Events
+### Phase 4 — Events ✅ done
+
+Collision (start/stop) and contact-force events are captured during each world step
+via a custom `EventHandler` and drained through buffer-based FFI. Colliders opt in
+with `set_active_events`; `set_contact_force_event_threshold` and
+`set_active_collision_types` are also exposed. Events reflect the most recent step.
+Component-API wrappers remain pending.
 
 - collision started / stopped
 - intersection started / stopped

@@ -649,6 +649,61 @@ pub fn set_collider_position_wrt_parent(
     })
 }
 
+pub fn get_collider_active_events(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| collider.active_events().bits())
+}
+
+pub fn set_collider_active_events(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    flags: u32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_active_events(ActiveEvents::from_bits_truncate(flags))
+    })
+}
+
+pub fn get_collider_active_collision_types(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| {
+        u32::from(collider.active_collision_types().bits())
+    })
+}
+
+pub fn set_collider_active_collision_types(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    types: u32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_active_collision_types(ActiveCollisionTypes::from_bits_truncate(types as u16))
+    })
+}
+
+pub fn get_collider_contact_force_event_threshold(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<f32> {
+    map_collider(world, collider, |collider| {
+        collider.contact_force_event_threshold()
+    })
+}
+
+pub fn set_collider_contact_force_event_threshold(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    threshold: f32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_contact_force_event_threshold(threshold)
+    })
+}
+
 pub fn set_collider_stable_id(
     world: &mut RapierUnityWorld,
     collider: RapierUnityColliderHandle,

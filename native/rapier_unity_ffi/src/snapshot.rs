@@ -322,6 +322,8 @@ pub fn snapshot_read(world: &mut RapierUnityWorld, bytes: *const u8, len: usize)
         body_stable_ids,
         collider_stable_ids,
         body_can_sleep,
+        collision_events: Vec::new(),
+        contact_force_events: Vec::new(),
     };
 
     true

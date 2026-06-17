@@ -1,5 +1,6 @@
 mod body;
 mod collider;
+mod events;
 mod handles;
 mod hash;
 mod query;
@@ -14,6 +15,7 @@ pub use collider::{
     RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnityMeshColliderDesc,
     RapierUnitySphereColliderDesc,
 };
+pub use events::{RapierUnityCollisionEvent, RapierUnityContactForceEvent};
 pub use handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 pub use query::{
     RapierUnityPointProjection, RapierUnityQueryFilter, RapierUnityQueryShape, RapierUnityRay,
@@ -894,6 +896,130 @@ pub extern "C" fn rapier_unity_collider_set_position_wrt_parent(
         collider::set_collider_position_wrt_parent(world, collider, transform)
     })
     .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_flags` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_active_events(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_flags: *mut u32,
+) -> bool {
+    write_value(out_flags, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_active_events(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_active_events(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    flags: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_active_events(world, collider, flags)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_types` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_active_collision_types(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_types: *mut u32,
+) -> bool {
+    write_value(out_types, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_active_collision_types(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_active_collision_types(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    types: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_active_collision_types(world, collider, types)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_threshold` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_get_contact_force_event_threshold(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    out_threshold: *mut f32,
+) -> bool {
+    write_value(out_threshold, || {
+        world::with_world(world_id, |world| {
+            collider::get_collider_contact_force_event_threshold(world, collider)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_collider_set_contact_force_event_threshold(
+    world_id: u64,
+    collider: RapierUnityColliderHandle,
+    threshold: f32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        collider::set_collider_contact_force_event_threshold(world, collider, threshold)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_events` must be valid for writes of `max_events` `RapierUnityCollisionEvent`
+/// values when `max_events` is non-zero.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_drain_collision_events(
+    world_id: u64,
+    out_events: *mut RapierUnityCollisionEvent,
+    max_events: usize,
+) -> usize {
+    let Some(out) = (unsafe { raw_slice_mut(out_events, max_events) }) else {
+        return 0;
+    };
+
+    world::with_world(world_id, |world| events::drain_collision_events(world, out)).unwrap_or(0)
+}
+
+/// # Safety
+///
+/// `out_events` must be valid for writes of `max_events`
+/// `RapierUnityContactForceEvent` values when `max_events` is non-zero.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_drain_contact_force_events(
+    world_id: u64,
+    out_events: *mut RapierUnityContactForceEvent,
+    max_events: usize,
+) -> usize {
+    let Some(out) = (unsafe { raw_slice_mut(out_events, max_events) }) else {
+        return 0;
+    };
+
+    world::with_world(world_id, |world| {
+        events::drain_contact_force_events(world, out)
+    })
+    .unwrap_or(0)
 }
 
 /// # Safety
@@ -2180,6 +2306,105 @@ mod tests {
         };
         assert_eq!(count, 1);
         assert_eq!(found[0].index, collider.index);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collider_event_config_roundtrip() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        let collider = attach_test_box(world_id, body);
+        assert!(collider.is_valid());
+
+        // COLLISION_EVENTS (1) | CONTACT_FORCE_EVENTS (2)
+        assert!(rapier_unity_collider_set_active_events(
+            world_id, collider, 3
+        ));
+        assert!(rapier_unity_collider_set_contact_force_event_threshold(
+            world_id, collider, 2.5
+        ));
+
+        let mut flags = 0_u32;
+        let mut threshold = 0.0_f32;
+        assert!(unsafe { rapier_unity_collider_get_active_events(world_id, collider, &mut flags) });
+        assert!(unsafe {
+            rapier_unity_collider_get_contact_force_event_threshold(
+                world_id,
+                collider,
+                &mut threshold,
+            )
+        });
+        assert_eq!(flags, 3);
+        assert_eq!(threshold, 2.5);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn collision_events_are_reported_for_active_colliders() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, -9.81, 0.0));
+        assert!(rapier_unity_world_set_timestep(world_id, 1.0 / 60.0));
+
+        // Fixed ground box at the origin.
+        let ground = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        assert!(rapier_unity_collider_create_box(
+            world_id,
+            ground,
+            RapierUnityBoxColliderDesc::default()
+        )
+        .is_valid());
+
+        // Dynamic box falling onto the ground, with collision events enabled.
+        let faller = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Dynamic as u32,
+                position_y: 1.5,
+                can_sleep: 0,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+        let faller_collider = rapier_unity_collider_create_box(
+            world_id,
+            faller,
+            RapierUnityBoxColliderDesc::default(),
+        );
+        assert!(faller_collider.is_valid());
+        assert!(rapier_unity_collider_set_active_events(
+            world_id,
+            faller_collider,
+            1
+        ));
+
+        let mut started_events = 0;
+        let mut buffer = [RapierUnityCollisionEvent {
+            collider1: RapierUnityColliderHandle::INVALID,
+            collider2: RapierUnityColliderHandle::INVALID,
+            started: 0,
+            flags: 0,
+        }; 16];
+
+        for _ in 0..120 {
+            assert!(rapier_unity_world_step(world_id));
+            let count = unsafe {
+                rapier_unity_drain_collision_events(world_id, buffer.as_mut_ptr(), buffer.len())
+            };
+            for event in buffer.iter().take(count) {
+                if event.started == 1 {
+                    started_events += 1;
+                }
+            }
+        }
+
+        assert!(started_events >= 1);
 
         assert!(rapier_unity_world_destroy(world_id));
     }

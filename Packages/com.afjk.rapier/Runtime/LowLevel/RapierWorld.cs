@@ -763,6 +763,134 @@ namespace AFJK.Rapier
             }
         }
 
+        public bool TryGetColliderActiveEvents(RapierColliderHandle collider, out RapierActiveEvents events)
+        {
+            ThrowIfDisposed();
+            if (RapierNative.ColliderGetActiveEvents(world, collider, out var raw))
+            {
+                events = (RapierActiveEvents)raw;
+                return true;
+            }
+
+            events = default;
+            return false;
+        }
+
+        public bool SetColliderActiveEvents(RapierColliderHandle collider, RapierActiveEvents events)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetActiveEvents(world, collider, (uint)events);
+        }
+
+        public bool TryGetColliderActiveCollisionTypes(RapierColliderHandle collider, out RapierActiveCollisionTypes types)
+        {
+            ThrowIfDisposed();
+            if (RapierNative.ColliderGetActiveCollisionTypes(world, collider, out var raw))
+            {
+                types = (RapierActiveCollisionTypes)raw;
+                return true;
+            }
+
+            types = default;
+            return false;
+        }
+
+        public bool SetColliderActiveCollisionTypes(RapierColliderHandle collider, RapierActiveCollisionTypes types)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetActiveCollisionTypes(world, collider, (uint)types);
+        }
+
+        public bool TryGetColliderContactForceEventThreshold(RapierColliderHandle collider, out float threshold)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderGetContactForceEventThreshold(world, collider, out threshold);
+        }
+
+        public bool SetColliderContactForceEventThreshold(RapierColliderHandle collider, float threshold)
+        {
+            ThrowIfDisposed();
+            return RapierNative.ColliderSetContactForceEventThreshold(world, collider, threshold);
+        }
+
+        /// <summary>
+        /// Copies collision events from the most recent step into <paramref name="results"/>,
+        /// returning the number written (capped at the array length).
+        /// </summary>
+        public int DrainCollisionEvents(RapierCollisionEvent[] results)
+        {
+            ThrowIfDisposed();
+            if (results == null || results.Length == 0)
+            {
+                return 0;
+            }
+
+            var buffer = new RapierNative.CollisionEventNative[results.Length];
+            var handle = default(GCHandle);
+            int count;
+            try
+            {
+                handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                count = (int)RapierNative.DrainCollisionEvents(
+                    world,
+                    handle.AddrOfPinnedObject(),
+                    (UIntPtr)buffer.Length).ToUInt64();
+            }
+            finally
+            {
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                results[i] = new RapierCollisionEvent(buffer[i]);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Copies contact-force events from the most recent step into <paramref name="results"/>,
+        /// returning the number written (capped at the array length).
+        /// </summary>
+        public int DrainContactForceEvents(RapierContactForceEvent[] results)
+        {
+            ThrowIfDisposed();
+            if (results == null || results.Length == 0)
+            {
+                return 0;
+            }
+
+            var buffer = new RapierNative.ContactForceEventNative[results.Length];
+            var handle = default(GCHandle);
+            int count;
+            try
+            {
+                handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                count = (int)RapierNative.DrainContactForceEvents(
+                    world,
+                    handle.AddrOfPinnedObject(),
+                    (UIntPtr)buffer.Length).ToUInt64();
+            }
+            finally
+            {
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                results[i] = new RapierContactForceEvent(buffer[i]);
+            }
+
+            return count;
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();
