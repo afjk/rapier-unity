@@ -1005,6 +1005,47 @@ namespace AFJK.Rapier
             return false;
         }
 
+        /// <summary>
+        /// Fills <paramref name="vertices"/> (two endpoints per line) and
+        /// <paramref name="colors"/> (one per line) with the world's debug geometry,
+        /// returning the number of lines written. <paramref name="vertices"/> should be
+        /// at least twice the length of <paramref name="colors"/>.
+        /// </summary>
+        public int DebugRender(Vector3[] vertices, Color[] colors)
+        {
+            ThrowIfDisposed();
+            if (vertices == null || colors == null || vertices.Length < 2 || colors.Length == 0)
+            {
+                return 0;
+            }
+
+            var vertexHandle = default(GCHandle);
+            var colorHandle = default(GCHandle);
+            try
+            {
+                vertexHandle = GCHandle.Alloc(vertices, GCHandleType.Pinned);
+                colorHandle = GCHandle.Alloc(colors, GCHandleType.Pinned);
+                return (int)RapierNative.DebugRender(
+                    world,
+                    vertexHandle.AddrOfPinnedObject(),
+                    (UIntPtr)vertices.Length,
+                    colorHandle.AddrOfPinnedObject(),
+                    (UIntPtr)colors.Length).ToUInt64();
+            }
+            finally
+            {
+                if (vertexHandle.IsAllocated)
+                {
+                    vertexHandle.Free();
+                }
+
+                if (colorHandle.IsAllocated)
+                {
+                    colorHandle.Free();
+                }
+            }
+        }
+
         public ulong StateHash()
         {
             ThrowIfDisposed();

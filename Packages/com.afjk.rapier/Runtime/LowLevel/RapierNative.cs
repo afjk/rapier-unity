@@ -598,6 +598,14 @@ namespace AFJK.Rapier
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_drain_contact_force_events")]
         internal static extern UIntPtr DrainContactForceEvents(ulong world, IntPtr outEvents, UIntPtr maxEvents);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_debug_render")]
+        internal static extern UIntPtr DebugRender(
+            ulong world,
+            IntPtr outVertices,
+            UIntPtr maxVertices,
+            IntPtr outColors,
+            UIntPtr maxColors);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_character_controller_move")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool CharacterControllerMove(

@@ -46,7 +46,7 @@ Coverage is tracked separately for:
 | restore snapshot | Supported | Missing | Supported | A |
 | state hash (native) | Supported | Missing | Supported | S |
 | canonical hash | Supported | Missing | Supported | S |
-| debug render | Missing | Missing | Missing | B |
+| debug render | Supported | Partial | Supported | B |
 | event queue | Supported | Missing | Supported | A |
 | integration parameters / solver settings | Partial | Missing | Partial | B |
 
@@ -187,8 +187,8 @@ Coverage is tracked separately for:
 
 | Feature | Status | Priority | Notes |
 |---|---|---|---|
-| debug render | Missing | B | Rapier debug lines not yet exposed |
-| gizmo drawing | Missing | B | Unity Gizmo integration not started |
+| debug render | Supported | B | Native line/color buffers via `rapier_unity_debug_render` |
+| gizmo drawing | Partial | B | `RapierDebugRenderer.DrawRuntimeLines` (Debug.DrawLine); editor Gizmo overlay pending |
 | parity fixture runner | Supported | S | CrossHostParity sample |
 | deterministic replay sample | Supported | S | DeterministicReplay sample |
 | basic falling ball sample | Supported | S | BasicFallingBall sample |
@@ -291,7 +291,14 @@ Component-API wrappers remain pending.
 - computed movement and collisions output
 - autostep, snap to ground, slope settings
 
-### Phase 7 — Debug render and Unity gizmo tooling
+### Phase 7 — Debug render and Unity gizmo tooling ✅ done
+
+Rapier's debug-render pipeline (enabled via the `debug-render` crate feature) is
+exposed through `rapier_unity_debug_render`, which fills caller buffers with line
+endpoints and per-line colors. `RapierWorld.DebugRender` and the
+`RapierDebugRenderer.DrawRuntimeLines` helper (using `Debug.DrawLine`) wrap it.
+An editor-only Gizmo overlay component and a richer debug overlay remain pending
+(Component-API layer).
 
 - expose Rapier debug render vertices/colors
 - Unity Gizmo draw pass in Editor

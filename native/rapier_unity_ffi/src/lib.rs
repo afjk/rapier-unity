@@ -1,6 +1,7 @@
 mod body;
 mod character;
 mod collider;
+mod debug;
 mod events;
 mod handles;
 mod hash;
@@ -18,6 +19,7 @@ pub use collider::{
     RapierUnityBoxColliderDesc, RapierUnityCapsuleColliderDesc, RapierUnityMeshColliderDesc,
     RapierUnitySphereColliderDesc,
 };
+pub use debug::{RapierUnityDebugColor, RapierUnityDebugVertex};
 pub use events::{RapierUnityCollisionEvent, RapierUnityContactForceEvent};
 pub use handles::{RapierUnityColliderHandle, RapierUnityJointHandle, RapierUnityRigidBodyHandle};
 pub use query::{
@@ -1172,6 +1174,36 @@ pub unsafe extern "C" fn rapier_unity_character_controller_move(
         })
         .flatten()
     })
+}
+
+/// Renders the world's debug geometry into the provided buffers.
+///
+/// Writes two vertices per line into `out_vertices` and one color per line into
+/// `out_colors`, returning the number of lines written (capped by both buffers).
+///
+/// # Safety
+///
+/// `out_vertices` must be valid for writes of `max_vertices` `RapierUnityDebugVertex`
+/// values and `out_colors` valid for writes of `max_colors` `RapierUnityDebugColor`
+/// values when those lengths are non-zero.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_debug_render(
+    world_id: u64,
+    out_vertices: *mut RapierUnityDebugVertex,
+    max_vertices: usize,
+    out_colors: *mut RapierUnityDebugColor,
+    max_colors: usize,
+) -> usize {
+    let vertices = unsafe { raw_slice_mut(out_vertices, max_vertices) };
+    let colors = unsafe { raw_slice_mut(out_colors, max_colors) };
+    let (Some(vertices), Some(colors)) = (vertices, colors) else {
+        return 0;
+    };
+
+    world::with_world(world_id, |world| {
+        debug::debug_render(world, vertices, colors)
+    })
+    .unwrap_or(0)
 }
 
 /// # Safety
@@ -2769,6 +2801,35 @@ mod tests {
         });
         assert!((air_movement.translation_y + 1.0).abs() < 1.0e-3);
         assert_eq!(air_movement.grounded, 0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn debug_render_emits_lines_for_colliders() {
+        let world_id = rapier_unity_world_create();
+        let body = create_test_body(world_id);
+        assert!(attach_test_box(world_id, body).is_valid());
+        assert!(rapier_unity_world_step(world_id));
+
+        let mut vertices = [RapierUnityDebugVertex::default(); 256];
+        let mut colors = [RapierUnityDebugColor::default(); 128];
+        let lines = unsafe {
+            rapier_unity_debug_render(
+                world_id,
+                vertices.as_mut_ptr(),
+                vertices.len(),
+                colors.as_mut_ptr(),
+                colors.len(),
+            )
+        };
+        assert!(lines > 0);
+
+        // A zero-length buffer writes nothing.
+        let empty = unsafe {
+            rapier_unity_debug_render(world_id, std::ptr::null_mut(), 0, std::ptr::null_mut(), 0)
+        };
+        assert_eq!(empty, 0);
 
         assert!(rapier_unity_world_destroy(world_id));
     }
