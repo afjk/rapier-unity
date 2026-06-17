@@ -42,12 +42,12 @@ Coverage is tracked separately for:
 | set gravity | Supported | Supported | Supported | S |
 | set timestep | Supported | Supported | Supported | S |
 | step | Supported | Supported | Supported | S |
-| take snapshot | Supported | Missing | Supported | A |
-| restore snapshot | Supported | Missing | Supported | A |
-| state hash (native) | Supported | Missing | Supported | S |
-| canonical hash | Supported | Missing | Supported | S |
+| take snapshot | Supported | Supported | Supported | A |
+| restore snapshot | Supported | Supported | Supported | A |
+| state hash (native) | Supported | Supported | Supported | S |
+| canonical hash | Supported | Supported | Supported | S |
 | debug render | Supported | Partial | Supported | B |
-| event queue | Supported | Missing | Supported | A |
+| event queue | Supported | Supported | Supported | A |
 | integration parameters / solver settings | Partial | Missing | Partial | B |
 
 ---
@@ -140,14 +140,14 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| collision started | Supported | Missing | Supported | A |
-| collision stopped | Supported | Missing | Supported | A |
-| intersection started | Supported | Missing | Supported | A |
-| intersection stopped | Supported | Missing | Supported | A |
-| contact force events | Supported | Missing | Supported | B |
+| collision started | Supported | Supported | Supported | A |
+| collision stopped | Supported | Supported | Supported | A |
+| intersection started | Supported | Supported | Supported | A |
+| intersection stopped | Supported | Supported | Supported | A |
+| contact force events | Supported | Supported | Supported | B |
 | contact pairs | Missing | Missing | Missing | B |
 | contact manifolds | Missing | Missing | Missing | C |
-| event queue drain API | Supported | Missing | Supported | A |
+| event queue drain API | Supported | Supported | Supported | A |
 
 ---
 
@@ -316,6 +316,7 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   friction/restitution/density, sensor, enabled, combine rules, collision/solver
   groups, active events/collision-types, contact-force threshold; mesh collider
   trimesh/convex-hull creation).
+- `RapierWorldComponent` now exposes state hashes, snapshots, and event drains.
 - Joint Component wrappers now cover fixed, spherical, revolute, prismatic, rope,
   and spring joints with shared lifecycle management plus limit/motor APIs.
 - Samples: the `RapierJsDemos` sample now ports the full Rapier JS 3D demo
