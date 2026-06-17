@@ -737,6 +737,29 @@ pub unsafe extern "C" fn rapier_unity_collider_create_heightfield(
     .unwrap_or(RapierUnityColliderHandle::INVALID)
 }
 
+/// # Safety
+///
+/// `points` must be valid for reads of `point_count * 3` `f32` values (when
+/// `point_count` is non-zero). Points are interpreted as voxel sample centers.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_collider_create_voxels(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    points: *const f32,
+    point_count: usize,
+    voxel_size: RapierUnityVector3,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let Some(points) = (unsafe { raw_slice(points, point_count.saturating_mul(3)) }) else {
+        return RapierUnityColliderHandle::INVALID;
+    };
+
+    world::with_world_mut(world_id, |world| {
+        collider::create_voxels_collider(world, body, points, voxel_size, desc)
+    })
+    .unwrap_or(RapierUnityColliderHandle::INVALID)
+}
+
 #[no_mangle]
 pub extern "C" fn rapier_unity_collider_destroy(
     world_id: u64,
@@ -2350,6 +2373,55 @@ mod tests {
             )
         };
         assert!(!bad.is_valid());
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn voxels_collider_from_points() {
+        let world_id = rapier_unity_world_create();
+        let ground = rapier_unity_body_create(
+            world_id,
+            RapierUnityRigidBodyDesc {
+                body_type: RapierUnityRigidBodyType::Fixed as u32,
+                ..RapierUnityRigidBodyDesc::default()
+            },
+        );
+
+        let points: [f32; 12] = [
+            0.0, 0.0, 0.0, //
+            1.0, 0.0, 0.0, //
+            0.0, 1.0, 0.0, //
+            0.0, 0.0, 1.0,
+        ];
+        let voxel_size = RapierUnityVector3 {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        };
+        let collider = unsafe {
+            rapier_unity_collider_create_voxels(
+                world_id,
+                ground,
+                points.as_ptr(),
+                4,
+                voxel_size,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(collider.is_valid());
+
+        let empty = unsafe {
+            rapier_unity_collider_create_voxels(
+                world_id,
+                ground,
+                std::ptr::null(),
+                0,
+                voxel_size,
+                RapierUnityMeshColliderDesc::default(),
+            )
+        };
+        assert!(!empty.is_valid());
 
         assert!(rapier_unity_world_destroy(world_id));
     }

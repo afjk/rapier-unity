@@ -490,6 +490,15 @@ namespace AFJK.Rapier
             Vector3 scale,
             MeshColliderDescNative desc);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_voxels")]
+        internal static extern RapierColliderHandle ColliderCreateVoxels(
+            ulong world,
+            RapierRigidBodyHandle body,
+            IntPtr points,
+            UIntPtr pointCount,
+            Vector3 voxelSize,
+            MeshColliderDescNative desc);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_destroy")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool ColliderDestroy(ulong world, RapierColliderHandle collider);

@@ -378,6 +378,26 @@ pub fn create_heightfield_collider(
     attach_collider(world, body, desc.apply(builder))
 }
 
+pub fn create_voxels_collider(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    points: &[f32],
+    voxel_size: RapierUnityVector3,
+    desc: RapierUnityMeshColliderDesc,
+) -> RapierUnityColliderHandle {
+    let points = slice_to_points(points);
+    if points.is_empty() {
+        return RapierUnityColliderHandle::INVALID;
+    }
+
+    let builder = ColliderBuilder::voxels_from_points(
+        Vector::new(voxel_size.x, voxel_size.y, voxel_size.z),
+        &points,
+    );
+
+    attach_collider(world, body, desc.apply(builder))
+}
+
 pub fn destroy_collider(world: &mut RapierUnityWorld, collider: RapierUnityColliderHandle) -> bool {
     if !collider.is_valid() {
         return false;

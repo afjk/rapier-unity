@@ -33,6 +33,10 @@ impl StableHasher {
         }
     }
 
+    fn write_i32(&mut self, value: i32) {
+        self.write_u32(value as u32);
+    }
+
     fn write_u64(&mut self, value: u64) {
         for byte in value.to_le_bytes() {
             self.write_u8(byte);
@@ -181,6 +185,18 @@ fn hash_collider_shape(hasher: &mut StableHasher, collider: &Collider) {
             hasher.write_vec3(&capsule.segment.a.coords);
             hasher.write_vec3(&capsule.segment.b.coords);
             hasher.write_f32(capsule.radius);
+        }
+        TypedShape::Voxels(voxels) => {
+            hasher.write_u8(4);
+            hasher.write_vec3(&voxels.voxel_size());
+            let mut voxel_keys: Vec<_> = voxels.voxels().map(|voxel| voxel.grid_coords).collect();
+            voxel_keys.sort_by_key(|key| (key.x, key.y, key.z));
+            hasher.write_u64(voxel_keys.len() as u64);
+            for key in voxel_keys {
+                hasher.write_i32(key.x);
+                hasher.write_i32(key.y);
+                hasher.write_i32(key.z);
+            }
         }
         _ => {
             // Keep unknown shapes distinguishable until each shape gets a full stable descriptor.
