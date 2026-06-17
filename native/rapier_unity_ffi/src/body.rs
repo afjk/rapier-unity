@@ -589,3 +589,89 @@ pub fn set_body_enabled_translations(
         body.set_enabled_translations(allow_x, allow_y, allow_z, wake_up);
     })
 }
+
+pub fn set_body_sleeping(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    sleeping: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        if sleeping {
+            body.sleep();
+        } else {
+            body.wake_up(true);
+        }
+    })
+}
+
+pub fn add_body_force_at_point(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    force: RapierUnityVector3,
+    point: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.add_force_at_point(
+            Vector::new(force.x, force.y, force.z),
+            Point::new(point.x, point.y, point.z),
+            wake_up,
+        );
+    })
+}
+
+pub fn apply_body_impulse_at_point(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    point: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.apply_impulse_at_point(
+            Vector::new(impulse.x, impulse.y, impulse.z),
+            Point::new(point.x, point.y, point.z),
+            wake_up,
+        );
+    })
+}
+
+pub fn get_body_additional_solver_iterations(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<u32> {
+    map_body(world, body, |body| {
+        body.additional_solver_iterations().min(u32::MAX as usize) as u32
+    })
+}
+
+pub fn set_body_additional_solver_iterations(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    iterations: u32,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_additional_solver_iterations(iterations as usize);
+    })
+}
+
+pub fn get_body_mass(world: &RapierUnityWorld, body: RapierUnityRigidBodyHandle) -> Option<f32> {
+    map_body(world, body, |body| body.mass())
+}
+
+pub fn get_body_dominance_group(
+    world: &RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+) -> Option<i32> {
+    map_body(world, body, |body| i32::from(body.dominance_group()))
+}
+
+pub fn set_body_dominance_group(
+    world: &mut RapierUnityWorld,
+    body: RapierUnityRigidBodyHandle,
+    dominance: i32,
+) -> bool {
+    with_body_mut(world, body, |body| {
+        body.set_dominance_group(dominance.clamp(i8::MIN as i32, i8::MAX as i32) as i8);
+    })
+}

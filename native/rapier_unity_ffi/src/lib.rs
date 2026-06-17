@@ -517,6 +517,118 @@ pub extern "C" fn rapier_unity_body_set_enabled_translations(
 }
 
 #[no_mangle]
+pub extern "C" fn rapier_unity_body_set_sleeping(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    sleeping: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_sleeping(world, body, sleeping)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_add_force_at_point(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    force: RapierUnityVector3,
+    point: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::add_body_force_at_point(world, body, force, point, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_apply_impulse_at_point(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    impulse: RapierUnityVector3,
+    point: RapierUnityVector3,
+    wake_up: bool,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::apply_body_impulse_at_point(world, body, impulse, point, wake_up)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_iterations` must be valid for writes of one `u32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_additional_solver_iterations(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_iterations: *mut u32,
+) -> bool {
+    write_value(out_iterations, || {
+        world::with_world(world_id, |world| {
+            body::get_body_additional_solver_iterations(world, body)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_additional_solver_iterations(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    iterations: u32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_additional_solver_iterations(world, body, iterations)
+    })
+    .unwrap_or(false)
+}
+
+/// # Safety
+///
+/// `out_mass` must be valid for writes of one `f32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_mass(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_mass: *mut f32,
+) -> bool {
+    write_value(out_mass, || {
+        world::with_world(world_id, |world| body::get_body_mass(world, body)).flatten()
+    })
+}
+
+/// # Safety
+///
+/// `out_dominance` must be valid for writes of one `i32`.
+#[no_mangle]
+pub unsafe extern "C" fn rapier_unity_body_get_dominance_group(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    out_dominance: *mut i32,
+) -> bool {
+    write_value(out_dominance, || {
+        world::with_world(world_id, |world| {
+            body::get_body_dominance_group(world, body)
+        })
+        .flatten()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_unity_body_set_dominance_group(
+    world_id: u64,
+    body: RapierUnityRigidBodyHandle,
+    dominance: i32,
+) -> bool {
+    world::with_world_mut(world_id, |world| {
+        body::set_body_dominance_group(world, body, dominance)
+    })
+    .unwrap_or(false)
+}
+
+#[no_mangle]
 pub extern "C" fn rapier_unity_collider_create_box(
     world_id: u64,
     body: RapierUnityRigidBodyHandle,
@@ -2924,6 +3036,90 @@ mod tests {
         assert!(transform.position_x.abs() < 1.0e-4);
         assert!(transform.position_z.abs() < 1.0e-4);
         assert!(transform.position_y < 5.0);
+
+        assert!(rapier_unity_world_destroy(world_id));
+    }
+
+    #[test]
+    fn body_extra_setters_roundtrip_and_apply() {
+        let world_id = rapier_unity_world_create();
+        assert!(rapier_unity_world_set_gravity(world_id, 0.0, 0.0, 0.0));
+        let body = create_test_body(world_id);
+        assert!(attach_test_box(world_id, body).is_valid());
+
+        assert!(rapier_unity_body_set_additional_solver_iterations(
+            world_id, body, 4
+        ));
+        assert!(rapier_unity_body_set_dominance_group(world_id, body, 3));
+
+        let mut iterations = 0_u32;
+        let mut dominance = 0_i32;
+        let mut mass = 0.0_f32;
+        assert!(unsafe {
+            rapier_unity_body_get_additional_solver_iterations(world_id, body, &mut iterations)
+        });
+        assert!(unsafe { rapier_unity_body_get_dominance_group(world_id, body, &mut dominance) });
+        assert!(unsafe { rapier_unity_body_get_mass(world_id, body, &mut mass) });
+        assert_eq!(iterations, 4);
+        assert_eq!(dominance, 3);
+        assert!(mass > 0.0);
+
+        // Off-centre impulse imparts angular velocity.
+        assert!(rapier_unity_body_apply_impulse_at_point(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+            RapierUnityVector3 {
+                x: 0.5,
+                y: 0.0,
+                z: 0.0,
+            },
+            true,
+        ));
+        assert!(rapier_unity_world_step(world_id));
+        let mut angvel = RapierUnityVector3::default();
+        assert!(unsafe { rapier_unity_body_get_angvel(world_id, body, &mut angvel) });
+        assert!(angvel.z.abs() > 0.0);
+
+        // Force at point accumulates similarly before a step.
+        assert!(rapier_unity_body_add_force_at_point(
+            world_id,
+            body,
+            RapierUnityVector3 {
+                x: 0.0,
+                y: 10.0,
+                z: 0.0,
+            },
+            RapierUnityVector3 {
+                x: 0.5,
+                y: 0.0,
+                z: 0.0,
+            },
+            true,
+        ));
+
+        // Sleep then wake toggles the sleeping state.
+        assert!(rapier_unity_body_set_sleeping(world_id, body, true));
+        let mut state = RapierUnityRigidBodyState {
+            transform: RapierUnityTransform::default(),
+            linear_velocity_x: 0.0,
+            linear_velocity_y: 0.0,
+            linear_velocity_z: 0.0,
+            angular_velocity_x: 0.0,
+            angular_velocity_y: 0.0,
+            angular_velocity_z: 0.0,
+            sleeping: 0,
+            enabled: 0,
+        };
+        assert!(unsafe { rapier_unity_body_get_state(world_id, body, &mut state) });
+        assert_eq!(state.sleeping, 1);
+        assert!(rapier_unity_body_set_sleeping(world_id, body, false));
+        assert!(unsafe { rapier_unity_body_get_state(world_id, body, &mut state) });
+        assert_eq!(state.sleeping, 0);
 
         assert!(rapier_unity_world_destroy(world_id));
     }

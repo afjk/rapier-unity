@@ -256,6 +256,54 @@ namespace AFJK.Rapier
             return RapierNative.BodySetEnabledTranslations(world, body, allowX, allowY, allowZ, wakeUp);
         }
 
+        public bool SetBodySleeping(RapierRigidBodyHandle body, bool sleeping)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetSleeping(world, body, sleeping);
+        }
+
+        public bool AddForceAtPoint(RapierRigidBodyHandle body, Vector3 force, Vector3 point, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyAddForceAtPoint(world, body, force, point, wakeUp);
+        }
+
+        public bool ApplyImpulseAtPoint(RapierRigidBodyHandle body, Vector3 impulse, Vector3 point, bool wakeUp = true)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyApplyImpulseAtPoint(world, body, impulse, point, wakeUp);
+        }
+
+        public bool TryGetAdditionalSolverIterations(RapierRigidBodyHandle body, out uint iterations)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetAdditionalSolverIterations(world, body, out iterations);
+        }
+
+        public bool SetAdditionalSolverIterations(RapierRigidBodyHandle body, uint iterations)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetAdditionalSolverIterations(world, body, iterations);
+        }
+
+        public bool TryGetMass(RapierRigidBodyHandle body, out float mass)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetMass(world, body, out mass);
+        }
+
+        public bool TryGetDominanceGroup(RapierRigidBodyHandle body, out int dominance)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodyGetDominanceGroup(world, body, out dominance);
+        }
+
+        public bool SetDominanceGroup(RapierRigidBodyHandle body, int dominance)
+        {
+            ThrowIfDisposed();
+            return RapierNative.BodySetDominanceGroup(world, body, dominance);
+        }
+
         public RapierColliderHandle CreateBoxCollider(
             RapierRigidBodyHandle body,
             RapierBoxColliderDesc desc)

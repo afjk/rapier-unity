@@ -240,6 +240,31 @@ namespace AFJK.Rapier
             return TryGetActiveWorld(out var w) && w.SetEnabledTranslations(BodyHandle, allowX, allowY, allowZ, wakeUp);
         }
 
+        public bool SetSleeping(bool sleeping)
+        {
+            return TryGetActiveWorld(out var w) && w.SetBodySleeping(BodyHandle, sleeping);
+        }
+
+        public bool AddForceAtPoint(Vector3 force, Vector3 point, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.AddForceAtPoint(BodyHandle, force, point, wakeUp);
+        }
+
+        public bool ApplyImpulseAtPoint(Vector3 impulse, Vector3 point, bool wakeUp = true)
+        {
+            return TryGetActiveWorld(out var w) && w.ApplyImpulseAtPoint(BodyHandle, impulse, point, wakeUp);
+        }
+
+        public bool SetAdditionalSolverIterations(uint iterations)
+        {
+            return TryGetActiveWorld(out var w) && w.SetAdditionalSolverIterations(BodyHandle, iterations);
+        }
+
+        public bool SetDominanceGroup(int dominance)
+        {
+            return TryGetActiveWorld(out var w) && w.SetDominanceGroup(BodyHandle, dominance);
+        }
+
         internal void RegisterCollider(RapierColliderComponent collider)
         {
             if (collider == null || colliders.Contains(collider))
