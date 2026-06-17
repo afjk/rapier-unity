@@ -412,6 +412,38 @@ namespace AFJK.Rapier
             [MarshalAs(UnmanagedType.I1)] bool allowZ,
             [MarshalAs(UnmanagedType.I1)] bool wakeUp);
 
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_sleeping")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetSleeping(ulong world, RapierRigidBodyHandle body, [MarshalAs(UnmanagedType.I1)] bool sleeping);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_add_force_at_point")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyAddForceAtPoint(ulong world, RapierRigidBodyHandle body, Vector3 force, Vector3 point, [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_apply_impulse_at_point")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyApplyImpulseAtPoint(ulong world, RapierRigidBodyHandle body, Vector3 impulse, Vector3 point, [MarshalAs(UnmanagedType.I1)] bool wakeUp);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_additional_solver_iterations")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetAdditionalSolverIterations(ulong world, RapierRigidBodyHandle body, out uint iterations);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_additional_solver_iterations")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetAdditionalSolverIterations(ulong world, RapierRigidBodyHandle body, uint iterations);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_mass")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetMass(ulong world, RapierRigidBodyHandle body, out float mass);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_get_dominance_group")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodyGetDominanceGroup(ulong world, RapierRigidBodyHandle body, out int dominance);
+
+        [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_body_set_dominance_group")]
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool BodySetDominanceGroup(ulong world, RapierRigidBodyHandle body, int dominance);
+
         [DllImport(DllName, CallingConvention = Convention, EntryPoint = "rapier_unity_collider_create_box")]
         internal static extern RapierColliderHandle ColliderCreateBox(
             ulong world,

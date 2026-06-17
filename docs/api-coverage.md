@@ -68,22 +68,22 @@ Coverage is tracked separately for:
 | get / set gravity scale | Supported | Supported | Supported | A |
 | get / set linear damping | Supported | Supported | Supported | A |
 | get / set angular damping | Supported | Supported | Supported | A |
-| get / set additional solver iterations | Missing | Missing | Missing | B |
+| get / set additional solver iterations | Supported | Supported | Supported | B |
 | get / set CCD enabled | Supported | Supported | Supported | A |
 | get / set enabled | Supported | Supported | Supported | A |
-| sleep / wake | Missing | Missing | Missing | B |
+| sleep / wake | Supported | Supported | Supported | B |
 | add force | Supported | Supported | Supported | A |
 | add torque | Supported | Supported | Supported | A |
 | apply impulse | Supported | Supported | Supported | A |
 | apply torque impulse | Supported | Supported | Supported | A |
-| add force at point | Missing | Missing | Missing | B |
-| apply impulse at point | Missing | Missing | Missing | B |
+| add force at point | Supported | Supported | Supported | B |
+| apply impulse at point | Supported | Supported | Supported | B |
 | set next kinematic translation | Supported | Supported | Supported | A |
 | set next kinematic rotation | Supported | Supported | Supported | A |
 | lock/enable rotations (per axis) | Supported | Supported | Supported | A |
 | lock/enable translations (per axis) | Supported | Supported | Supported | A |
-| mass / mass properties getters | Missing | Missing | Missing | B |
-| dominance group | Missing | Missing | Missing | C |
+| mass / mass properties getters | Supported | Missing | Supported | B |
+| dominance group | Supported | Supported | Supported | C |
 | user data / stable id | Supported | Supported | Supported | S |
 
 ---
