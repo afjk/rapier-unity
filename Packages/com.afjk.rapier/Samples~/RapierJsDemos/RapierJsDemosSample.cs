@@ -97,6 +97,10 @@ namespace AFJK.Rapier.Samples
         private int nextBodyId;
         private int fountainSpawnCounter;
         private RapierColliderHandle lastCollider = RapierColliderHandle.Invalid;
+        private bool debugDraw;
+        private Material debugMaterial;
+        private Vector3[] debugVertices;
+        private Color[] debugColors;
 
         // Platform demo state.
         private VisualBody platformBody;
@@ -173,6 +177,71 @@ namespace AFJK.Rapier.Samples
         {
             DisposeWorld();
             DestroyGeneratedRoot();
+
+            if (debugMaterial != null)
+            {
+                DestroyImmediate(debugMaterial);
+                debugMaterial = null;
+            }
+        }
+
+        // Draws the world's native debug geometry (collider outlines) into the
+        // Game view with immediate-mode GL when "Debug draw colliders" is on.
+        private void OnRenderObject()
+        {
+            if (!debugDraw || world == null || !world.IsCreated)
+            {
+                return;
+            }
+
+            const int maxLines = 8192;
+            if (debugColors == null || debugColors.Length < maxLines)
+            {
+                debugColors = new Color[maxLines];
+            }
+
+            if (debugVertices == null || debugVertices.Length < maxLines * 2)
+            {
+                debugVertices = new Vector3[maxLines * 2];
+            }
+
+            var lines = world.DebugRender(debugVertices, debugColors);
+            if (lines <= 0)
+            {
+                return;
+            }
+
+            EnsureDebugMaterial();
+            debugMaterial.SetPass(0);
+            GL.PushMatrix();
+            GL.Begin(GL.LINES);
+            for (var i = 0; i < lines; i++)
+            {
+                GL.Color(debugColors[i]);
+                GL.Vertex(debugVertices[i * 2]);
+                GL.Vertex(debugVertices[(i * 2) + 1]);
+            }
+
+            GL.End();
+            GL.PopMatrix();
+        }
+
+        private void EnsureDebugMaterial()
+        {
+            if (debugMaterial != null)
+            {
+                return;
+            }
+
+            // Built-in colored shader for immediate-mode line drawing; drawn on
+            // top of scene geometry so collider outlines stay visible.
+            var shader = Shader.Find("Hidden/Internal-Colored");
+            debugMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            debugMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            debugMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            debugMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+            debugMaterial.SetInt("_ZWrite", 0);
+            debugMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
         }
 
         private void OnGUI()
@@ -206,6 +275,8 @@ namespace AFJK.Rapier.Samples
                 RequestRebuild();
             }
             GUILayout.EndHorizontal();
+
+            debugDraw = GUILayout.Toggle(debugDraw, " Debug draw colliders");
 
             GUILayout.Label("Entries are ported from the Rapier JS 3D demo catalog.");
             GUILayout.EndArea();
