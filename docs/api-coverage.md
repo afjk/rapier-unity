@@ -63,23 +63,23 @@ Coverage is tracked separately for:
 | destroy body | Supported | Supported | Supported | S |
 | get / set translation | Supported | Supported | Supported | S |
 | get / set rotation | Supported | Supported | Supported | S |
-| get / set linvel | Supported | Missing | Supported | S |
-| get / set angvel | Supported | Missing | Supported | S |
-| get / set gravity scale | Supported | Missing | Supported | A |
-| get / set linear damping | Supported | Missing | Supported | A |
-| get / set angular damping | Supported | Missing | Supported | A |
+| get / set linvel | Supported | Supported | Supported | S |
+| get / set angvel | Supported | Supported | Supported | S |
+| get / set gravity scale | Supported | Supported | Supported | A |
+| get / set linear damping | Supported | Supported | Supported | A |
+| get / set angular damping | Supported | Supported | Supported | A |
 | get / set additional solver iterations | Missing | Missing | Missing | B |
-| get / set CCD enabled | Supported | Missing | Supported | A |
-| get / set enabled | Supported | Missing | Supported | A |
+| get / set CCD enabled | Supported | Supported | Supported | A |
+| get / set enabled | Supported | Supported | Supported | A |
 | sleep / wake | Missing | Missing | Missing | B |
-| add force | Supported | Missing | Supported | A |
-| add torque | Supported | Missing | Supported | A |
-| apply impulse | Supported | Missing | Supported | A |
-| apply torque impulse | Supported | Missing | Supported | A |
+| add force | Supported | Supported | Supported | A |
+| add torque | Supported | Supported | Supported | A |
+| apply impulse | Supported | Supported | Supported | A |
+| apply torque impulse | Supported | Supported | Supported | A |
 | add force at point | Missing | Missing | Missing | B |
 | apply impulse at point | Missing | Missing | Missing | B |
-| set next kinematic translation | Supported | Missing | Supported | A |
-| set next kinematic rotation | Supported | Missing | Supported | A |
+| set next kinematic translation | Supported | Supported | Supported | A |
+| set next kinematic rotation | Supported | Supported | Supported | A |
 | mass / mass properties getters | Missing | Missing | Missing | B |
 | dominance group | Missing | Missing | Missing | C |
 | user data / stable id | Supported | Supported | Supported | S |
@@ -98,17 +98,17 @@ Coverage is tracked separately for:
 | heightfield | Supported | Missing | Supported | B |
 | round shapes | Missing | Missing | Missing | C |
 | sensor | Supported | Partial | Supported | A |
-| enabled | Supported | Missing | Supported | A |
+| enabled | Supported | Supported | Supported | A |
 | density | Supported | Supported | Supported | S |
 | mass (override) | Missing | Missing | Missing | B |
 | friction | Supported | Partial | Supported | S |
 | restitution | Supported | Partial | Supported | S |
-| friction combine rule | Supported | Missing | Supported | A |
-| restitution combine rule | Supported | Missing | Supported | A |
-| collision groups | Supported | Missing | Supported | A |
-| solver groups | Supported | Missing | Supported | A |
-| active events | Supported | Missing | Supported | A |
-| active collision types | Supported | Missing | Supported | B |
+| friction combine rule | Supported | Supported | Supported | A |
+| restitution combine rule | Supported | Supported | Supported | A |
+| collision groups | Supported | Supported | Supported | A |
+| solver groups | Supported | Supported | Supported | A |
+| active events | Supported | Supported | Supported | A |
+| active collision types | Supported | Supported | Supported | B |
 | active hooks | Missing | Missing | Missing | C |
 | parent body | Supported | Supported | Supported | S |
 | local translation | Supported | Partial | Supported | A |
