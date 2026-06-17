@@ -172,16 +172,16 @@ Coverage is tracked separately for:
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| create controller | Supported | Missing | Supported | A |
-| compute collider movement | Supported | Missing | Supported | A |
-| computed movement result | Supported | Missing | Supported | A |
+| create controller | Supported | Supported | Supported | A |
+| compute collider movement | Supported | Supported | Supported | A |
+| computed movement result | Supported | Supported | Supported | A |
 | collisions output | Missing | Missing | Missing | A |
-| autostep | Supported | Missing | Supported | B |
-| snap to ground | Supported | Missing | Supported | B |
-| slope settings | Supported | Missing | Supported | B |
-| up vector | Supported | Missing | Supported | A |
+| autostep | Supported | Supported | Supported | B |
+| snap to ground | Supported | Supported | Supported | B |
+| slope settings | Supported | Supported | Supported | B |
+| up vector | Supported | Supported | Supported | A |
 | apply impulses to dynamic bodies | Missing | Missing | Missing | B |
-| query filters | Supported | Missing | Supported | A |
+| query filters | Supported | Supported | Supported | A |
 
 ---
 
@@ -286,8 +286,9 @@ A kinematic character controller is exposed as a single stateless
 cuboid / capsule shape given a desired translation, configurable up vector,
 offset, slide, autostep, snap-to-ground, and slope angles, plus a `QueryFilter`.
 It returns the effective translation and grounded / sliding flags without moving
-any body. Per-collision output and dynamic-body impulses remain pending.
-Component-API wrappers remain pending.
+any body. `RapierCharacterControllerComponent` wraps this for
+`RapierRigidBodyComponent`, including optional next-kinematic-translation
+application. Per-collision output and dynamic-body impulses remain pending.
 
 - controller create / destroy
 - compute collider movement
@@ -320,5 +321,5 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   catalog — pyramid, keva tower, damping, CCD, fountain, collision groups,
   joints, platform, locked rotations, convex polyhedron, triangle mesh,
   heightfield, and character controller.
-- Pending: editor Gizmo overlay component, character/query Component-layer
-  wrappers, and Unity Editor playmode validation of the ported demos.
+- Pending: editor Gizmo overlay component, query Component-layer wrappers, and
+  Unity Editor playmode validation of the ported demos.
