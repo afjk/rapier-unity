@@ -27,7 +27,7 @@ namespace AFJK.Rapier.Samples
         [SerializeField] private float timestep = 1f / 60f;
         [SerializeField] private bool runOnStart = true;
         [SerializeField] private bool running = true;
-        [SerializeField] private int maxFountainBodies = 240;
+        [SerializeField] private int maxFountainBodies = 400;
 
         private static readonly DemoKind[] DemoValues =
         {
@@ -82,6 +82,7 @@ namespace AFJK.Rapier.Samples
         private ulong lastHash;
         private bool rebuildRequested;
         private int nextBodyId;
+        private int fountainSpawnCounter;
         private RapierColliderHandle lastCollider = RapierColliderHandle.Invalid;
 
         // Platform demo state.
@@ -199,6 +200,7 @@ namespace AFJK.Rapier.Samples
             tick = 0;
             lastHash = 0;
             nextBodyId = 0;
+            fountainSpawnCounter = 0;
 
             if (!TryProbeNative(out var nativeError))
             {
@@ -443,23 +445,31 @@ namespace AFJK.Rapier.Samples
 
         private void PreStepFountain()
         {
-            if (tick % 5 != 0)
+            const int spawnInterval = 5;
+            var position = new Vector3(0f, 10f, 0f);
+            var velocity = new Vector3(0f, 15f, 0f);
+
+            fountainSpawnCounter++;
+            if (fountainSpawnCounter % spawnInterval != 0)
             {
                 return;
             }
 
-            var shapeIndex = (tick / 5) % 3;
+            var shapeIndex = (fountainSpawnCounter / spawnInterval) % 4;
             VisualBody body;
             switch (shapeIndex)
             {
                 case 0:
-                    body = CreateBox(NextId("fountain-box"), RapierRigidBodyType.Dynamic, new Vector3(0f, 10f, 0f), Quaternion.identity, Vector3.one, 1f, ColorFor("box"), new Vector3(0f, 15f, 0f), Vector3.zero, 0f, 0f);
+                    body = CreateBox(NextId("fountain-box"), RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.one, 1f, ColorFor("box"), velocity, Vector3.zero, 0f, 0f);
                     break;
                 case 1:
-                    body = CreateSphere(NextId("fountain-sphere"), RapierRigidBodyType.Dynamic, new Vector3(0f, 10f, 0f), 1f, 1f, ColorFor("sphere"), new Vector3(0f, 15f, 0f), Vector3.zero, 0f, 0f, false);
+                    body = CreateSphere(NextId("fountain-sphere"), RapierRigidBodyType.Dynamic, position, 1f, 1f, ColorFor("sphere"), velocity, Vector3.zero, 0f, 0f, false);
+                    break;
+                case 2:
+                    body = CreateConvexCylinderBody(NextId("fountain-cylinder"), position, 1f, ColorFor("capsule"), velocity);
                     break;
                 default:
-                    body = CreateCapsule(NextId("fountain-capsule"), RapierRigidBodyType.Dynamic, new Vector3(0f, 10f, 0f), 1f, 0.4f, 1f, ColorFor("capsule"), new Vector3(0f, 15f, 0f));
+                    body = CreateConvexConeBody(NextId("fountain-cone"), position, 1f, ColorFor("keva"), velocity);
                     break;
             }
 
@@ -780,10 +790,10 @@ namespace AFJK.Rapier.Samples
             }
         }
 
-        private VisualBody CreateConvexCylinderBody(string id, Vector3 position, float radius, Color color)
+        private VisualBody CreateConvexCylinderBody(string id, Vector3 position, float radius, Color color, Vector3 linearVelocity = default)
         {
             const int segments = 16;
-            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, linearVelocity, Vector3.zero, 0f, 0f, false);
             var collider = world.CreateConvexHullCollider(body, CylinderHullPoints(radius, radius, segments), RapierMeshColliderDesc.Default);
             RegisterCollider(id, collider);
 
@@ -793,10 +803,10 @@ namespace AFJK.Rapier.Samples
             return TrackBody(id, body, visual, true);
         }
 
-        private VisualBody CreateConvexConeBody(string id, Vector3 position, float radius, Color color)
+        private VisualBody CreateConvexConeBody(string id, Vector3 position, float radius, Color color, Vector3 linearVelocity = default)
         {
             const int segments = 16;
-            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, Vector3.zero, Vector3.zero, 0f, 0f, false);
+            var body = CreateRigidBody(id, RapierRigidBodyType.Dynamic, position, Quaternion.identity, linearVelocity, Vector3.zero, 0f, 0f, false);
             var collider = world.CreateConvexHullCollider(body, ConeHullPoints(radius, segments), RapierMeshColliderDesc.Default);
             RegisterCollider(id, collider);
 
