@@ -97,22 +97,22 @@ Coverage is tracked separately for:
 | convex hull | Missing | Missing | Missing | A |
 | heightfield | Missing | Missing | Missing | B |
 | round shapes | Missing | Missing | Missing | C |
-| sensor | Missing | Missing | Missing | A |
-| enabled | Missing | Missing | Missing | A |
+| sensor | Supported | Partial | Supported | A |
+| enabled | Supported | Missing | Supported | A |
 | density | Supported | Supported | Supported | S |
 | mass (override) | Missing | Missing | Missing | B |
-| friction | Partial | Partial | Partial | S |
-| restitution | Partial | Partial | Partial | S |
-| friction combine rule | Missing | Missing | Missing | A |
-| restitution combine rule | Missing | Missing | Missing | A |
-| collision groups | Missing | Missing | Missing | A |
-| solver groups | Missing | Missing | Missing | A |
+| friction | Supported | Partial | Supported | S |
+| restitution | Supported | Partial | Supported | S |
+| friction combine rule | Supported | Missing | Supported | A |
+| restitution combine rule | Supported | Missing | Supported | A |
+| collision groups | Supported | Missing | Supported | A |
+| solver groups | Supported | Missing | Supported | A |
 | active events | Missing | Missing | Missing | A |
 | active collision types | Missing | Missing | Missing | B |
 | active hooks | Missing | Missing | Missing | C |
 | parent body | Supported | Supported | Supported | S |
-| local translation | Missing | Missing | Missing | A |
-| local rotation | Missing | Missing | Missing | A |
+| local translation | Supported | Partial | Supported | A |
+| local rotation | Supported | Partial | Supported | A |
 | stable id | Supported | Supported | Supported | S |
 
 ---
@@ -215,7 +215,13 @@ wrappers are still pending.
 - apply impulse, apply torque impulse
 - kinematic next-position: set next kinematic translation, set next kinematic rotation
 
-### Phase 2 — Collider filtering and material API
+### Phase 2 — Collider filtering and material API 🚧 in progress
+
+Runtime material/filtering setters and getters (friction, restitution, combine
+rules, collision/solver groups, sensor, enabled, density, translation/rotation
+wrt parent) are implemented at the native FFI and low-level C# layers. Mesh
+shapes (trimesh, convex hull, heightfield) and active-event flags are still
+pending.
 
 - friction and restitution combine rules
 - collision groups, solver groups

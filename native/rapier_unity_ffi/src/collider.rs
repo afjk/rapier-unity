@@ -1,6 +1,6 @@
 use rapier3d::prelude::*;
 
-use crate::body::RapierUnityTransform;
+use crate::body::{RapierUnityTransform, RapierUnityVector3};
 use crate::handles::{RapierUnityColliderHandle, RapierUnityRigidBodyHandle};
 use crate::world::RapierUnityWorld;
 
@@ -251,6 +251,259 @@ pub fn destroy_collider(world: &mut RapierUnityWorld, collider: RapierUnityColli
     }
 
     removed
+}
+
+/// Runs `f` against the collider referenced by `collider`, returning `true` when it exists.
+fn with_collider_mut(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    f: impl FnOnce(&mut Collider),
+) -> bool {
+    if !collider.is_valid() {
+        return false;
+    }
+
+    if let Some(collider) = world.colliders.get_mut(collider.into()) {
+        f(collider);
+        true
+    } else {
+        false
+    }
+}
+
+/// Reads a value from the collider referenced by `collider`, returning `None` when missing.
+fn map_collider<T>(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    f: impl FnOnce(&Collider) -> T,
+) -> Option<T> {
+    if !collider.is_valid() {
+        return None;
+    }
+
+    world.colliders.get(collider.into()).map(f)
+}
+
+/// Decodes the JS-style packed collision-groups value (memberships in the high
+/// 16 bits, filter in the low 16 bits) into Rapier `InteractionGroups`.
+fn decode_groups(value: u32) -> InteractionGroups {
+    InteractionGroups::new(
+        Group::from_bits_retain(value >> 16),
+        Group::from_bits_retain(value & 0xFFFF),
+    )
+}
+
+/// Encodes Rapier `InteractionGroups` back into the JS-style packed value.
+fn encode_groups(groups: InteractionGroups) -> u32 {
+    ((groups.memberships.bits() & 0xFFFF) << 16) | (groups.filter.bits() & 0xFFFF)
+}
+
+fn combine_rule_from_u32(value: u32) -> Option<CoefficientCombineRule> {
+    match value {
+        0 => Some(CoefficientCombineRule::Average),
+        1 => Some(CoefficientCombineRule::Min),
+        2 => Some(CoefficientCombineRule::Multiply),
+        3 => Some(CoefficientCombineRule::Max),
+        _ => None,
+    }
+}
+
+fn combine_rule_to_u32(rule: CoefficientCombineRule) -> u32 {
+    match rule {
+        CoefficientCombineRule::Average => 0,
+        CoefficientCombineRule::Min => 1,
+        CoefficientCombineRule::Multiply => 2,
+        CoefficientCombineRule::Max => 3,
+    }
+}
+
+pub fn get_collider_friction(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<f32> {
+    map_collider(world, collider, |collider| collider.friction())
+}
+
+pub fn set_collider_friction(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    friction: f32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_friction(friction.max(0.0))
+    })
+}
+
+pub fn get_collider_restitution(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<f32> {
+    map_collider(world, collider, |collider| collider.restitution())
+}
+
+pub fn set_collider_restitution(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    restitution: f32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_restitution(restitution.max(0.0))
+    })
+}
+
+pub fn get_collider_friction_combine_rule(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| {
+        combine_rule_to_u32(collider.friction_combine_rule())
+    })
+}
+
+pub fn set_collider_friction_combine_rule(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    rule: u32,
+) -> bool {
+    let Some(rule) = combine_rule_from_u32(rule) else {
+        return false;
+    };
+
+    with_collider_mut(world, collider, |collider| {
+        collider.set_friction_combine_rule(rule)
+    })
+}
+
+pub fn get_collider_restitution_combine_rule(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| {
+        combine_rule_to_u32(collider.restitution_combine_rule())
+    })
+}
+
+pub fn set_collider_restitution_combine_rule(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    rule: u32,
+) -> bool {
+    let Some(rule) = combine_rule_from_u32(rule) else {
+        return false;
+    };
+
+    with_collider_mut(world, collider, |collider| {
+        collider.set_restitution_combine_rule(rule)
+    })
+}
+
+pub fn get_collider_collision_groups(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| {
+        encode_groups(collider.collision_groups())
+    })
+}
+
+pub fn set_collider_collision_groups(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    groups: u32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_collision_groups(decode_groups(groups))
+    })
+}
+
+pub fn get_collider_solver_groups(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<u32> {
+    map_collider(world, collider, |collider| {
+        encode_groups(collider.solver_groups())
+    })
+}
+
+pub fn set_collider_solver_groups(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    groups: u32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_solver_groups(decode_groups(groups))
+    })
+}
+
+pub fn get_collider_sensor(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<bool> {
+    map_collider(world, collider, |collider| collider.is_sensor())
+}
+
+pub fn set_collider_sensor(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    is_sensor: bool,
+) -> bool {
+    with_collider_mut(world, collider, |collider| collider.set_sensor(is_sensor))
+}
+
+pub fn get_collider_enabled(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<bool> {
+    map_collider(world, collider, |collider| collider.is_enabled())
+}
+
+pub fn set_collider_enabled(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    enabled: bool,
+) -> bool {
+    with_collider_mut(world, collider, |collider| collider.set_enabled(enabled))
+}
+
+pub fn get_collider_density(
+    world: &RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+) -> Option<f32> {
+    map_collider(world, collider, |collider| collider.density())
+}
+
+pub fn set_collider_density(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    density: f32,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_density(density.max(0.0))
+    })
+}
+
+pub fn set_collider_translation_wrt_parent(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    translation: RapierUnityVector3,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_translation_wrt_parent(Vector::new(
+            translation.x,
+            translation.y,
+            translation.z,
+        ));
+    })
+}
+
+pub fn set_collider_position_wrt_parent(
+    world: &mut RapierUnityWorld,
+    collider: RapierUnityColliderHandle,
+    transform: RapierUnityTransform,
+) -> bool {
+    with_collider_mut(world, collider, |collider| {
+        collider.set_position_wrt_parent(transform.to_pose());
+    })
 }
 
 pub fn set_collider_stable_id(
