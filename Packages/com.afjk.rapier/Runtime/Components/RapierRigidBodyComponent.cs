@@ -20,6 +20,7 @@ namespace AFJK.Rapier
         [SerializeField] private float angularDamping;
 
         private readonly List<RapierColliderComponent> colliders = new List<RapierColliderComponent>();
+        private readonly List<RapierJointComponent> joints = new List<RapierJointComponent>();
 
         public RapierRigidBodyHandle BodyHandle { get; private set; } = RapierRigidBodyHandle.Invalid;
 
@@ -86,11 +87,21 @@ namespace AFJK.Rapier
                 colliders[i].CreateInWorld(this);
             }
 
+            for (var i = 0; i < joints.Count; i++)
+            {
+                joints[i].CreateInWorld();
+            }
+
             return true;
         }
 
         public void Unregister()
         {
+            for (var i = joints.Count - 1; i >= 0; i--)
+            {
+                joints[i].DestroyInWorld();
+            }
+
             for (var i = colliders.Count - 1; i >= 0; i--)
             {
                 colliders[i].DestroyInWorld();
@@ -285,6 +296,26 @@ namespace AFJK.Rapier
             colliders.Remove(collider);
         }
 
+        internal void RegisterJoint(RapierJointComponent joint)
+        {
+            if (joint == null || joints.Contains(joint))
+            {
+                return;
+            }
+
+            joints.Add(joint);
+
+            if (IsRegistered)
+            {
+                joint.CreateInWorld();
+            }
+        }
+
+        internal void UnregisterJoint(RapierJointComponent joint)
+        {
+            joints.Remove(joint);
+        }
+
         internal void SyncTransformToRapierBeforeStepIfNeeded()
         {
             if (syncTransformToRapierBeforeStep)
@@ -312,6 +343,11 @@ namespace AFJK.Rapier
             for (var i = 0; i < colliders.Count; i++)
             {
                 colliders[i].ForgetNativeRegistration();
+            }
+
+            for (var i = 0; i < joints.Count; i++)
+            {
+                joints[i].ForgetNativeRegistration();
             }
         }
 
