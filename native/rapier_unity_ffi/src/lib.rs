@@ -3559,3 +3559,262 @@ mod tests {
         assert!(rapier_unity_world_destroy(restored_world));
     }
 }
+
+#[cfg(test)]
+mod parity_golden {
+    use super::*;
+    use serde::Deserialize;
+    use std::path::PathBuf;
+
+    const HASH_VERSION: &str = "SceneSyncCanonicalPhysicsHashV1";
+    const RAPIER_CORE_VERSION: &str = "0.30.0";
+
+    const FIXTURES: &[&str] = &[
+        "parity-basic-001.json",
+        "parity-freefall-001.json",
+        "parity-contact-basic-001.json",
+    ];
+
+    // All numbers are f32. The C# runner holds floats, so high-precision JSON
+    // values must be narrowed to f32 before crossing the FFI boundary or the
+    // hash will not match.
+    #[derive(Deserialize)]
+    struct Fixture {
+        #[allow(dead_code)]
+        profile: String,
+        #[serde(rename = "rapierCoreVersion")]
+        rapier_core_version: String,
+        timestep: f32,
+        gravity: [f32; 3],
+        bodies: Vec<Body>,
+        #[serde(rename = "sampleTicks")]
+        sample_ticks: Vec<i32>,
+    }
+
+    #[derive(Deserialize)]
+    struct Body {
+        id: String,
+        #[serde(rename = "type")]
+        body_type: String,
+        shape: String,
+        position: [f32; 3],
+        #[serde(default)]
+        rotation: Option<[f32; 4]>,
+        #[serde(rename = "halfExtents")]
+        half_extents: [f32; 3],
+        #[serde(default = "one")]
+        density: f32,
+        #[serde(rename = "linearVelocity", default)]
+        linear_velocity: Option<[f32; 3]>,
+        #[serde(rename = "angularVelocity", default)]
+        angular_velocity: Option<[f32; 3]>,
+        #[serde(rename = "linearDamping", default)]
+        linear_damping: f32,
+        #[serde(rename = "angularDamping", default)]
+        angular_damping: f32,
+        #[serde(rename = "canSleep", default = "yes")]
+        can_sleep: bool,
+        #[serde(default)]
+        ccd: bool,
+        #[serde(default = "half")]
+        friction: f32,
+        #[serde(default = "fifth")]
+        restitution: f32,
+    }
+
+    fn one() -> f32 {
+        1.0
+    }
+    fn half() -> f32 {
+        0.5
+    }
+    fn fifth() -> f32 {
+        0.2
+    }
+    fn yes() -> bool {
+        true
+    }
+
+    #[derive(serde::Serialize, Deserialize)]
+    struct Golden {
+        profile: String,
+        #[serde(rename = "hashVersion")]
+        hash_version: String,
+        #[serde(rename = "rapierCoreVersion")]
+        rapier_core_version: String,
+        hashes: std::collections::BTreeMap<String, String>,
+    }
+
+    fn fixtures_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("fixtures")
+            .join("rapier")
+    }
+
+    fn stable_id(id: &str) -> u64 {
+        let bytes = id.as_bytes();
+        unsafe { rapier_unity_stable_id_hash(bytes.as_ptr(), bytes.len()) }
+    }
+
+    fn run_fixture(fx: &Fixture) -> std::collections::BTreeMap<String, String> {
+        assert_eq!(fx.rapier_core_version, RAPIER_CORE_VERSION);
+
+        let world = rapier_unity_world_create();
+        assert_ne!(world, 0);
+        assert!(rapier_unity_world_set_gravity(
+            world,
+            fx.gravity[0],
+            fx.gravity[1],
+            fx.gravity[2]
+        ));
+        assert!(rapier_unity_world_set_timestep(world, fx.timestep));
+
+        for b in &fx.bodies {
+            assert_eq!(b.shape, "box", "v0 parity fixtures are box-only");
+            let fixed = b.body_type == "fixed";
+            let rot = b.rotation.unwrap_or([0.0, 0.0, 0.0, 1.0]);
+            let linv = if fixed {
+                [0.0; 3]
+            } else {
+                b.linear_velocity.unwrap_or([0.0; 3])
+            };
+            let angv = if fixed {
+                [0.0; 3]
+            } else {
+                b.angular_velocity.unwrap_or([0.0; 3])
+            };
+
+            let body = rapier_unity_body_create(
+                world,
+                RapierUnityRigidBodyDesc {
+                    body_type: if fixed { 1 } else { 0 },
+                    position_x: b.position[0],
+                    position_y: b.position[1],
+                    position_z: b.position[2],
+                    rotation_x: rot[0],
+                    rotation_y: rot[1],
+                    rotation_z: rot[2],
+                    rotation_w: rot[3],
+                    linear_velocity_x: linv[0],
+                    linear_velocity_y: linv[1],
+                    linear_velocity_z: linv[2],
+                    angular_velocity_x: angv[0],
+                    angular_velocity_y: angv[1],
+                    angular_velocity_z: angv[2],
+                    linear_damping: b.linear_damping.max(0.0),
+                    angular_damping: b.angular_damping.max(0.0),
+                    can_sleep: u8::from(b.can_sleep),
+                    ccd_enabled: u8::from(!fixed && b.ccd),
+                },
+            );
+            assert!(body.is_valid(), "body '{}' invalid", b.id);
+
+            let sid = stable_id(&b.id);
+            assert!(rapier_unity_body_set_stable_id(world, body, sid));
+
+            let collider = rapier_unity_collider_create_box(
+                world,
+                body,
+                RapierUnityBoxColliderDesc {
+                    half_extents_x: b.half_extents[0],
+                    half_extents_y: b.half_extents[1],
+                    half_extents_z: b.half_extents[2],
+                    density: b.density.max(0.0),
+                    friction: b.friction.max(0.0),
+                    restitution: b.restitution.max(0.0),
+                    is_sensor: 0,
+                    local_position_x: 0.0,
+                    local_position_y: 0.0,
+                    local_position_z: 0.0,
+                    local_rotation_x: 0.0,
+                    local_rotation_y: 0.0,
+                    local_rotation_z: 0.0,
+                    local_rotation_w: 1.0,
+                },
+            );
+            assert!(collider.is_valid(), "collider '{}' invalid", b.id);
+            assert!(rapier_unity_collider_set_stable_id(world, collider, sid));
+        }
+
+        let mut ticks: Vec<i32> = fx
+            .sample_ticks
+            .iter()
+            .copied()
+            .filter(|t| *t >= 0)
+            .collect();
+        ticks.sort_unstable();
+        ticks.dedup();
+
+        let mut out = std::collections::BTreeMap::new();
+        let mut current = 0i32;
+        for target in ticks {
+            while current < target {
+                assert!(
+                    rapier_unity_world_step(world),
+                    "step failed at tick {current}"
+                );
+                current += 1;
+            }
+            let h = rapier_unity_world_state_hash(world);
+            out.insert(target.to_string(), format!("{h:016x}"));
+        }
+        assert!(rapier_unity_world_destroy(world));
+        out
+    }
+
+    #[test]
+    fn cross_host_parity_golden() {
+        let record = std::env::var("RAPIER_PARITY_RECORD").is_ok();
+        let dir = fixtures_dir();
+
+        for name in FIXTURES {
+            let fx_path = dir.join(name);
+            let fx_text = std::fs::read_to_string(&fx_path)
+                .unwrap_or_else(|e| panic!("read {}: {e}", fx_path.display()));
+            let fx: Fixture = serde_json::from_str(&fx_text)
+                .unwrap_or_else(|e| panic!("parse {}: {e}", fx_path.display()));
+
+            let hashes = run_fixture(&fx);
+            let golden_path = dir.join(name.replace(".json", ".golden.json"));
+
+            if record {
+                let golden = Golden {
+                    profile: fx.profile.clone(),
+                    hash_version: HASH_VERSION.to_string(),
+                    rapier_core_version: RAPIER_CORE_VERSION.to_string(),
+                    hashes,
+                };
+                std::fs::write(
+                    &golden_path,
+                    serde_json::to_string_pretty(&golden).unwrap() + "\n",
+                )
+                .unwrap();
+                eprintln!("recorded {}", golden_path.display());
+                continue;
+            }
+
+            let golden_text = std::fs::read_to_string(&golden_path).unwrap_or_else(|e| {
+                panic!(
+                    "missing golden {}: {e}\nrun: RAPIER_PARITY_RECORD=1 cargo test -p rapier_unity_ffi parity_golden",
+                    golden_path.display()
+                )
+            });
+            let golden: Golden = serde_json::from_str(&golden_text).unwrap();
+
+            assert_eq!(
+                golden.hash_version, HASH_VERSION,
+                "{name}: hash version drift"
+            );
+            assert_eq!(
+                golden.rapier_core_version, RAPIER_CORE_VERSION,
+                "{name}: core version drift"
+            );
+            assert_eq!(
+                hashes, golden.hashes,
+                "{name}: native hashes diverged from committed golden"
+            );
+        }
+    }
+}

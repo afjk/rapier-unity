@@ -1,0 +1,20 @@
+{
+  "profile": "SceneSyncRapierParity-0.30",
+  "hashVersion": "SceneSyncCanonicalPhysicsHashV1",
+  "rapierCoreVersion": "0.30.0",
+  "hashes": {
+    "0": "717960f5748ebc9b",
+    "1": "97be88421da8e037",
+    "10": "7739acdd722fa024",
+    "120": "c49b9e20d1703bfe",
+    "2": "9a569c50cfad59f8",
+    "30": "a4e8bcc70f15dfc3",
+    "300": "8e235a1c14a6d011",
+    "55": "38956d3b881e76e2",
+    "56": "dd9c85319711aa62",
+    "57": "1e60f60ea96e5965",
+    "58": "f53842bcbbdae1e8",
+    "60": "66ee8d6b45f00a51",
+    "600": "1d1d479bf100e287"
+  }
+}
