@@ -13,6 +13,26 @@ namespace AFJK.Rapier
         [SerializeField] private Vector3 localPosition;
         [SerializeField] private Quaternion localRotation = Quaternion.identity;
 
+        [Header("Stable Id (optional, for external references)")]
+        [SerializeField] private string stableId = string.Empty;
+
+        [Header("Authored material/filter (applied on creation)")]
+        [SerializeField] private RapierCoefficientCombineRule frictionCombineRule = RapierCoefficientCombineRule.Average;
+        [SerializeField] private RapierCoefficientCombineRule restitutionCombineRule = RapierCoefficientCombineRule.Average;
+        [SerializeField] private bool overrideCollisionGroups;
+        [SerializeField] private uint collisionGroupMemberships = 0xFFFF;
+        [SerializeField] private uint collisionGroupFilter = 0xFFFF;
+        [SerializeField] private bool overrideSolverGroups;
+        [SerializeField] private uint solverGroupMemberships = 0xFFFF;
+        [SerializeField] private uint solverGroupFilter = 0xFFFF;
+        [SerializeField] private RapierActiveEvents activeEvents = RapierActiveEvents.None;
+        [SerializeField] private bool overrideActiveCollisionTypes;
+        [SerializeField] private RapierActiveCollisionTypes activeCollisionTypes =
+            RapierActiveCollisionTypes.DynamicDynamic |
+            RapierActiveCollisionTypes.DynamicKinematic |
+            RapierActiveCollisionTypes.DynamicFixed;
+        [SerializeField] private float contactForceEventThreshold;
+
         public RapierColliderHandle ColliderHandle { get; protected set; } = RapierColliderHandle.Invalid;
 
         public bool IsRegistered => ColliderHandle.IsValid;
@@ -53,6 +73,27 @@ namespace AFJK.Rapier
         {
             get => localRotation == default(Quaternion) ? Quaternion.identity : localRotation;
             set => localRotation = value == default(Quaternion) ? Quaternion.identity : value;
+        }
+
+        public string StableId
+        {
+            get => stableId;
+            set => stableId = value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Sets the collision interaction groups that will be applied when the collider is
+        /// created (and immediately, if it already exists).
+        /// </summary>
+        public void SetAuthoredCollisionGroups(ushort memberships, ushort filter)
+        {
+            overrideCollisionGroups = true;
+            collisionGroupMemberships = memberships;
+            collisionGroupFilter = filter;
+            if (IsRegistered)
+            {
+                SetCollisionGroups(RapierWorld.InteractionGroups(memberships, filter));
+            }
         }
 
         public bool Register()
@@ -178,7 +219,56 @@ namespace AFJK.Rapier
                 return false;
             }
 
+            ApplyAuthoredSettings(body.World);
             return true;
+        }
+
+        // Applies serialized material/filter/event settings to the freshly created collider.
+        // Shape descriptors already carry friction/restitution/sensor/density, so this layer
+        // covers the remaining configurable collider state in one explicit pass.
+        private void ApplyAuthoredSettings(RapierWorld activeWorld)
+        {
+            if (activeWorld == null || !activeWorld.IsCreated || !ColliderHandle.IsValid)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(stableId))
+            {
+                activeWorld.SetColliderStableId(ColliderHandle, RapierWorld.StableIdHash(stableId));
+            }
+
+            activeWorld.SetColliderFrictionCombineRule(ColliderHandle, frictionCombineRule);
+            activeWorld.SetColliderRestitutionCombineRule(ColliderHandle, restitutionCombineRule);
+
+            if (overrideCollisionGroups)
+            {
+                activeWorld.SetColliderCollisionGroups(
+                    ColliderHandle,
+                    RapierWorld.InteractionGroups((ushort)collisionGroupMemberships, (ushort)collisionGroupFilter));
+            }
+
+            if (overrideSolverGroups)
+            {
+                activeWorld.SetColliderSolverGroups(
+                    ColliderHandle,
+                    RapierWorld.InteractionGroups((ushort)solverGroupMemberships, (ushort)solverGroupFilter));
+            }
+
+            if (activeEvents != RapierActiveEvents.None)
+            {
+                activeWorld.SetColliderActiveEvents(ColliderHandle, activeEvents);
+            }
+
+            if (overrideActiveCollisionTypes)
+            {
+                activeWorld.SetColliderActiveCollisionTypes(ColliderHandle, activeCollisionTypes);
+            }
+
+            if (contactForceEventThreshold > 0f)
+            {
+                activeWorld.SetColliderContactForceEventThreshold(ColliderHandle, contactForceEventThreshold);
+            }
         }
 
         internal void DestroyInWorld()

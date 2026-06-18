@@ -58,8 +58,8 @@ Coverage is tracked separately for:
 |---|---|---|---|---|
 | create fixed body | Supported | Supported | Supported | S |
 | create dynamic body | Supported | Supported | Supported | S |
-| create kinematic position-based body | Supported | Missing | Supported | A |
-| create kinematic velocity-based body | Supported | Missing | Supported | A |
+| create kinematic position-based body | Supported | Supported | Supported | A |
+| create kinematic velocity-based body | Supported | Supported | Supported | A |
 | destroy body | Supported | Supported | Supported | S |
 | get / set translation | Supported | Supported | Supported | S |
 | get / set rotation | Supported | Supported | Supported | S |
@@ -82,7 +82,7 @@ Coverage is tracked separately for:
 | set next kinematic rotation | Supported | Supported | Supported | A |
 | lock/enable rotations (per axis) | Supported | Supported | Supported | A |
 | lock/enable translations (per axis) | Supported | Supported | Supported | A |
-| mass / mass properties getters | Supported | Missing | Supported | B |
+| mass / mass properties getters | Supported | Supported | Supported | B |
 | dominance group | Supported | Supported | Supported | C |
 | user data / stable id | Supported | Supported | Supported | S |
 
@@ -97,14 +97,15 @@ Coverage is tracked separately for:
 | capsule | Supported | Supported | Supported | S |
 | trimesh | Supported | Supported | Supported | A |
 | convex hull | Supported | Supported | Supported | A |
-| heightfield | Supported | Missing | Supported | B |
+| heightfield | Supported | Supported | Supported | B |
+| voxels | Supported | Supported | Supported | B |
 | round shapes | Missing | Missing | Missing | C |
-| sensor | Supported | Partial | Supported | A |
+| sensor | Supported | Supported | Supported | A |
 | enabled | Supported | Supported | Supported | A |
 | density | Supported | Supported | Supported | S |
 | mass (override) | Missing | Missing | Missing | B |
-| friction | Supported | Partial | Supported | S |
-| restitution | Supported | Partial | Supported | S |
+| friction | Supported | Supported | Supported | S |
+| restitution | Supported | Supported | Supported | S |
 | friction combine rule | Supported | Supported | Supported | A |
 | restitution combine rule | Supported | Supported | Supported | A |
 | collision groups | Supported | Supported | Supported | A |
@@ -113,26 +114,29 @@ Coverage is tracked separately for:
 | active collision types | Supported | Supported | Supported | B |
 | active hooks | Missing | Missing | Missing | C |
 | parent body | Supported | Supported | Supported | S |
-| local translation | Supported | Partial | Supported | A |
-| local rotation | Supported | Partial | Supported | A |
+| local translation | Supported | Supported | Supported | A |
+| local rotation | Supported | Supported | Supported | A |
 | stable id | Supported | Supported | Supported | S |
 
 ---
 
 ## 4. Scene Queries
 
+Component-API coverage is provided by the `RapierPhysics` static façade, which
+accepts either a `RapierWorld` or a `RapierWorldComponent`.
+
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
-| castRay | Supported | N/A | Supported | S |
-| castRayAndGetNormal | Supported | N/A | Supported | A |
-| intersectionsWithRay / raycast all | Supported | N/A | Supported | A |
-| projectPoint | Supported | N/A | Supported | A |
-| intersectionsWithPoint | Supported | N/A | Supported | B |
-| castShape | Supported | N/A | Supported | A |
-| intersectionsWithShape | Supported | N/A | Supported | B |
-| query filters | Supported | N/A | Supported | A |
-| exclude collider / body filter | Supported | N/A | Supported | A |
-| collision groups filter | Supported | N/A | Supported | A |
+| castRay | Supported | Supported | Supported | S |
+| castRayAndGetNormal | Supported | Supported | Supported | A |
+| intersectionsWithRay / raycast all | Supported | Supported | Supported | A |
+| projectPoint | Supported | Supported | Supported | A |
+| intersectionsWithPoint | Supported | Supported | Supported | B |
+| castShape | Supported | Supported | Supported | A |
+| intersectionsWithShape | Supported | Supported | Supported | B |
+| query filters | Supported | Supported | Supported | A |
+| exclude collider / body filter | Supported | Supported | Supported | A |
+| collision groups filter | Supported | Supported | Supported | A |
 
 ---
 
@@ -182,6 +186,7 @@ Coverage is tracked separately for:
 | up vector | Supported | Supported | Supported | A |
 | apply impulses to dynamic bodies | Missing | Missing | Missing | B |
 | query filters | Supported | Supported | Supported | A |
+| PID controller (create/axes/linear+angular correction) | Supported | Supported | Supported | B |
 
 ---
 
@@ -308,20 +313,26 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
 - Unity Gizmo draw pass in Editor
 - optional debug overlay component
 
-### Phase 8 — Component API parity & JS demos 🚧 in progress
+### Phase 8 — Component API parity & JS demos ✅ done (validation pending)
 
 - Component layer: `RapierRigidBodyComponent` and `RapierColliderComponent` now
   wrap the Phase 1–4 runtime APIs (velocities, damping, gravity scale, CCD,
   enabled, forces/impulses, kinematic next-position, axis locks; collider
   friction/restitution/density, sensor, enabled, combine rules, collision/solver
   groups, active events/collision-types, contact-force threshold; mesh collider
-  trimesh/convex-hull creation).
-- `RapierWorldComponent` now exposes state hashes, snapshots, and event drains.
-- Joint Component wrappers now cover fixed, spherical, revolute, prismatic, rope,
+  trimesh/convex-hull creation). Bodies also expose authored gravity scale,
+  soft-CCD, solver iterations, dominance, per-axis locks, stable id, and
+  `TryGetMass`. Colliders expose authored combine rules / groups / events /
+  contact-force threshold / stable id applied on creation.
+- Full shape coverage as components: `RapierConvexHullCollider`,
+  `RapierTrimeshCollider`, `RapierHeightfieldCollider`, `RapierVoxelsCollider`.
+- `RapierPidControllerComponent` wraps the native PID controller.
+- `RapierPhysics` exposes the full scene-query surface for `RapierWorldComponent`.
+- `RapierWorldComponent` exposes state hashes, snapshots, and event drains.
+- Joint Component wrappers cover fixed, spherical, revolute, prismatic, rope,
   and spring joints with shared lifecycle management plus limit/motor APIs.
-- Samples: the `RapierJsDemos` sample now ports the full Rapier JS 3D demo
-  catalog — pyramid, keva tower, damping, CCD, fountain, collision groups,
-  joints, platform, locked rotations, convex polyhedron, triangle mesh,
-  heightfield, and character controller.
-- Pending: editor Gizmo overlay component, query Component-layer wrappers, and
-  Unity Editor playmode validation of the ported demos.
+- Samples: the `RapierComponentDemos` sample reimplements the full Rapier JS 3D
+  demo catalog entirely with the component layer (each body is a GameObject with
+  Rapier components), alongside the existing low-level `RapierJsDemos` sample.
+- Pending: editor Gizmo overlay component and Unity Editor playmode validation of
+  the ported demos.

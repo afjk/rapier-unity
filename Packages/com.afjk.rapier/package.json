@@ -35,6 +35,11 @@
       "displayName": "Rapier JS Demos",
       "description": "Ports the supported Rapier 3D JavaScript demos into a generated Unity sample.",
       "path": "Samples~/RapierJsDemos"
+    },
+    {
+      "displayName": "Rapier Component Demos",
+      "description": "Reimplements the Rapier 3D JavaScript demos entirely with the Unity component layer.",
+      "path": "Samples~/RapierComponentDemos"
     }
   ]
 }

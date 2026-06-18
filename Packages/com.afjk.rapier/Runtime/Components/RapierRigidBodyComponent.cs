@@ -19,6 +19,21 @@ namespace AFJK.Rapier
         [SerializeField] private float linearDamping;
         [SerializeField] private float angularDamping;
 
+        [Header("Stable Id (optional, for external references)")]
+        [SerializeField] private string stableId = string.Empty;
+
+        [Header("Authored body settings (applied on register)")]
+        [SerializeField] private float gravityScale = 1f;
+        [SerializeField] private float softCcdPrediction;
+        [SerializeField] private uint additionalSolverIterations;
+        [SerializeField] private int dominanceGroup;
+        [SerializeField] private bool lockTranslationX;
+        [SerializeField] private bool lockTranslationY;
+        [SerializeField] private bool lockTranslationZ;
+        [SerializeField] private bool lockRotationX;
+        [SerializeField] private bool lockRotationY;
+        [SerializeField] private bool lockRotationZ;
+
         private readonly List<RapierColliderComponent> colliders = new List<RapierColliderComponent>();
         private readonly List<RapierJointComponent> joints = new List<RapierJointComponent>();
 
@@ -46,6 +61,82 @@ namespace AFJK.Rapier
         {
             get => syncTransformToRapierBeforeStep;
             set => syncTransformToRapierBeforeStep = value;
+        }
+
+        public bool CanSleep
+        {
+            get => canSleep;
+            set => canSleep = value;
+        }
+
+        public bool CcdEnabled
+        {
+            get => ccdEnabled;
+            set => ccdEnabled = value;
+        }
+
+        public Vector3 InitialLinearVelocity
+        {
+            get => initialLinearVelocity;
+            set => initialLinearVelocity = value;
+        }
+
+        public Vector3 InitialAngularVelocity
+        {
+            get => initialAngularVelocity;
+            set => initialAngularVelocity = value;
+        }
+
+        public float LinearDamping
+        {
+            get => linearDamping;
+            set => linearDamping = Mathf.Max(0f, value);
+        }
+
+        public float AngularDamping
+        {
+            get => angularDamping;
+            set => angularDamping = Mathf.Max(0f, value);
+        }
+
+        public float GravityScale
+        {
+            get => gravityScale;
+            set => gravityScale = value;
+        }
+
+        public float SoftCcdPrediction
+        {
+            get => softCcdPrediction;
+            set => softCcdPrediction = Mathf.Max(0f, value);
+        }
+
+        public uint AdditionalSolverIterations
+        {
+            get => additionalSolverIterations;
+            set => additionalSolverIterations = value;
+        }
+
+        public int DominanceGroup
+        {
+            get => dominanceGroup;
+            set => dominanceGroup = value;
+        }
+
+        /// <summary>Locks the X/Y/Z world translation axes (true = locked) before registration.</summary>
+        public void SetLockedTranslations(bool x, bool y, bool z)
+        {
+            lockTranslationX = x;
+            lockTranslationY = y;
+            lockTranslationZ = z;
+        }
+
+        /// <summary>Locks the X/Y/Z world rotation axes (true = locked) before registration.</summary>
+        public void SetLockedRotations(bool x, bool y, bool z)
+        {
+            lockRotationX = x;
+            lockRotationY = y;
+            lockRotationZ = z;
         }
 
         public bool Register()
@@ -76,6 +167,7 @@ namespace AFJK.Rapier
             }
 
             worldComponent.RegisterBody(this);
+            ApplyAuthoredSettings(world);
 
             if (syncTransformToRapierOnRegister)
             {
@@ -274,6 +366,84 @@ namespace AFJK.Rapier
         public bool SetDominanceGroup(int dominance)
         {
             return TryGetActiveWorld(out var w) && w.SetDominanceGroup(BodyHandle, dominance);
+        }
+
+        public bool SetSoftCcdPrediction(float prediction)
+        {
+            return TryGetActiveWorld(out var w) && w.SetSoftCcdPrediction(BodyHandle, prediction);
+        }
+
+        public bool TryGetMass(out float mass)
+        {
+            if (TryGetActiveWorld(out var w))
+            {
+                return w.TryGetMass(BodyHandle, out mass);
+            }
+
+            mass = 0f;
+            return false;
+        }
+
+        public bool TryGetTransform(out RapierTransform transform)
+        {
+            if (TryGetActiveWorld(out var w))
+            {
+                return w.TryGetTransform(BodyHandle, out transform);
+            }
+
+            transform = default;
+            return false;
+        }
+
+        public string StableId
+        {
+            get => stableId;
+            set => stableId = value ?? string.Empty;
+        }
+
+        // Pushes serialized authoring state to the freshly created body. RapierBodyDesc already
+        // carries type/velocity/damping/CCD/sleep, so this covers the remaining body settings.
+        private void ApplyAuthoredSettings(RapierWorld activeWorld)
+        {
+            if (activeWorld == null || !activeWorld.IsCreated || !BodyHandle.IsValid)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(stableId))
+            {
+                activeWorld.SetRigidBodyStableId(BodyHandle, RapierWorld.StableIdHash(stableId));
+            }
+
+            if (!Mathf.Approximately(gravityScale, 1f))
+            {
+                activeWorld.SetGravityScale(BodyHandle, gravityScale, false);
+            }
+
+            if (softCcdPrediction > 0f)
+            {
+                activeWorld.SetSoftCcdPrediction(BodyHandle, softCcdPrediction);
+            }
+
+            if (additionalSolverIterations > 0)
+            {
+                activeWorld.SetAdditionalSolverIterations(BodyHandle, additionalSolverIterations);
+            }
+
+            if (dominanceGroup != 0)
+            {
+                activeWorld.SetDominanceGroup(BodyHandle, dominanceGroup);
+            }
+
+            if (lockTranslationX || lockTranslationY || lockTranslationZ)
+            {
+                activeWorld.SetEnabledTranslations(BodyHandle, !lockTranslationX, !lockTranslationY, !lockTranslationZ, false);
+            }
+
+            if (lockRotationX || lockRotationY || lockRotationZ)
+            {
+                activeWorld.SetEnabledRotations(BodyHandle, !lockRotationX, !lockRotationY, !lockRotationZ, false);
+            }
         }
 
         internal void RegisterCollider(RapierColliderComponent collider)

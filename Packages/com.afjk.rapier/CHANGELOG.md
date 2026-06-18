@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Component layer now covers the full Rapier shape catalog with dedicated
+  authoring components: `RapierConvexHullCollider`, `RapierTrimeshCollider`,
+  `RapierHeightfieldCollider`, and `RapierVoxelsCollider` (each accepting code or
+  inline/mesh geometry).
+- `RapierPidControllerComponent` wraps the native PID controller for a target
+  `RapierRigidBodyComponent`.
+- `RapierRigidBodyComponent` gained authored body settings (stable id, gravity
+  scale, soft-CCD prediction, additional solver iterations, dominance group,
+  per-axis translation/rotation locks) plus `TryGetMass` / `SetSoftCcdPrediction`
+  / `TryGetTransform` accessors.
+- `RapierColliderComponent` gained authored material/filter settings (stable id,
+  friction/restitution combine rules, collision and solver groups, active events,
+  active collision types, contact-force threshold) applied on creation.
+- `RapierPhysics` query façade expanded to the full scene-query surface
+  (filtered/all raycasts, point projection/intersection, shape cast/intersection)
+  for both `RapierWorld` and `RapierWorldComponent`.
+- New **Rapier Component Demos** sample: the entire Rapier JS 3D demo catalog
+  reimplemented with the component layer (each body is a GameObject with Rapier
+  components).
+
 ## [0.2.0] - 2026-06-18
 
 ### Added
