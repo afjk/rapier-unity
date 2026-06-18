@@ -9,8 +9,7 @@ namespace AFJK.Rapier
     public sealed class RapierVoxelsCollider : RapierColliderComponent
     {
         [SerializeField] private Vector3 voxelSize = Vector3.one;
-
-        private Vector3[] points;
+        [SerializeField] private Vector3[] points;
 
         public Vector3 VoxelSize
         {

@@ -10,11 +10,11 @@ namespace AFJK.Rapier
     public sealed class RapierConvexHullCollider : RapierColliderComponent
     {
         [SerializeField] private Mesh sourceMesh;
-
-        private Vector3[] points;
+        [SerializeField] private Vector3[] points;
 
         /// <summary>
-        /// Explicit hull points. When non-empty these take priority over <see cref="SourceMesh"/>.
+        /// Explicit hull points, serialized so they persist in a Scene/Prefab. When non-empty
+        /// these take priority over <see cref="SourceMesh"/>.
         /// </summary>
         public Vector3[] Points
         {

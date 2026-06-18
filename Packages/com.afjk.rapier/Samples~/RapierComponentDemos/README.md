@@ -1,7 +1,11 @@
 # Rapier Component Demos
 
-Reimplements the Rapier 3D JavaScript demo catalog using the **Unity component
-layer** instead of the low-level `RapierWorld` API.
+Reimplements the current Rapier 3D JavaScript demo catalog using the **Unity
+component layer** instead of the low-level `RapierWorld` API.
+
+> This sample validates **practical** component coverage — it shows the demos are
+> expressible entirely as Rapier components. It is not intended to prove complete
+> Rapier API coverage. See `docs/api-coverage.md` for the per-API matrix.
 
 Source demo:
 

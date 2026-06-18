@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Component layer now covers the full Rapier shape catalog with dedicated
-  authoring components: `RapierConvexHullCollider`, `RapierTrimeshCollider`,
+- Component layer adds dedicated authoring components for the advanced
+  mesh/heightfield/voxel shapes used by the Rapier JS demos:
+  `RapierConvexHullCollider`, `RapierTrimeshCollider`,
   `RapierHeightfieldCollider`, and `RapierVoxelsCollider` (each accepting code or
-  inline/mesh geometry).
+  serialized inline/mesh geometry). These join the existing box/sphere/capsule
+  collider components.
 - `RapierPidControllerComponent` wraps the native PID controller for a target
   `RapierRigidBodyComponent`.
 - `RapierRigidBodyComponent` gained authored body settings (stable id, gravity
@@ -24,9 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RapierPhysics` query façade expanded to the full scene-query surface
   (filtered/all raycasts, point projection/intersection, shape cast/intersection)
   for both `RapierWorld` and `RapierWorldComponent`.
-- New **Rapier Component Demos** sample: the entire Rapier JS 3D demo catalog
-  reimplemented with the component layer (each body is a GameObject with Rapier
-  components).
+- New **Rapier Component Demos** sample: reimplements the current Rapier JS 3D
+  demo catalog using the component layer (each body is a GameObject with Rapier
+  components). This validates practical component coverage; it is not a proof of
+  complete Rapier API coverage.
 
 ## [0.2.0] - 2026-06-18
 

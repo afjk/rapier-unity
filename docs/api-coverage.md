@@ -324,15 +324,18 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   soft-CCD, solver iterations, dominance, per-axis locks, stable id, and
   `TryGetMass`. Colliders expose authored combine rules / groups / events /
   contact-force threshold / stable id applied on creation.
-- Full shape coverage as components: `RapierConvexHullCollider`,
-  `RapierTrimeshCollider`, `RapierHeightfieldCollider`, `RapierVoxelsCollider`.
+- Added shape components for the advanced cases used by the demos:
+  `RapierConvexHullCollider`, `RapierTrimeshCollider`,
+  `RapierHeightfieldCollider`, `RapierVoxelsCollider` (joining the existing
+  box/sphere/capsule collider components). Round shapes remain unimplemented.
 - `RapierPidControllerComponent` wraps the native PID controller.
 - `RapierPhysics` exposes the full scene-query surface for `RapierWorldComponent`.
 - `RapierWorldComponent` exposes state hashes, snapshots, and event drains.
 - Joint Component wrappers cover fixed, spherical, revolute, prismatic, rope,
   and spring joints with shared lifecycle management plus limit/motor APIs.
-- Samples: the `RapierComponentDemos` sample reimplements the full Rapier JS 3D
-  demo catalog entirely with the component layer (each body is a GameObject with
-  Rapier components), alongside the existing low-level `RapierJsDemos` sample.
+- Samples: the `RapierComponentDemos` sample reimplements the current Rapier JS
+  3D demo catalog with the component layer (each body is a GameObject with Rapier
+  components), alongside the existing low-level `RapierJsDemos` sample. This is a
+  practical coverage check, not a proof of complete Rapier API coverage.
 - Pending: editor Gizmo overlay component and Unity Editor playmode validation of
   the ported demos.

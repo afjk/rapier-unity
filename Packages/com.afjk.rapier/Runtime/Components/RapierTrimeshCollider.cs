@@ -10,9 +10,8 @@ namespace AFJK.Rapier
     public sealed class RapierTrimeshCollider : RapierColliderComponent
     {
         [SerializeField] private Mesh sourceMesh;
-
-        private Vector3[] vertices;
-        private int[] indices;
+        [SerializeField] private Vector3[] vertices;
+        [SerializeField] private int[] indices;
 
         public Vector3[] Vertices
         {

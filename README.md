@@ -103,12 +103,14 @@ The component API is opt-in:
 - Transform synchronization is explicit and configurable.
 - Unity `Rigidbody` and built-in collider behavior is not changed.
 
-The component layer covers the full Rapier shape catalog (box, sphere, capsule,
-convex hull, trimesh, heightfield, voxels), joints, character controller, a PID
+The component layer includes box, sphere, capsule, convex hull, trimesh,
+heightfield, and voxel colliders, joints, a character controller, a PID
 controller, and scene queries (via the `RapierPhysics` façade). The **Rapier
-Component Demos** sample reimplements the entire Rapier JS 3D demo catalog using
+Component Demos** sample reimplements the current Rapier JS 3D demo catalog using
 only these components — every body is a GameObject with Rapier components — which
-serves as the practical coverage check for the component layer. The
+serves as a practical coverage check for the component layer (it validates that
+the demos are expressible as components, not that every Rapier API is wrapped;
+see [docs/api-coverage.md](docs/api-coverage.md) for the per-API matrix). The
 **Rapier JS Demos** sample builds the same scenes with the low-level API for
 comparison.
 

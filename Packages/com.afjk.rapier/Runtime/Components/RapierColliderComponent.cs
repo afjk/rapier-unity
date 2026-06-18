@@ -20,11 +20,11 @@ namespace AFJK.Rapier
         [SerializeField] private RapierCoefficientCombineRule frictionCombineRule = RapierCoefficientCombineRule.Average;
         [SerializeField] private RapierCoefficientCombineRule restitutionCombineRule = RapierCoefficientCombineRule.Average;
         [SerializeField] private bool overrideCollisionGroups;
-        [SerializeField] private uint collisionGroupMemberships = 0xFFFF;
-        [SerializeField] private uint collisionGroupFilter = 0xFFFF;
+        [SerializeField] private ushort collisionGroupMemberships = 0xFFFF;
+        [SerializeField] private ushort collisionGroupFilter = 0xFFFF;
         [SerializeField] private bool overrideSolverGroups;
-        [SerializeField] private uint solverGroupMemberships = 0xFFFF;
-        [SerializeField] private uint solverGroupFilter = 0xFFFF;
+        [SerializeField] private ushort solverGroupMemberships = 0xFFFF;
+        [SerializeField] private ushort solverGroupFilter = 0xFFFF;
         [SerializeField] private RapierActiveEvents activeEvents = RapierActiveEvents.None;
         [SerializeField] private bool overrideActiveCollisionTypes;
         [SerializeField] private RapierActiveCollisionTypes activeCollisionTypes =
@@ -245,14 +245,14 @@ namespace AFJK.Rapier
             {
                 activeWorld.SetColliderCollisionGroups(
                     ColliderHandle,
-                    RapierWorld.InteractionGroups((ushort)collisionGroupMemberships, (ushort)collisionGroupFilter));
+                    RapierWorld.InteractionGroups(collisionGroupMemberships, collisionGroupFilter));
             }
 
             if (overrideSolverGroups)
             {
                 activeWorld.SetColliderSolverGroups(
                     ColliderHandle,
-                    RapierWorld.InteractionGroups((ushort)solverGroupMemberships, (ushort)solverGroupFilter));
+                    RapierWorld.InteractionGroups(solverGroupMemberships, solverGroupFilter));
             }
 
             if (activeEvents != RapierActiveEvents.None)
