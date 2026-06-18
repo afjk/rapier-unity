@@ -5,6 +5,9 @@ Thumbs.db
 /native/target/
 **/*.rs.bk
 
+# Node (tools/parity-js)
+node_modules/
+
 # Unity
 /Library/
 /Temp/

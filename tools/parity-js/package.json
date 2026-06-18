@@ -1,0 +1,12 @@
+{
+  "name": "rapier-unity-parity-js",
+  "private": true,
+  "type": "module",
+  "description": "JS-side cross-host parity verifier for rapier-unity's canonical physics hash, using the public @dimforge/rapier3d-deterministic-compat npm package as the reference implementation.",
+  "scripts": {
+    "verify": "node run.mjs"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-deterministic-compat": "0.19.3"
+  }
+}
