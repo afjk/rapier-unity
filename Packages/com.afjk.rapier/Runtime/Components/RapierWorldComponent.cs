@@ -148,6 +148,8 @@ namespace AFJK.Rapier
                     continue;
                 }
 
+                // Generate any opted-in auto stable ids before sorting so StableId mode can use them.
+                found[i].EnsureStableId();
                 list.Add(found[i]);
             }
 

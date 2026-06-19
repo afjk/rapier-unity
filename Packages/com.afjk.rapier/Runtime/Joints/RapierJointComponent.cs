@@ -14,6 +14,9 @@ namespace AFJK.Rapier
         [Header("Stable Id (optional, for external references)")]
         [SerializeField] private string stableId = string.Empty;
 
+        [Tooltip("If set and StableId is empty, a deterministic StableId is generated from the hierarchy path on creation.")]
+        [SerializeField] private bool autoGenerateStableId;
+
         [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
         [SerializeField] private int registrationOrder;
 
@@ -44,6 +47,22 @@ namespace AFJK.Rapier
         {
             get => stableId;
             set => stableId = value ?? string.Empty;
+        }
+
+        public bool AutoGenerateStableId
+        {
+            get => autoGenerateStableId;
+            set => autoGenerateStableId = value;
+        }
+
+        public void EnsureStableId()
+        {
+            if (autoGenerateStableId && string.IsNullOrEmpty(stableId))
+            {
+                var siblings = GetComponents<RapierJointComponent>();
+                var index = System.Array.IndexOf(siblings, this);
+                stableId = RapierStableId.FromHierarchy(transform, "Joint" + index);
+            }
         }
 
         public RapierRigidBodyComponent Body1
@@ -198,6 +217,7 @@ namespace AFJK.Rapier
                 return false;
             }
 
+            EnsureStableId();
             JointHandle = CreateJoint(body1.World, body1.BodyHandle, body2.BodyHandle);
             if (!JointHandle.IsValid)
             {

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Stable id auto-generation. Rigid body, collider, and joint components gained an
+  opt-in `AutoGenerateStableId` flag: when enabled and no id is set, a
+  deterministic id is derived from the GameObject's hierarchy path (via the new
+  `RapierStableId` helper) at registration, so the same hierarchy maps to the same
+  id on every host without serialization. A `RapierStableId.Generate()` helper and
+  a **Tools ▸ Rapier ▸ Assign Stable Ids To Selection** editor menu assign
+  persistent ids into a Scene/Prefab. Auto-generation defaults off so existing
+  state hashes are unchanged.
 - Deterministic registration order for component worlds. `RapierWorldComponent`
   gained a `RegistrationMode` (`HierarchyOrder` / `StableId` / `ExplicitOrder`)
   and a `RebuildWorld()` method that discards and recreates the native world,

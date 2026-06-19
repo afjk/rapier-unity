@@ -22,6 +22,9 @@ namespace AFJK.Rapier
         [Header("Stable Id (optional, for external references)")]
         [SerializeField] private string stableId = string.Empty;
 
+        [Tooltip("If set and StableId is empty, a deterministic StableId is generated from the hierarchy path on registration.")]
+        [SerializeField] private bool autoGenerateStableId;
+
         [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
         [SerializeField] private int registrationOrder;
 
@@ -470,6 +473,20 @@ namespace AFJK.Rapier
             set => stableId = value ?? string.Empty;
         }
 
+        public bool AutoGenerateStableId
+        {
+            get => autoGenerateStableId;
+            set => autoGenerateStableId = value;
+        }
+
+        public void EnsureStableId()
+        {
+            if (autoGenerateStableId && string.IsNullOrEmpty(stableId))
+            {
+                stableId = RapierStableId.FromHierarchy(transform, "Body");
+            }
+        }
+
         // Pushes serialized authoring state to the freshly created body. RapierBodyDesc already
         // carries type/velocity/damping/CCD/sleep, so this covers the remaining body settings.
         private void ApplyAuthoredSettings(RapierWorld activeWorld)
@@ -478,6 +495,8 @@ namespace AFJK.Rapier
             {
                 return;
             }
+
+            EnsureStableId();
 
             if (!string.IsNullOrEmpty(stableId))
             {

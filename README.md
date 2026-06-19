@@ -106,6 +106,9 @@ The component API is opt-in:
   registration order (`HierarchyOrder`, `StableId`, or `ExplicitOrder`), so the
   same scene/prefab produces the same body/collider/joint creation order on every
   host — the basis for Scene Sync import and deterministic network parity.
+- Stable ids can be auto-generated: enable `AutoGenerateStableId` for a
+  deterministic hierarchy-derived id at runtime, or use **Tools ▸ Rapier ▸ Assign
+  Stable Ids To Selection** to bake persistent ids into a Scene/Prefab.
 
 The component layer includes box, sphere, capsule, convex hull, trimesh,
 heightfield, and voxel colliders, joints, a character controller, a PID

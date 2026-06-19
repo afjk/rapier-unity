@@ -313,8 +313,9 @@ namespace AFJK.Rapier.Samples
             status = $"Rebuilt world deterministically ({RegistrationModeNames[(int)registrationMode]} order).";
         }
 
-        // Stamps StableId and RegistrationOrder onto every Rapier component in hierarchy order so
-        // the StableId and ExplicitOrder registration modes have well-defined keys to sort by.
+        // Prepares every Rapier component for deterministic registration: enables StableId
+        // auto-generation (so StableId mode derives ids from the hierarchy path) and stamps a
+        // hierarchy-order RegistrationOrder (so ExplicitOrder mode has well-defined keys).
         private void AssignDeterministicKeys()
         {
             if (worldGo == null)
@@ -325,21 +326,21 @@ namespace AFJK.Rapier.Samples
             var bodyComponents = worldGo.GetComponentsInChildren<RapierRigidBodyComponent>(true);
             for (var i = 0; i < bodyComponents.Length; i++)
             {
-                bodyComponents[i].StableId = bodyComponents[i].gameObject.name;
+                bodyComponents[i].AutoGenerateStableId = true;
                 bodyComponents[i].RegistrationOrder = i;
             }
 
             var colliderComponents = worldGo.GetComponentsInChildren<RapierColliderComponent>(true);
             for (var i = 0; i < colliderComponents.Length; i++)
             {
-                colliderComponents[i].StableId = $"{colliderComponents[i].gameObject.name}#col{i}";
+                colliderComponents[i].AutoGenerateStableId = true;
                 colliderComponents[i].RegistrationOrder = i;
             }
 
             var jointComponents = worldGo.GetComponentsInChildren<RapierJointComponent>(true);
             for (var i = 0; i < jointComponents.Length; i++)
             {
-                jointComponents[i].StableId = $"{jointComponents[i].gameObject.name}#jnt{i}";
+                jointComponents[i].AutoGenerateStableId = true;
                 jointComponents[i].RegistrationOrder = i;
             }
         }
