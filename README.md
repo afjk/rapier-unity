@@ -158,6 +158,7 @@ Snapshot format notes live in [docs/snapshot-design.md](docs/snapshot-design.md)
 Scene Sync parity notes live in [docs/scenesync-parity.md](docs/scenesync-parity.md).
 Platform and backend support live in [docs/support-matrix.md](docs/support-matrix.md).
 API coverage and implementation order live in [docs/api-coverage.md](docs/api-coverage.md).
+The low-level ↔ component API mapping lives in [docs/component-api-coverage.md](docs/component-api-coverage.md).
 
 ## Relationship to Scene Sync
 

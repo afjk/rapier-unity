@@ -2,6 +2,10 @@
 
 This document tracks Rapier JS 0.19.3 / Rapier core 0.30.0 API coverage in Rapier for Unity.
 
+> For the internal **low-level ↔ component** API mapping (which `RapierWorld` call
+> maps to which component member), see
+> [component-api-coverage.md](component-api-coverage.md).
+
 ## Baseline and goal
 
 The short-term API baseline is **rapier.js 0.19.3** because this is the browser parity target (see [scenesync-parity.md](scenesync-parity.md)). The goal is to make official Rapier JS demos portable to Unity where practical.
