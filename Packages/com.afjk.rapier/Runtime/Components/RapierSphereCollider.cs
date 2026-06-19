@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierSphereCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Sphere Collider")]
+    public sealed class RapierSphereCollider : RapierCollider
     {
         [SerializeField] private float radius = 0.5f;
 

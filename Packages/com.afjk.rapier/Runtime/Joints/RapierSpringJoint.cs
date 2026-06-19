@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierSpringJointComponent : RapierJointComponent
+    [AddComponentMenu("Rapier/Joints/Rapier Spring Joint")]
+    public sealed class RapierSpringJoint : RapierJoint
     {
         [SerializeField] private float restLength = 1f;
         [SerializeField] private float stiffness = 100f;

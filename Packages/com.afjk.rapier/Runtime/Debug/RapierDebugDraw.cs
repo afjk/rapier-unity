@@ -4,20 +4,20 @@ namespace AFJK.Rapier
 {
     public sealed class RapierDebugDraw : MonoBehaviour
     {
-        [SerializeField] private RapierWorldComponent worldComponent;
+        [SerializeField] private RapierWorldBehaviour worldComponent;
         [SerializeField] private Color bodyColor = Color.cyan;
         [SerializeField] private float bodyMarkerRadius = 0.08f;
 
         private void Reset()
         {
-            worldComponent = GetComponent<RapierWorldComponent>();
+            worldComponent = GetComponent<RapierWorldBehaviour>();
         }
 
         private void OnDrawGizmosSelected()
         {
             if (worldComponent == null)
             {
-                worldComponent = GetComponent<RapierWorldComponent>();
+                worldComponent = GetComponent<RapierWorldBehaviour>();
             }
 
             if (worldComponent == null)
@@ -25,7 +25,7 @@ namespace AFJK.Rapier
                 return;
             }
 
-            var bodies = GetComponentsInChildren<RapierRigidBodyComponent>();
+            var bodies = GetComponentsInChildren<RapierRigidbody>();
             Gizmos.color = bodyColor;
             for (var i = 0; i < bodies.Length; i++)
             {

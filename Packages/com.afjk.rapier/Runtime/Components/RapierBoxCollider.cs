@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierBoxCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Box Collider")]
+    public sealed class RapierBoxCollider : RapierCollider
     {
         [SerializeField] private Vector3 halfExtents = Vector3.one * 0.5f;
 

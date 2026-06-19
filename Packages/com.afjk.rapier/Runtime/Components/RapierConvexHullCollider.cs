@@ -7,7 +7,8 @@ namespace AFJK.Rapier
     /// code (for procedurally generated shapes such as cylinders or cones) or derived from an
     /// assigned <see cref="UnityEngine.Mesh"/> for editor authoring.
     /// </summary>
-    public sealed class RapierConvexHullCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Convex Hull Collider")]
+    public sealed class RapierConvexHullCollider : RapierCollider
     {
         [SerializeField] private Mesh sourceMesh;
         [SerializeField] private Vector3[] points;

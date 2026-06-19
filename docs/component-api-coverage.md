@@ -14,10 +14,10 @@ low-level → component mapping.
 |---|---|
 | ✅ | Wrapped by a component / component-friendly façade |
 | ◐ | Partially wrapped (e.g. authoring + setter, but no live getter) |
-| ➖ | Not wrapped; use the low-level API via `RapierWorldComponent.World` |
+| ➖ | Not wrapped; use the low-level API via `RapierWorldBehaviour.World` |
 
 Every component can still reach the low-level world through
-`RapierWorldComponent.World` (or `RapierRigidBodyComponent.World`), so ➖ rows are
+`RapierWorldBehaviour.World` (or `RapierRigidbody.World`), so ➖ rows are
 always available — they just don't have a dedicated component member yet.
 
 ---
@@ -26,25 +26,25 @@ always available — they just don't have a dedicated component member yet.
 
 | Low-level (`RapierWorld`) | Component | Status |
 |---|---|---|
-| `Create()` / `Dispose()` | `RapierWorldComponent` lifecycle (`EnsureWorld`, `OnDisable`) | ✅ |
-| `SetGravity` | `RapierWorldComponent.Gravity` | ✅ |
-| `SetTimestep` | `RapierWorldComponent.Timestep` | ✅ |
-| `Step` | `RapierWorldComponent.Step()` / `StepMode.FixedUpdate` | ✅ |
-| `StateHash` | `RapierWorldComponent.StateHash()` | ✅ |
-| `SnapshotSize` | `RapierWorldComponent.SnapshotSize()` | ✅ |
-| `TryCreateSnapshot` / `TryReadSnapshot` | `RapierWorldComponent.TryCreateSnapshot` / `TryReadSnapshot` | ✅ |
+| `Create()` / `Dispose()` | `RapierWorldBehaviour` lifecycle (`EnsureWorld`, `OnDisable`) | ✅ |
+| `SetGravity` | `RapierWorldBehaviour.Gravity` | ✅ |
+| `SetTimestep` | `RapierWorldBehaviour.Timestep` | ✅ |
+| `Step` | `RapierWorldBehaviour.Step()` / `StepMode.FixedUpdate` | ✅ |
+| `StateHash` | `RapierWorldBehaviour.StateHash()` | ✅ |
+| `SnapshotSize` | `RapierWorldBehaviour.SnapshotSize()` | ✅ |
+| `TryCreateSnapshot` / `TryReadSnapshot` | `RapierWorldBehaviour.TryCreateSnapshot` / `TryReadSnapshot` | ✅ |
 | `TryWriteSnapshot` | (use `TryCreateSnapshot`) | ➖ |
-| `DrainCollisionEvents` / `DrainContactForceEvents` | `RapierWorldComponent.DrainCollisionEvents` / `DrainContactForceEvents` | ✅ |
-| `DebugRender` | `RapierDebugRenderer.DrawRuntimeLines`, or `RapierWorldComponent.World.DebugRender` | ✅ |
+| `DrainCollisionEvents` / `DrainContactForceEvents` | `RapierWorldBehaviour.DrainCollisionEvents` / `DrainContactForceEvents` | ✅ |
+| `DebugRender` | `RapierDebugRenderer.DrawRuntimeLines`, or `RapierWorldBehaviour.World.DebugRender` | ✅ |
 | `InteractionGroups` (static) | `RapierWorld.InteractionGroups` (shared static) | ✅ |
 | `StableIdHash` (static) | `RapierStableId` / set via `StableId` + `AutoGenerateStableId` | ✅ |
-| — | `RapierWorldComponent.RebuildWorld()` + `RegistrationMode` (deterministic order) | ✅ component-only |
+| — | `RapierWorldBehaviour.RebuildWorld()` + `RegistrationMode` (deterministic order) | ✅ component-only |
 
 ---
 
 ## Rigid body
 
-| Low-level (`RapierWorld`) | Component (`RapierRigidBodyComponent`) | Status |
+| Low-level (`RapierWorld`) | Component (`RapierRigidbody`) | Status |
 |---|---|---|
 | `CreateRigidBody` | the component itself (`BodyType`, velocities, damping, …) | ✅ |
 | `DestroyRigidBody` | `Unregister()` / disable | ✅ |
@@ -106,7 +106,7 @@ always available — they just don't have a dedicated component member yet.
 ## Scene queries
 
 All wrapped by the `RapierPhysics` static façade (accepts a `RapierWorld` or a
-`RapierWorldComponent`).
+`RapierWorldBehaviour`).
 
 | Low-level (`RapierWorld`) | Component (`RapierPhysics`) | Status |
 |---|---|---|
@@ -124,14 +124,14 @@ All wrapped by the `RapierPhysics` static façade (accepts a `RapierWorld` or a
 
 | Low-level (`RapierWorld`) | Component | Status |
 |---|---|---|
-| `CreateFixedJoint` | `RapierFixedJointComponent` | ✅ |
-| `CreateSphericalJoint` | `RapierSphericalJointComponent` | ✅ |
-| `CreateRevoluteJoint` | `RapierRevoluteJointComponent` | ✅ |
-| `CreatePrismaticJoint` | `RapierPrismaticJointComponent` | ✅ |
-| `CreateRopeJoint` | `RapierRopeJointComponent` | ✅ |
-| `CreateSpringJoint` | `RapierSpringJointComponent` | ✅ |
-| `RemoveJoint` | `RapierJointComponent.RemoveJoint()` / disable | ✅ |
-| `SetJointLimits` | `RapierJointComponent.SetLimits` (cached, reapplied on rebuild) | ✅ |
+| `CreateFixedJoint` | `RapierFixedJoint` | ✅ |
+| `CreateSphericalJoint` | `RapierSphericalJoint` | ✅ |
+| `CreateRevoluteJoint` | `RapierRevoluteJoint` | ✅ |
+| `CreatePrismaticJoint` | `RapierPrismaticJoint` | ✅ |
+| `CreateRopeJoint` | `RapierRopeJoint` | ✅ |
+| `CreateSpringJoint` | `RapierSpringJoint` | ✅ |
+| `RemoveJoint` | `RapierJoint.RemoveJoint()` / disable | ✅ |
+| `SetJointLimits` | `RapierJoint.SetLimits` (cached, reapplied on rebuild) | ✅ |
 | `SetJointMotorPosition` / `SetJointMotorVelocity` / `SetJointMotorMaxForce` | `SetMotorPosition` / `SetMotorVelocity` / `SetMotorMaxForce` (cached) | ✅ |
 | — | `StableId` + `AutoGenerateStableId`, `RegistrationOrder` | ✅ component-only |
 
@@ -139,7 +139,7 @@ All wrapped by the `RapierPhysics` static façade (accepts a `RapierWorld` or a
 
 ## Character controller
 
-| Low-level (`RapierWorld`) | Component (`RapierCharacterControllerComponent`) | Status |
+| Low-level (`RapierWorld`) | Component (`RapierCharacterControllerBehaviour`) | Status |
 |---|---|---|
 | `MoveCharacter` | `Move` / `ComputeMovement` (+ `Controller`, `Shape`, `QueryFilter`) | ✅ |
 
@@ -147,7 +147,7 @@ All wrapped by the `RapierPhysics` static façade (accepts a `RapierWorld` or a
 
 ## PID controller
 
-| Low-level (`RapierWorld`) | Component (`RapierPidControllerComponent`) | Status |
+| Low-level (`RapierWorld`) | Component (`RapierPidController`) | Status |
 |---|---|---|
 | `CreatePidController` | the component itself (`Kp`/`Ki`/`Kd`/`Axes`, lazy `EnsureController`) | ✅ |
 | `DestroyPidController` | `OnDisable` | ✅ |
@@ -161,7 +161,7 @@ All wrapped by the `RapierPhysics` static façade (accepts a `RapierWorld` or a
 ## Known component-layer gaps (use the low-level world)
 
 These have no dedicated component member yet; reach them through
-`RapierWorldComponent.World` / `RapierRigidBodyComponent.World`:
+`RapierWorldBehaviour.World` / `RapierRigidbody.World`:
 
 - Live getters for body damping, gravity scale, CCD, soft-CCD, enabled, solver
   iterations, dominance group (`TryGet*`). Components expose the setters and

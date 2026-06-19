@@ -11,7 +11,7 @@ namespace AFJK.Rapier.Editor
         {
             var gameObject = new GameObject("Rapier World");
             GameObjectUtility.SetParentAndAlign(gameObject, command.context as GameObject);
-            gameObject.AddComponent<RapierWorldComponent>();
+            gameObject.AddComponent<RapierWorldBehaviour>();
             Undo.RegisterCreatedObjectUndo(gameObject, "Create Rapier World");
             Selection.activeGameObject = gameObject;
         }
@@ -21,7 +21,7 @@ namespace AFJK.Rapier.Editor
         {
             var gameObject = new GameObject("Rapier Dynamic Box");
             GameObjectUtility.SetParentAndAlign(gameObject, command.context as GameObject);
-            gameObject.AddComponent<RapierRigidBodyComponent>();
+            gameObject.AddComponent<RapierRigidbody>();
             gameObject.AddComponent<RapierBoxCollider>();
             Undo.RegisterCreatedObjectUndo(gameObject, "Create Rapier Dynamic Box");
             Selection.activeGameObject = gameObject;

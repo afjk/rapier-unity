@@ -12,12 +12,12 @@ primitives are created entirely from a data description, not hand-placed.
    each with colliders) describes the scene. It contains **no** Scene Sync or
    network concepts.
 2. `RapierSceneImporter.Import(description, parent)` creates a
-   `RapierWorldComponent` and, for each body, a GameObject with a
-   `RapierRigidBodyComponent`, its collider components, and a
+   `RapierWorldBehaviour` and, for each body, a GameObject with a
+   `RapierRigidbody`, its collider components, and a
    `RapierImportedObject` metadata component (which records the source system /
    id / order).
 3. The importer sets `StableId` and `RegistrationOrder` from the description and
-   calls `RapierWorldComponent.RebuildWorld()`, so the world is built in one
+   calls `RapierWorldBehaviour.RebuildWorld()`, so the world is built in one
    deterministic pass — the same description yields the same world on every host.
 
 The sample either imports the assigned `scene-import-example.json` (the default)

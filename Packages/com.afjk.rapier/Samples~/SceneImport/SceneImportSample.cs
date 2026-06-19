@@ -18,7 +18,7 @@ namespace AFJK.Rapier.Samples
         [SerializeField] private bool runOnStart = true;
 
         private GameObject generatedRoot;
-        private RapierWorldComponent world;
+        private RapierWorldBehaviour world;
         private string status = "Not started.";
         private int tick;
         private ulong lastHash;
@@ -190,15 +190,15 @@ namespace AFJK.Rapier.Samples
         }
 
         // Adds a Unity primitive per imported collider for visualization. The body GameObject is the
-        // physics object (its transform is synced by RapierRigidBodyComponent); the primitive is a
+        // physics object (its transform is synced by RapierRigidbody); the primitive is a
         // child that follows it.
-        private static void AddVisuals(RapierWorldComponent worldComponent)
+        private static void AddVisuals(RapierWorldBehaviour worldComponent)
         {
-            var bodies = worldComponent.GetComponentsInChildren<RapierRigidBodyComponent>(true);
+            var bodies = worldComponent.GetComponentsInChildren<RapierRigidbody>(true);
             for (var i = 0; i < bodies.Length; i++)
             {
                 var body = bodies[i];
-                var colliders = body.GetComponents<RapierColliderComponent>();
+                var colliders = body.GetComponents<RapierCollider>();
                 var color = body.BodyType == RapierRigidBodyType.Fixed
                     ? new Color(0.28f, 0.32f, 0.36f)
                     : new Color(0.16f, 0.52f, 0.92f);
@@ -210,7 +210,7 @@ namespace AFJK.Rapier.Samples
             }
         }
 
-        private static void AddColliderVisual(Transform parent, RapierColliderComponent collider, Color color)
+        private static void AddColliderVisual(Transform parent, RapierCollider collider, Color color)
         {
             GameObject visual;
             switch (collider)

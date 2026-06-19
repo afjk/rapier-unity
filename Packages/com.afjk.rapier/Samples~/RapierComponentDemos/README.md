@@ -22,17 +22,17 @@ The `Rapier JS Demos` sample builds each scene by calling the low-level
 `RapierWorld` API directly and drives plain visual GameObjects. **This** sample
 builds the exact same scenes out of Rapier components:
 
-- A single `RapierWorldComponent` owns the world (stepped manually each
+- A single `RapierWorldBehaviour` owns the world (stepped manually each
   `FixedUpdate` so per-demo pre-step logic can run first).
-- Every body is a GameObject with a `RapierRigidBodyComponent` plus one or more
+- Every body is a GameObject with a `RapierRigidbody` plus one or more
   collider components (`RapierBoxCollider`, `RapierSphereCollider`,
   `RapierCapsuleCollider`, `RapierConvexHullCollider`, `RapierTrimeshCollider`,
   `RapierHeightfieldCollider`, `RapierVoxelsCollider`).
-- Joints use the joint components (`RapierFixedJointComponent`,
-  `RapierSphericalJointComponent`, `RapierRevoluteJointComponent`,
-  `RapierPrismaticJointComponent`).
-- The character demo uses `RapierCharacterControllerComponent`; the PID demo uses
-  `RapierPidControllerComponent`.
+- Joints use the joint components (`RapierFixedJoint`,
+  `RapierSphericalJoint`, `RapierRevoluteJoint`,
+  `RapierPrismaticJoint`).
+- The character demo uses `RapierCharacterControllerBehaviour`; the PID demo uses
+  `RapierPidController`.
 - The component transform sync drives the visuals — the GameObject *is* both the
   physics body and the rendered object.
 
@@ -54,7 +54,7 @@ All entries in the on-screen menu run with the component layer:
 - `GLB to trimesh` (Suzanne mesh, trimesh collider component)
 - `collision groups` (authored per-collider interaction groups)
 - `joints` (prismatic / fixed / revolute / spherical joint components)
-- `PID controller` (`RapierPidControllerComponent` on a dynamic body)
+- `PID controller` (`RapierPidController` on a dynamic body)
 - `platform` (kinematic-velocity body driven by `SetLinearVelocity` /
   `SetAngularVelocity`)
 - `locked rotations` (per-axis translation/rotation locks)
@@ -63,7 +63,7 @@ All entries in the on-screen menu run with the component layer:
 - `heightfield` (heightfield collider component ground)
 - `voxels` (voxels collider component ground)
 - `character controller` (kinematic capsule moved with
-  `RapierCharacterControllerComponent`, autostep + snap-to-ground)
+  `RapierCharacterControllerBehaviour`, autostep + snap-to-ground)
 
 Toggle **Debug draw colliders** in the menu to overlay the world's native
 collider geometry (via `RapierWorld.DebugRender`) on top of the visuals.

@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierMeshCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Mesh Collider")]
+    public sealed class RapierMeshCollider : RapierCollider
     {
         [SerializeField] private Mesh mesh;
         [SerializeField] private bool convex;

@@ -14,7 +14,7 @@ namespace AFJK.Rapier
     /// </para>
     /// <para>
     /// Imported components use <c>RegisterOnEnable = false</c>; the world is constructed in one
-    /// deterministic pass via <see cref="RapierWorldComponent.RebuildWorld"/> using the
+    /// deterministic pass via <see cref="RapierWorldBehaviour.RebuildWorld"/> using the
     /// description's <see cref="RapierSceneDescription.registrationMode"/>, so the same description
     /// produces the same world on every host.
     /// </para>
@@ -22,7 +22,7 @@ namespace AFJK.Rapier
     public static class RapierSceneImporter
     {
         /// <summary>Parses a JSON <see cref="RapierSceneDescription"/> and imports it.</summary>
-        public static RapierWorldComponent ImportJson(string json, Transform parent = null, string worldName = "Rapier Imported World")
+        public static RapierWorldBehaviour ImportJson(string json, Transform parent = null, string worldName = "Rapier Imported World")
         {
             if (string.IsNullOrEmpty(json))
             {
@@ -39,11 +39,11 @@ namespace AFJK.Rapier
         }
 
         /// <summary>
-        /// Creates a world GameObject with a <see cref="RapierWorldComponent"/> plus a body
+        /// Creates a world GameObject with a <see cref="RapierWorldBehaviour"/> plus a body
         /// GameObject (with collider components and a <see cref="RapierImportedObject"/>) for each
         /// entry in <paramref name="description"/>, then deterministically rebuilds the world.
         /// </summary>
-        public static RapierWorldComponent Import(RapierSceneDescription description, Transform parent = null, string worldName = "Rapier Imported World")
+        public static RapierWorldBehaviour Import(RapierSceneDescription description, Transform parent = null, string worldName = "Rapier Imported World")
         {
             if (description == null)
             {
@@ -56,7 +56,7 @@ namespace AFJK.Rapier
                 worldObject.transform.SetParent(parent, false);
             }
 
-            var world = worldObject.AddComponent<RapierWorldComponent>();
+            var world = worldObject.AddComponent<RapierWorldBehaviour>();
             world.StepMode = RapierWorldStepMode.Manual;
             world.Gravity = description.gravity;
             world.Timestep = Mathf.Max(0.000001f, description.timestep);
@@ -75,7 +75,7 @@ namespace AFJK.Rapier
             return world;
         }
 
-        private static void BuildBody(RapierWorldComponent world, RapierBodyDescription body, string sourceSystem)
+        private static void BuildBody(RapierWorldBehaviour world, RapierBodyDescription body, string sourceSystem)
         {
             if (body == null)
             {
@@ -87,7 +87,7 @@ namespace AFJK.Rapier
             go.transform.SetParent(world.transform, false);
             go.transform.SetPositionAndRotation(body.position, Quaternion.Euler(body.eulerAngles));
 
-            var rigidBody = go.AddComponent<RapierRigidBodyComponent>();
+            var rigidBody = go.AddComponent<RapierRigidbody>();
             rigidBody.RegisterOnEnable = false;
             rigidBody.BodyType = body.bodyType;
             rigidBody.StableId = body.id;
@@ -124,7 +124,7 @@ namespace AFJK.Rapier
                 return;
             }
 
-            RapierColliderComponent component;
+            RapierCollider component;
             switch (collider.shape)
             {
                 case RapierImportColliderShape.Sphere:

@@ -10,8 +10,8 @@ namespace AFJK.Rapier.Samples
         [SerializeField] private bool logStateHashEverySecond = true;
 
         private GameObject generatedRoot;
-        private RapierWorldComponent worldComponent;
-        private RapierRigidBodyComponent ballBody;
+        private RapierWorldBehaviour worldComponent;
+        private RapierRigidbody ballBody;
         private string status = "Not started.";
         private int fixedTick;
         private ulong lastHash;
@@ -99,7 +99,7 @@ namespace AFJK.Rapier.Samples
 
             var worldObject = new GameObject("Rapier World");
             worldObject.transform.SetParent(generatedRoot.transform, false);
-            worldComponent = worldObject.AddComponent<RapierWorldComponent>();
+            worldComponent = worldObject.AddComponent<RapierWorldBehaviour>();
             worldComponent.Gravity = gravity;
             worldComponent.Timestep = timestep;
             worldComponent.StepMode = RapierWorldStepMode.FixedUpdate;
@@ -122,7 +122,7 @@ namespace AFJK.Rapier.Samples
             RemoveUnityCollider(floor);
             SetColor(floor, new Color(0.28f, 0.32f, 0.36f));
 
-            var body = floor.AddComponent<RapierRigidBodyComponent>();
+            var body = floor.AddComponent<RapierRigidbody>();
             body.BodyType = RapierRigidBodyType.Fixed;
 
             var collider = floor.AddComponent<RapierBoxCollider>();
@@ -143,7 +143,7 @@ namespace AFJK.Rapier.Samples
             RemoveUnityCollider(ball);
             SetColor(ball, new Color(0.16f, 0.52f, 0.92f));
 
-            ballBody = ball.AddComponent<RapierRigidBodyComponent>();
+            ballBody = ball.AddComponent<RapierRigidbody>();
             ballBody.BodyType = RapierRigidBodyType.Dynamic;
             ballBody.SyncTransformFromRapier = true;
 

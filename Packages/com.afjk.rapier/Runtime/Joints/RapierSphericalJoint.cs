@@ -1,6 +1,9 @@
+using UnityEngine;
+
 namespace AFJK.Rapier
 {
-    public sealed class RapierSphericalJointComponent : RapierJointComponent
+    [AddComponentMenu("Rapier/Joints/Rapier Spherical Joint")]
+    public sealed class RapierSphericalJoint : RapierJoint
     {
         protected override RapierJointHandle CreateJoint(
             RapierWorld world,
