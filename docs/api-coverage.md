@@ -48,6 +48,7 @@ Coverage is tracked separately for:
 | canonical hash | Supported | Supported | Supported | S |
 | debug render | Supported | Partial | Supported | B |
 | event queue | Supported | Supported | Supported | A |
+| deterministic registration order / rebuild | N/A | Supported | N/A | S |
 | integration parameters / solver settings | Partial | Missing | Partial | B |
 
 ---

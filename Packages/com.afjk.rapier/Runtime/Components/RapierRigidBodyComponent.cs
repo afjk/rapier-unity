@@ -4,7 +4,7 @@ using UnityEngine;
 namespace AFJK.Rapier
 {
     [DisallowMultipleComponent]
-    public sealed class RapierRigidBodyComponent : MonoBehaviour
+    public sealed class RapierRigidBodyComponent : MonoBehaviour, IRapierRegistrationOrdered
     {
         [SerializeField] private RapierWorldComponent worldComponent;
         [SerializeField] private RapierRigidBodyType bodyType = RapierRigidBodyType.Dynamic;
@@ -21,6 +21,9 @@ namespace AFJK.Rapier
 
         [Header("Stable Id (optional, for external references)")]
         [SerializeField] private string stableId = string.Empty;
+
+        [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
+        [SerializeField] private int registrationOrder;
 
         [Header("Authored body settings (applied on register)")]
         [SerializeField] private float gravityScale = 1f;
@@ -49,6 +52,18 @@ namespace AFJK.Rapier
         {
             get => bodyType;
             set => bodyType = value;
+        }
+
+        public bool RegisterOnEnable
+        {
+            get => registerOnEnable;
+            set => registerOnEnable = value;
+        }
+
+        public int RegistrationOrder
+        {
+            get => registrationOrder;
+            set => registrationOrder = value;
         }
 
         public bool SyncTransformFromRapier
@@ -185,6 +200,60 @@ namespace AFJK.Rapier
             }
 
             return true;
+        }
+
+        // Creates only the native body (no collider/joint pass) against an explicitly chosen world.
+        // RapierWorldComponent.RebuildWorld drives collider/joint creation separately so their global
+        // order is deterministic rather than dependent on per-body registration timing.
+        internal bool CreateManaged(RapierWorldComponent owner)
+        {
+            if (IsRegistered)
+            {
+                return true;
+            }
+
+            if (owner == null)
+            {
+                return false;
+            }
+
+            worldComponent = owner;
+            var world = owner.EnsureWorld();
+            BodyHandle = world.CreateRigidBody(CreateDesc());
+
+            if (!BodyHandle.IsValid)
+            {
+                Debug.LogWarning("Failed to create Rapier rigid body.", this);
+                return false;
+            }
+
+            owner.RegisterBody(this);
+            ApplyAuthoredSettings(world);
+
+            if (syncTransformToRapierOnRegister)
+            {
+                PushTransformToRapier();
+            }
+
+            return true;
+        }
+
+        // Adds a collider/joint to this body's tracking lists without creating it, so a managed
+        // rebuild can create them in its own deterministic order while teardown still finds them.
+        internal void TrackCollider(RapierColliderComponent collider)
+        {
+            if (collider != null && !colliders.Contains(collider))
+            {
+                colliders.Add(collider);
+            }
+        }
+
+        internal void TrackJoint(RapierJointComponent joint)
+        {
+            if (joint != null && !joints.Contains(joint))
+            {
+                joints.Add(joint);
+            }
         }
 
         public void Unregister()

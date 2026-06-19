@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Deterministic registration order for component worlds. `RapierWorldComponent`
+  gained a `RegistrationMode` (`HierarchyOrder` / `StableId` / `ExplicitOrder`)
+  and a `RebuildWorld()` method that discards and recreates the native world,
+  creating every body, then collider, then joint in a fully determined order
+  (independent of Unity's incidental component discovery). Rigid bodies,
+  colliders, and joints gained a `RegistrationOrder` (and joints a `StableId`);
+  joint limits/motors are cached and reapplied so joints survive a rebuild, and
+  `RapierPidControllerComponent` re-creates its controller when the world is
+  rebuilt. The Rapier Component Demos sample exposes a registration-mode selector
+  and a "Rebuild world" button. This is the foundation for Scene Sync import and
+  network-bridge parity.
 - Component layer adds dedicated authoring components for the advanced
   mesh/heightfield/voxel shapes used by the Rapier JS demos:
   `RapierConvexHullCollider`, `RapierTrimeshCollider`,

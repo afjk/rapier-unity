@@ -62,14 +62,22 @@ namespace AFJK.Rapier
 
         public bool EnsureController()
         {
-            if (controller.IsValid)
-            {
-                return true;
-            }
-
             if (!TryGetWorld(out var world))
             {
                 return false;
+            }
+
+            // If the world was rebuilt (e.g. RapierWorldComponent.RebuildWorld), the cached
+            // controller belongs to a disposed world; drop it and recreate against the new world.
+            if (controller.IsValid && !ReferenceEquals(createdInWorld, world))
+            {
+                controller = RapierPidControllerHandle.Invalid;
+                createdInWorld = null;
+            }
+
+            if (controller.IsValid)
+            {
+                return true;
             }
 
             controller = world.CreatePidController(kp, ki, kd, axes);
