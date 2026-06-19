@@ -112,7 +112,7 @@ namespace AFJK.Rapier.Editor
                 if (useCollisionGroups.boolValue && !useCollisionGroups.hasMultipleDifferentValues)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(collisionGroups, new GUIContent("Collision Groups"));
+                    RapierEditorUtility.PackedGroupMaskField(collisionGroups);
                     EditorGUI.indentLevel--;
                 }
 
