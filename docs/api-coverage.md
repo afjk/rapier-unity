@@ -86,6 +86,7 @@ Coverage is tracked separately for:
 | mass / mass properties getters | Supported | Supported | Supported | B |
 | dominance group | Supported | Supported | Supported | C |
 | user data / stable id | Supported | Supported | Supported | S |
+| stable id auto-generation | N/A | Supported | N/A | A |
 
 ---
 

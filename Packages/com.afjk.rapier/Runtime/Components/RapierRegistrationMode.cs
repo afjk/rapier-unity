@@ -24,6 +24,12 @@ namespace AFJK.Rapier
     public interface IRapierRegistrationOrdered
     {
         int RegistrationOrder { get; }
-        string StableId { get; }
+        string StableId { get; set; }
+
+        /// <summary>
+        /// Assigns a deterministic <see cref="StableId"/> if the component opts into auto-generation
+        /// and does not already have one. Called before sorting so id-based ordering is meaningful.
+        /// </summary>
+        void EnsureStableId();
     }
 }
