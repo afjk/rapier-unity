@@ -72,8 +72,8 @@ namespace AFJK.Rapier.Editor
                 if (overrideCollisionGroups.boolValue && !overrideCollisionGroups.hasMultipleDifferentValues)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(collisionGroupMemberships, new GUIContent("Memberships"));
-                    EditorGUILayout.PropertyField(collisionGroupFilter, new GUIContent("Filter"));
+                    RapierEditorUtility.GroupMaskField(collisionGroupMemberships, "Memberships");
+                    RapierEditorUtility.GroupMaskField(collisionGroupFilter, "Filter");
                     EditorGUI.indentLevel--;
                 }
 
@@ -81,8 +81,8 @@ namespace AFJK.Rapier.Editor
                 if (overrideSolverGroups.boolValue && !overrideSolverGroups.hasMultipleDifferentValues)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(solverGroupMemberships, new GUIContent("Memberships"));
-                    EditorGUILayout.PropertyField(solverGroupFilter, new GUIContent("Filter"));
+                    RapierEditorUtility.GroupMaskField(solverGroupMemberships, "Memberships");
+                    RapierEditorUtility.GroupMaskField(solverGroupFilter, "Filter");
                     EditorGUI.indentLevel--;
                 }
 

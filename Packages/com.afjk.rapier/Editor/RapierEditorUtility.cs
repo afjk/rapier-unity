@@ -8,6 +8,14 @@ namespace AFJK.Rapier.Editor
     {
         private static readonly string[] CollisionDetectionOptions = { "Discrete", "Continuous" };
 
+        private static readonly string[] GroupNames =
+        {
+            "Group 0", "Group 1", "Group 2", "Group 3",
+            "Group 4", "Group 5", "Group 6", "Group 7",
+            "Group 8", "Group 9", "Group 10", "Group 11",
+            "Group 12", "Group 13", "Group 14", "Group 15",
+        };
+
         public static bool AdvancedFoldout(string sessionKey, string label = "Advanced")
         {
             var expanded = SessionState.GetBool(sessionKey, false);
@@ -133,6 +141,38 @@ namespace AFJK.Rapier.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 halfProp.floatValue = full * 0.5f;
+            }
+
+            EditorGUI.showMixedValue = false;
+        }
+
+        public static void GroupMaskField(SerializedProperty ushortProp, string label)
+        {
+            EditorGUI.showMixedValue = ushortProp.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            int mask = ushortProp.intValue & 0xFFFF;
+            int result = EditorGUILayout.MaskField(label, mask, GroupNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                ushortProp.intValue = result & 0xFFFF;
+            }
+
+            EditorGUI.showMixedValue = false;
+        }
+
+        public static void PackedGroupMaskField(SerializedProperty uintProp)
+        {
+            EditorGUI.showMixedValue = uintProp.hasMultipleDifferentValues;
+            long packed = uintProp.longValue & 0xFFFFFFFFL;
+            int memberships = (int)((packed >> 16) & 0xFFFF);
+            int filter = (int)(packed & 0xFFFF);
+            EditorGUI.BeginChangeCheck();
+            int newMemberships = EditorGUILayout.MaskField("Memberships", memberships, GroupNames);
+            int newFilter = EditorGUILayout.MaskField("Filter", filter, GroupNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                long newPacked = (((long)(newMemberships & 0xFFFF)) << 16) | (long)(newFilter & 0xFFFF);
+                uintProp.longValue = newPacked;
             }
 
             EditorGUI.showMixedValue = false;
