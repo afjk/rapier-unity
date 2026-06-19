@@ -86,5 +86,56 @@ namespace AFJK.Rapier.Editor
                 worldProp.objectReferenceValue = worlds[0];
             }
         }
+
+        public static void AutoResolveRigidBody(SerializedProperty rbProp)
+        {
+            if (rbProp.objectReferenceValue != null)
+            {
+                return;
+            }
+
+            if (rbProp.serializedObject.targetObjects.Length != 1)
+            {
+                return;
+            }
+
+            var comp = rbProp.serializedObject.targetObject as Component;
+            if (comp == null)
+            {
+                return;
+            }
+
+            var rb = comp.GetComponentInParent<RapierRigidbody>();
+            if (rb != null)
+            {
+                rbProp.objectReferenceValue = rb;
+            }
+        }
+
+        public static void HalfExtentsAsSizeField(SerializedProperty halfExtentsProp, string label = "Size")
+        {
+            EditorGUI.showMixedValue = halfExtentsProp.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var size = EditorGUILayout.Vector3Field(label, halfExtentsProp.vector3Value * 2f);
+            if (EditorGUI.EndChangeCheck())
+            {
+                halfExtentsProp.vector3Value = size * 0.5f;
+            }
+
+            EditorGUI.showMixedValue = false;
+        }
+
+        public static void HalfValueAsFullField(SerializedProperty halfProp, string label)
+        {
+            EditorGUI.showMixedValue = halfProp.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var full = EditorGUILayout.FloatField(label, halfProp.floatValue * 2f);
+            if (EditorGUI.EndChangeCheck())
+            {
+                halfProp.floatValue = full * 0.5f;
+            }
+
+            EditorGUI.showMixedValue = false;
+        }
     }
 }
