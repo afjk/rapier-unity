@@ -41,6 +41,9 @@ namespace AFJK.Rapier.Samples
         [SerializeField] private bool runOnStart = true;
         [SerializeField] private bool running = true;
         [SerializeField] private int maxFountainBodies = 400;
+        [SerializeField] private RapierRegistrationMode registrationMode = RapierRegistrationMode.HierarchyOrder;
+
+        private static readonly string[] RegistrationModeNames = { "Hierarchy", "Stable Id", "Explicit" };
 
         private static readonly DemoKind[] DemoValues =
         {
@@ -269,6 +272,20 @@ namespace AFJK.Rapier.Samples
 
             debugDraw = GUILayout.Toggle(debugDraw, " Debug draw colliders");
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Registration order:", GUILayout.Width(120f));
+            var modeIndex = GUILayout.SelectionGrid((int)registrationMode, RegistrationModeNames, 3);
+            if (modeIndex != (int)registrationMode)
+            {
+                registrationMode = (RapierRegistrationMode)modeIndex;
+            }
+            GUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Rebuild world (deterministic registration)"))
+            {
+                RebuildDeterministic();
+            }
+
             GUILayout.Label("Each body is a GameObject with Rapier components attached.");
             GUILayout.EndArea();
         }
@@ -277,6 +294,54 @@ namespace AFJK.Rapier.Samples
         {
             status = "Rebuild requested.";
             rebuildRequested = true;
+        }
+
+        // Demonstrates RapierWorldComponent.RebuildWorld: assigns deterministic keys to every
+        // component, then rebuilds the native world in the selected order. The demo keeps running
+        // because joints reapply cached limits and the PID controller re-creates against the new
+        // world.
+        private void RebuildDeterministic()
+        {
+            if (worldComponent == null)
+            {
+                return;
+            }
+
+            AssignDeterministicKeys();
+            worldComponent.RegistrationMode = registrationMode;
+            worldComponent.RebuildWorld();
+            status = $"Rebuilt world deterministically ({RegistrationModeNames[(int)registrationMode]} order).";
+        }
+
+        // Stamps StableId and RegistrationOrder onto every Rapier component in hierarchy order so
+        // the StableId and ExplicitOrder registration modes have well-defined keys to sort by.
+        private void AssignDeterministicKeys()
+        {
+            if (worldGo == null)
+            {
+                return;
+            }
+
+            var bodyComponents = worldGo.GetComponentsInChildren<RapierRigidBodyComponent>(true);
+            for (var i = 0; i < bodyComponents.Length; i++)
+            {
+                bodyComponents[i].StableId = bodyComponents[i].gameObject.name;
+                bodyComponents[i].RegistrationOrder = i;
+            }
+
+            var colliderComponents = worldGo.GetComponentsInChildren<RapierColliderComponent>(true);
+            for (var i = 0; i < colliderComponents.Length; i++)
+            {
+                colliderComponents[i].StableId = $"{colliderComponents[i].gameObject.name}#col{i}";
+                colliderComponents[i].RegistrationOrder = i;
+            }
+
+            var jointComponents = worldGo.GetComponentsInChildren<RapierJointComponent>(true);
+            for (var i = 0; i < jointComponents.Length; i++)
+            {
+                jointComponents[i].StableId = $"{jointComponents[i].gameObject.name}#jnt{i}";
+                jointComponents[i].RegistrationOrder = i;
+            }
         }
 
         private void BuildDemo()

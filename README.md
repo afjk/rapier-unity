@@ -102,6 +102,10 @@ The component API is opt-in:
 - `RapierColliderComponent` implementations attach to a selected rigid body.
 - Transform synchronization is explicit and configurable.
 - Unity `Rigidbody` and built-in collider behavior is not changed.
+- `RapierWorldComponent.RebuildWorld()` rebuilds the world with a deterministic
+  registration order (`HierarchyOrder`, `StableId`, or `ExplicitOrder`), so the
+  same scene/prefab produces the same body/collider/joint creation order on every
+  host — the basis for Scene Sync import and deterministic network parity.
 
 The component layer includes box, sphere, capsule, convex hull, trimesh,
 heightfield, and voxel colliders, joints, a character controller, a PID

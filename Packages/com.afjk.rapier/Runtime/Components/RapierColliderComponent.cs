@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public abstract class RapierColliderComponent : MonoBehaviour
+    public abstract class RapierColliderComponent : MonoBehaviour, IRapierRegistrationOrdered
     {
         [SerializeField] private RapierRigidBodyComponent rigidBody;
         [SerializeField] private bool registerOnEnable = true;
@@ -15,6 +15,9 @@ namespace AFJK.Rapier
 
         [Header("Stable Id (optional, for external references)")]
         [SerializeField] private string stableId = string.Empty;
+
+        [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
+        [SerializeField] private int registrationOrder;
 
         [Header("Authored material/filter (applied on creation)")]
         [SerializeField] private RapierCoefficientCombineRule frictionCombineRule = RapierCoefficientCombineRule.Average;
@@ -79,6 +82,18 @@ namespace AFJK.Rapier
         {
             get => stableId;
             set => stableId = value ?? string.Empty;
+        }
+
+        public bool RegisterOnEnable
+        {
+            get => registerOnEnable;
+            set => registerOnEnable = value;
+        }
+
+        public int RegistrationOrder
+        {
+            get => registrationOrder;
+            set => registrationOrder = value;
         }
 
         /// <summary>
@@ -221,6 +236,29 @@ namespace AFJK.Rapier
 
             ApplyAuthoredSettings(body.World);
             return true;
+        }
+
+        // Resolves and tracks the owning body, then creates the native collider. Used by
+        // RapierWorldComponent.RebuildWorld so collider creation order is controlled globally.
+        internal bool CreateManaged()
+        {
+            if (IsRegistered)
+            {
+                return true;
+            }
+
+            if (rigidBody == null)
+            {
+                rigidBody = GetComponentInParent<RapierRigidBodyComponent>();
+            }
+
+            if (rigidBody == null || !rigidBody.IsRegistered)
+            {
+                return false;
+            }
+
+            rigidBody.TrackCollider(this);
+            return CreateInWorld(rigidBody);
         }
 
         // Applies serialized material/filter/event settings to the freshly created collider.
