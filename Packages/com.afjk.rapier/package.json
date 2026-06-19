@@ -40,6 +40,11 @@
       "displayName": "Rapier Component Demos",
       "description": "Reimplements the Rapier 3D JavaScript demos entirely with the Unity component layer.",
       "path": "Samples~/RapierComponentDemos"
+    },
+    {
+      "displayName": "Scene Import",
+      "description": "Builds a Rapier component world from a neutral data description (the Scene Sync import foundation).",
+      "path": "Samples~/SceneImport"
     }
   ]
 }

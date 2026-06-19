@@ -1,0 +1,52 @@
+{
+  "gravity": { "x": 0.0, "y": -9.81, "z": 0.0 },
+  "timestep": 0.0166666667,
+  "registrationMode": 1,
+  "sourceSystem": "ExampleImporter",
+  "bodies": [
+    {
+      "id": "floor",
+      "order": 0,
+      "bodyType": 1,
+      "position": { "x": 0.0, "y": -0.5, "z": 0.0 },
+      "eulerAngles": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "gravityScale": 1.0,
+      "colliders": [
+        { "id": "floor-box", "shape": 0, "halfExtents": { "x": 8.0, "y": 0.5, "z": 8.0 }, "density": 0.0, "friction": 0.7, "restitution": 0.0 }
+      ]
+    },
+    {
+      "id": "box-a",
+      "order": 1,
+      "bodyType": 0,
+      "position": { "x": -1.5, "y": 6.0, "z": 0.0 },
+      "eulerAngles": { "x": 15.0, "y": 0.0, "z": 10.0 },
+      "gravityScale": 1.0,
+      "colliders": [
+        { "id": "box-a-box", "shape": 0, "halfExtents": { "x": 0.5, "y": 0.5, "z": 0.5 }, "density": 1.0, "friction": 0.5, "restitution": 0.1 }
+      ]
+    },
+    {
+      "id": "sphere-b",
+      "order": 2,
+      "bodyType": 0,
+      "position": { "x": 0.0, "y": 8.0, "z": 0.5 },
+      "eulerAngles": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "gravityScale": 1.0,
+      "colliders": [
+        { "id": "sphere-b-ball", "shape": 1, "radius": 0.6, "density": 1.0, "friction": 0.4, "restitution": 0.4 }
+      ]
+    },
+    {
+      "id": "capsule-c",
+      "order": 3,
+      "bodyType": 0,
+      "position": { "x": 1.5, "y": 7.0, "z": -0.5 },
+      "eulerAngles": { "x": 0.0, "y": 0.0, "z": 25.0 },
+      "gravityScale": 1.0,
+      "colliders": [
+        { "id": "capsule-c-cap", "shape": 2, "halfHeight": 0.5, "radius": 0.4, "density": 1.0, "friction": 0.5, "restitution": 0.0 }
+      ]
+    }
+  ]
+}
