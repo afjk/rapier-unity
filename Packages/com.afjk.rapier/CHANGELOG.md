@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `docs/component-api-coverage.md`: an explicit low-level ↔ component API mapping
+  table (every `RapierWorld` call → its component-layer equivalent, or a note that
+  it needs the low-level world), so component-layer gaps are tracked precisely.
 - Stable id auto-generation. Rigid body, collider, and joint components gained an
   opt-in `AutoGenerateStableId` flag: when enabled and no id is set, a
   deterministic id is derived from the GameObject's hierarchy path (via the new
