@@ -164,6 +164,13 @@ The low-level ↔ component API mapping lives in [docs/component-api-coverage.md
 
 Scene Sync can use this package as a downstream consumer. Core APIs must stay general-purpose and should make sense to Unity developers who are not using Scene Sync.
 
+For the import path, the package ships a **neutral** foundation: `RapierSceneImporter`
+builds Rapier component GameObjects from a serializable `RapierSceneDescription`
+(deterministically, via `RebuildWorld()`), and a `RapierImportedObject` metadata
+component records source-system/id/order. A downstream Scene Sync adapter only has
+to map its own data into a `RapierSceneDescription` — the core components stay Scene
+Sync-agnostic. See the **Scene Import** sample.
+
 ## Relationship to Rapier
 
 This package integrates the Rapier physics engine into Unity through a native Rust plugin. It is not maintained by the Rapier project and should not be presented as an official Rapier package.

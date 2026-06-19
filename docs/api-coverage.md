@@ -53,6 +53,7 @@ Coverage is tracked separately for:
 | debug render | Supported | Partial | Supported | B |
 | event queue | Supported | Supported | Supported | A |
 | deterministic registration order / rebuild | N/A | Supported | N/A | S |
+| data-driven import (RapierSceneImporter) | N/A | Supported | N/A | A |
 | integration parameters / solver settings | Partial | Missing | Partial | B |
 
 ---

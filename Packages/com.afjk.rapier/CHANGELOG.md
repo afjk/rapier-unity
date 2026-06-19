@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Data-driven scene import (Scene Sync foundation). `RapierSceneImporter` builds a
+  `RapierWorldComponent` + body/collider GameObjects from a neutral, serializable
+  `RapierSceneDescription` (also loadable from JSON), assigning StableId and
+  RegistrationOrder and constructing the world in one deterministic
+  `RebuildWorld()` pass. A `RapierImportedObject` metadata component records
+  source-system/id/order, keeping the core components importer-agnostic. New
+  **Scene Import** sample demonstrates the path. A downstream Scene Sync adapter
+  maps its own format into `RapierSceneDescription`; this package stays Scene
+  Sync-agnostic.
 - `docs/component-api-coverage.md`: an explicit low-level ↔ component API mapping
   table (every `RapierWorld` call → its component-layer equivalent, or a note that
   it needs the low-level world), so component-layer gaps are tracked precisely.
