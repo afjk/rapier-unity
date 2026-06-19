@@ -134,12 +134,23 @@ namespace AFJK.Rapier
             }
         }
 
-        // Collects this world's components (active, in hierarchy order) and sorts them by mode.
+        // Collects this world's components (active+enabled, in hierarchy order) and sorts them by
+        // mode. The isActiveAndEnabled filter matches the registerOnEnable path, which only
+        // registers components whose OnEnable has run, so both paths register the same set.
         private List<T> CollectOrdered<T>() where T : Component, IRapierRegistrationOrdered
         {
             var found = GetComponentsInChildren<T>(false);
             var list = new List<T>(found.Length);
-            list.AddRange(found);
+            for (var i = 0; i < found.Length; i++)
+            {
+                if (found[i] is Behaviour behaviour && !behaviour.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                list.Add(found[i]);
+            }
+
             SortByMode(list);
             return list;
         }
@@ -174,13 +185,27 @@ namespace AFJK.Rapier
                 if (missingId)
                 {
                     Debug.LogWarning(
-                        $"{nameof(RapierWorldComponent)} StableId registration mode found {typeof(T).Name} components without a StableId; they fall back to hierarchy order.",
+                        $"{nameof(RapierWorldComponent)} StableId registration mode found {typeof(T).Name} components without a StableId; those are registered after the identified ones, in hierarchy order.",
                         this);
                 }
 
+                // Components with a StableId come first (ordered by id); components without one are
+                // placed after them, in hierarchy order. Hierarchy index is the final tie-break.
                 list.Sort((a, b) =>
                 {
-                    var r = string.CompareOrdinal(a.StableId ?? string.Empty, b.StableId ?? string.Empty);
+                    var aEmpty = string.IsNullOrEmpty(a.StableId);
+                    var bEmpty = string.IsNullOrEmpty(b.StableId);
+                    if (aEmpty != bEmpty)
+                    {
+                        return aEmpty ? 1 : -1;
+                    }
+
+                    if (aEmpty)
+                    {
+                        return hierarchyIndex[a].CompareTo(hierarchyIndex[b]);
+                    }
+
+                    var r = string.CompareOrdinal(a.StableId, b.StableId);
                     return r != 0 ? r : hierarchyIndex[a].CompareTo(hierarchyIndex[b]);
                 });
                 return;
