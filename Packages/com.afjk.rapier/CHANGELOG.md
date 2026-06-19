@@ -24,6 +24,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sub-menus) in the Add Component browser.
 
 ### Added
+- Custom Inspectors for the authoring components, reorganized to mirror Unity's
+  built-in physics components and lower the learning curve. The values users
+  actually tune are shown up top; internal plumbing (transform sync, StableId /
+  registration, lifecycle, deterministic-order tuning) is collapsed into an
+  **Advanced** foldout. Highlights: Rigidbody shows a Unity-style **Constraints**
+  grid and a Discrete/Continuous **Collision Detection** popup; colliders expose
+  shape size the Unity way (Box **Size**, Capsule **Radius/Height**), **Is
+  Trigger**, and a **Material** group; the character controller maps to **Slope
+  Limit** / **Skin Width** with grouped Auto Step and Snap To Ground; joints use
+  the Unity **Connected Body** model (**Anchor** / **Connected Anchor**) with the
+  joint's own body auto-resolved; and collision/solver groups are edited as
+  **LayerMask-style** 16-group dropdowns instead of raw integers. Body/world
+  references auto-resolve when unambiguous. These are editor-only presentation
+  changes — no serialized data or runtime behavior is affected.
 - Data-driven scene import (Scene Sync foundation). `RapierSceneImporter` builds a
   `RapierWorldBehaviour` + body/collider GameObjects from a neutral, serializable
   `RapierSceneDescription` (also loadable from JSON), assigning StableId and
