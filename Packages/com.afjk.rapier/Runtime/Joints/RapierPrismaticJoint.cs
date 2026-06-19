@@ -2,14 +2,15 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierRevoluteJointComponent : RapierJointComponent
+    [AddComponentMenu("Rapier/Joints/Rapier Prismatic Joint")]
+    public sealed class RapierPrismaticJoint : RapierJoint
     {
-        [SerializeField] private Vector3 axis = Vector3.up;
+        [SerializeField] private Vector3 axis = Vector3.right;
 
         public Vector3 Axis
         {
             get => axis;
-            set => axis = SanitizeAxis(value, Vector3.up);
+            set => axis = SanitizeAxis(value, Vector3.right);
         }
 
         protected override RapierJointHandle CreateJoint(
@@ -17,13 +18,13 @@ namespace AFJK.Rapier
             RapierRigidBodyHandle body1Handle,
             RapierRigidBodyHandle body2Handle)
         {
-            return world.CreateRevoluteJoint(body1Handle, body2Handle, LocalAnchor1, LocalAnchor2, Axis);
+            return world.CreatePrismaticJoint(body1Handle, body2Handle, LocalAnchor1, LocalAnchor2, Axis);
         }
 
         protected override void OnValidate()
         {
             base.OnValidate();
-            axis = SanitizeAxis(axis, Vector3.up);
+            axis = SanitizeAxis(axis, Vector3.right);
         }
 
         private static Vector3 SanitizeAxis(Vector3 value, Vector3 fallback)

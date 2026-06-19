@@ -39,7 +39,7 @@ Packages/com.afjk.rapier/Runtime/Plugins/macOS/librapier_unity_ffi.dylib
 
 ## API Shape
 
-Use `RapierWorld` for low-level code and `RapierWorldComponent` for scene-authored worlds. Both are explicit world owners, so multiple worlds are supported.
+Use `RapierWorld` for low-level code and `RapierWorldBehaviour` for scene-authored worlds. Both are explicit world owners, so multiple worlds are supported.
 
 ## Samples
 

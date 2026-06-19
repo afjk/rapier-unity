@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierRopeJointComponent : RapierJointComponent
+    [AddComponentMenu("Rapier/Joints/Rapier Rope Joint")]
+    public sealed class RapierRopeJoint : RapierJoint
     {
         [SerializeField] private float maxDistance = 1f;
 

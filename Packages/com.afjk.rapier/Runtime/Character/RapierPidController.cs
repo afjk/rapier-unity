@@ -3,14 +3,15 @@ using UnityEngine;
 namespace AFJK.Rapier
 {
     /// <summary>
-    /// Wraps a Rapier PID controller for a single dynamic <see cref="RapierRigidBodyComponent"/>.
+    /// Wraps a Rapier PID controller for a single dynamic <see cref="RapierRigidbody"/>.
     /// The controller computes velocity corrections that push the body toward a target pose, which
     /// is useful for kinematic-feeling control of dynamic bodies (see the JS "PID controller" demo).
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RapierPidControllerComponent : MonoBehaviour
+    [AddComponentMenu("Rapier/Controllers/Rapier PID Controller")]
+    public sealed class RapierPidController : MonoBehaviour
     {
-        [SerializeField] private RapierRigidBodyComponent rigidBody;
+        [SerializeField] private RapierRigidbody rigidBody;
         [SerializeField] private float kp = 60f;
         [SerializeField] private float ki;
         [SerializeField] private float kd = 1f;
@@ -19,7 +20,7 @@ namespace AFJK.Rapier
         private RapierPidControllerHandle controller = RapierPidControllerHandle.Invalid;
         private RapierWorld createdInWorld;
 
-        public RapierRigidBodyComponent RigidBody
+        public RapierRigidbody RigidBody
         {
             get => rigidBody;
             set => rigidBody = value;
@@ -67,7 +68,7 @@ namespace AFJK.Rapier
                 return false;
             }
 
-            // If the world was rebuilt (e.g. RapierWorldComponent.RebuildWorld), the cached
+            // If the world was rebuilt (e.g. RapierWorldBehaviour.RebuildWorld), the cached
             // controller belongs to a disposed world; drop it and recreate against the new world.
             if (controller.IsValid && !ReferenceEquals(createdInWorld, world))
             {
@@ -83,7 +84,7 @@ namespace AFJK.Rapier
             controller = world.CreatePidController(kp, ki, kd, axes);
             if (!controller.IsValid)
             {
-                Debug.LogWarning($"{nameof(RapierPidControllerComponent)} failed to create a PID controller.", this);
+                Debug.LogWarning($"{nameof(RapierPidController)} failed to create a PID controller.", this);
                 return false;
             }
 
@@ -130,7 +131,7 @@ namespace AFJK.Rapier
         {
             if (rigidBody == null)
             {
-                rigidBody = GetComponentInParent<RapierRigidBodyComponent>();
+                rigidBody = GetComponentInParent<RapierRigidbody>();
             }
 
             world = rigidBody != null ? rigidBody.World : null;

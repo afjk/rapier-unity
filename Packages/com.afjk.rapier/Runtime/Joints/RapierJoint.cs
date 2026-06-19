@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public abstract class RapierJointComponent : MonoBehaviour, IRapierRegistrationOrdered
+    public abstract class RapierJoint : MonoBehaviour, IRapierRegistrationOrdered
     {
-        [SerializeField] private RapierRigidBodyComponent body1;
-        [SerializeField] private RapierRigidBodyComponent body2;
+        [SerializeField] private RapierRigidbody body1;
+        [SerializeField] private RapierRigidbody body2;
         [SerializeField] private bool registerOnEnable = true;
         [SerializeField] private Vector3 localAnchor1;
         [SerializeField] private Vector3 localAnchor2;
@@ -17,11 +17,11 @@ namespace AFJK.Rapier
         [Tooltip("If set and StableId is empty, a deterministic StableId is generated from the hierarchy path on creation.")]
         [SerializeField] private bool autoGenerateStableId;
 
-        [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
+        [Tooltip("Used by RapierWorldBehaviour.RebuildWorld when its registration mode is ExplicitOrder.")]
         [SerializeField] private int registrationOrder;
 
         // Limit/motor settings are cached so they can be reapplied when the joint is recreated
-        // (for example by RapierWorldComponent.RebuildWorld), keeping the joint configuration stable.
+        // (for example by RapierWorldBehaviour.RebuildWorld), keeping the joint configuration stable.
         private readonly List<AxisLimit> limitCache = new List<AxisLimit>();
         private readonly List<AxisMotorPosition> motorPositionCache = new List<AxisMotorPosition>();
         private readonly List<AxisMotorVelocity> motorVelocityCache = new List<AxisMotorVelocity>();
@@ -59,19 +59,19 @@ namespace AFJK.Rapier
         {
             if (autoGenerateStableId && string.IsNullOrEmpty(stableId))
             {
-                var siblings = GetComponents<RapierJointComponent>();
+                var siblings = GetComponents<RapierJoint>();
                 var index = System.Array.IndexOf(siblings, this);
                 stableId = RapierStableId.FromHierarchy(transform, "Joint" + index);
             }
         }
 
-        public RapierRigidBodyComponent Body1
+        public RapierRigidbody Body1
         {
             get => body1;
             set => body1 = value;
         }
 
-        public RapierRigidBodyComponent Body2
+        public RapierRigidbody Body2
         {
             get => body2;
             set => body2 = value;
@@ -115,7 +115,7 @@ namespace AFJK.Rapier
 
             if (!ReferenceEquals(body1.World, body2.World))
             {
-                Debug.LogWarning($"{GetType().Name} requires both bodies to belong to the same {nameof(RapierWorldComponent)}.", this);
+                Debug.LogWarning($"{GetType().Name} requires both bodies to belong to the same {nameof(RapierWorldBehaviour)}.", this);
                 return false;
             }
 
@@ -174,7 +174,7 @@ namespace AFJK.Rapier
         }
 
         // Resolves and tracks both bodies, then creates the native joint. Used by
-        // RapierWorldComponent.RebuildWorld so joint creation order is controlled globally.
+        // RapierWorldBehaviour.RebuildWorld so joint creation order is controlled globally.
         internal bool CreateManaged()
         {
             if (IsRegistered)
@@ -385,14 +385,14 @@ namespace AFJK.Rapier
         {
             if (body1 == null)
             {
-                body1 = GetComponentInParent<RapierRigidBodyComponent>();
+                body1 = GetComponentInParent<RapierRigidbody>();
             }
 
             if (body1 == null)
             {
                 if (warn)
                 {
-                    Debug.LogWarning($"{GetType().Name} requires a primary {nameof(RapierRigidBodyComponent)}.", this);
+                    Debug.LogWarning($"{GetType().Name} requires a primary {nameof(RapierRigidbody)}.", this);
                 }
 
                 return false;
@@ -402,7 +402,7 @@ namespace AFJK.Rapier
             {
                 if (warn)
                 {
-                    Debug.LogWarning($"{GetType().Name} requires a connected {nameof(RapierRigidBodyComponent)}.", this);
+                    Debug.LogWarning($"{GetType().Name} requires a connected {nameof(RapierRigidbody)}.", this);
                 }
 
                 return false;

@@ -13,7 +13,7 @@ The short-term API baseline is **rapier.js 0.19.3** because this is the browser 
 Coverage is tracked separately for:
 
 - **Low-level C# API** — `RapierWorld` and related types
-- **Unity Component API** — `RapierWorldComponent`, `RapierRigidBodyComponent`, `RapierColliderComponent`
+- **Unity Component API** — `RapierWorldBehaviour`, `RapierRigidbody`, `RapierCollider`
 - **Native FFI** — Rust/C ABI exposed by `rapier_unity_ffi`
 - **Samples/tests** — Unity samples and parity fixtures
 
@@ -130,7 +130,7 @@ Coverage is tracked separately for:
 ## 4. Scene Queries
 
 Component-API coverage is provided by the `RapierPhysics` static façade, which
-accepts either a `RapierWorld` or a `RapierWorldComponent`.
+accepts either a `RapierWorld` or a `RapierWorldBehaviour`.
 
 | Feature | Low-level C# | Component API | Native FFI | Priority |
 |---|---|---|---|---|
@@ -298,8 +298,8 @@ A kinematic character controller is exposed as a single stateless
 cuboid / capsule shape given a desired translation, configurable up vector,
 offset, slide, autostep, snap-to-ground, and slope angles, plus a `QueryFilter`.
 It returns the effective translation and grounded / sliding flags without moving
-any body. `RapierCharacterControllerComponent` wraps this for
-`RapierRigidBodyComponent`, including optional next-kinematic-translation
+any body. `RapierCharacterControllerBehaviour` wraps this for
+`RapierRigidbody`, including optional next-kinematic-translation
 application. Per-collision output and dynamic-body impulses remain pending.
 
 - controller create / destroy
@@ -322,7 +322,7 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
 
 ### Phase 8 — Component API parity & JS demos ✅ done (validation pending)
 
-- Component layer: `RapierRigidBodyComponent` and `RapierColliderComponent` now
+- Component layer: `RapierRigidbody` and `RapierCollider` now
   wrap the Phase 1–4 runtime APIs (velocities, damping, gravity scale, CCD,
   enabled, forces/impulses, kinematic next-position, axis locks; collider
   friction/restitution/density, sensor, enabled, combine rules, collision/solver
@@ -335,9 +335,9 @@ An editor-only Gizmo overlay component and a richer debug overlay remain pending
   `RapierConvexHullCollider`, `RapierTrimeshCollider`,
   `RapierHeightfieldCollider`, `RapierVoxelsCollider` (joining the existing
   box/sphere/capsule collider components). Round shapes remain unimplemented.
-- `RapierPidControllerComponent` wraps the native PID controller.
-- `RapierPhysics` exposes the full scene-query surface for `RapierWorldComponent`.
-- `RapierWorldComponent` exposes state hashes, snapshots, and event drains.
+- `RapierPidController` wraps the native PID controller.
+- `RapierPhysics` exposes the full scene-query surface for `RapierWorldBehaviour`.
+- `RapierWorldBehaviour` exposes state hashes, snapshots, and event drains.
 - Joint Component wrappers cover fixed, spherical, revolute, prismatic, rope,
   and spring joints with shared lifecycle management plus limit/motor APIs.
 - Samples: the `RapierComponentDemos` sample reimplements the current Rapier JS

@@ -1,6 +1,9 @@
+using UnityEngine;
+
 namespace AFJK.Rapier
 {
-    public sealed class RapierFixedJointComponent : RapierJointComponent
+    [AddComponentMenu("Rapier/Joints/Rapier Fixed Joint")]
+    public sealed class RapierFixedJoint : RapierJoint
     {
         protected override RapierJointHandle CreateJoint(
             RapierWorld world,

@@ -148,16 +148,16 @@ opt-in and never touch Unity's built-in `Rigidbody`/`Collider` components.
 ### Scene hierarchy
 
 ```text
-RapierWorld          (GameObject)  + RapierWorldComponent
-└── Box              (GameObject)  + RapierRigidBodyComponent
+RapierWorld          (GameObject)  + RapierWorldBehaviour
+└── Box              (GameObject)  + RapierRigidbody
                                    + RapierBoxCollider
 ```
 
 1. Create an empty GameObject named e.g. `RapierWorld` and add
-   **`RapierWorldComponent`**. Leave **Step Mode** at `FixedUpdate` so it steps
+   **`RapierWorldBehaviour`**. Leave **Step Mode** at `FixedUpdate` so it steps
    automatically; set **Gravity** and **Timestep** as needed.
-2. Create a child GameObject and add **`RapierRigidBodyComponent`**. It resolves
-   its world from the nearest parent `RapierWorldComponent` automatically (or
+2. Create a child GameObject and add **`RapierRigidbody`**. It resolves
+   its world from the nearest parent `RapierWorldBehaviour` automatically (or
    assign one explicitly in the inspector). Set **Body Type** (`Dynamic`,
    `Fixed`, `KinematicPositionBased`, `KinematicVelocityBased`).
 3. On the same GameObject, add a collider component — one of
@@ -178,13 +178,13 @@ public sealed class ComponentBootstrap : MonoBehaviour
     private void Awake()
     {
         var worldGo = new GameObject("RapierWorld");
-        worldGo.AddComponent<RapierWorldComponent>(); // steps in FixedUpdate
+        worldGo.AddComponent<RapierWorldBehaviour>(); // steps in FixedUpdate
 
         var boxGo = new GameObject("Box");
         boxGo.transform.SetParent(worldGo.transform);
         boxGo.transform.position = new Vector3(0f, 5f, 0f);
 
-        var bodyComponent = boxGo.AddComponent<RapierRigidBodyComponent>();
+        var bodyComponent = boxGo.AddComponent<RapierRigidbody>();
         bodyComponent.BodyType = RapierRigidBodyType.Dynamic;
 
         var box = boxGo.AddComponent<RapierBoxCollider>();
@@ -205,7 +205,7 @@ var hash = worldComponent.StateHash();
 
 ## Determinism, snapshots, and events
 
-- `RapierWorld.StateHash()` / `RapierWorldComponent.StateHash()` return a
+- `RapierWorld.StateHash()` / `RapierWorldBehaviour.StateHash()` return a
   canonical hash for parity checks and replay validation.
 - `TryCreateSnapshot` / `TryReadSnapshot` save and restore full world state for
   rollback.

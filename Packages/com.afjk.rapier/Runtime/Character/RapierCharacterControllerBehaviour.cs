@@ -3,9 +3,10 @@ using UnityEngine;
 namespace AFJK.Rapier
 {
     [DisallowMultipleComponent]
-    public sealed class RapierCharacterControllerComponent : MonoBehaviour
+    [AddComponentMenu("Rapier/Controllers/Rapier Character Controller")]
+    public sealed class RapierCharacterControllerBehaviour : MonoBehaviour
     {
-        [SerializeField] private RapierRigidBodyComponent rigidBody;
+        [SerializeField] private RapierRigidbody rigidBody;
         [SerializeField] private bool registerBodyOnEnable = true;
         [SerializeField] private RapierShapeType shapeType = RapierShapeType.Capsule;
         [SerializeField] private Vector3 halfExtents = Vector3.one * 0.5f;
@@ -30,7 +31,7 @@ namespace AFJK.Rapier
 
         public RapierCharacterMovement LastMovement { get; private set; }
 
-        public RapierRigidBodyComponent RigidBody
+        public RapierRigidbody RigidBody
         {
             get => rigidBody;
             set => rigidBody = value;
@@ -192,14 +193,14 @@ namespace AFJK.Rapier
         {
             if (rigidBody == null)
             {
-                rigidBody = GetComponentInParent<RapierRigidBodyComponent>();
+                rigidBody = GetComponentInParent<RapierRigidbody>();
             }
 
             if (rigidBody == null)
             {
                 if (warn)
                 {
-                    Debug.LogWarning($"{nameof(RapierCharacterControllerComponent)} requires a {nameof(RapierRigidBodyComponent)}.", this);
+                    Debug.LogWarning($"{nameof(RapierCharacterControllerBehaviour)} requires a {nameof(RapierRigidbody)}.", this);
                 }
 
                 return false;
@@ -220,7 +221,7 @@ namespace AFJK.Rapier
                 return true;
             }
 
-            Debug.LogWarning($"{nameof(RapierCharacterControllerComponent)}.{nameof(Move)} requires a {nameof(RapierRigidBodyType.KinematicPositionBased)} body.", this);
+            Debug.LogWarning($"{nameof(RapierCharacterControllerBehaviour)}.{nameof(Move)} requires a {nameof(RapierRigidBodyType.KinematicPositionBased)} body.", this);
             return false;
         }
 

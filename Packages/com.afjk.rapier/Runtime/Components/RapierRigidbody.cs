@@ -4,9 +4,10 @@ using UnityEngine;
 namespace AFJK.Rapier
 {
     [DisallowMultipleComponent]
-    public sealed class RapierRigidBodyComponent : MonoBehaviour, IRapierRegistrationOrdered
+    [AddComponentMenu("Rapier/Rapier Rigidbody")]
+    public sealed class RapierRigidbody : MonoBehaviour, IRapierRegistrationOrdered
     {
-        [SerializeField] private RapierWorldComponent worldComponent;
+        [SerializeField] private RapierWorldBehaviour worldComponent;
         [SerializeField] private RapierRigidBodyType bodyType = RapierRigidBodyType.Dynamic;
         [SerializeField] private bool registerOnEnable = true;
         [SerializeField] private bool syncTransformFromRapier = true;
@@ -25,7 +26,7 @@ namespace AFJK.Rapier
         [Tooltip("If set and StableId is empty, a deterministic StableId is generated from the hierarchy path on registration.")]
         [SerializeField] private bool autoGenerateStableId;
 
-        [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
+        [Tooltip("Used by RapierWorldBehaviour.RebuildWorld when its registration mode is ExplicitOrder.")]
         [SerializeField] private int registrationOrder;
 
         [Header("Authored body settings (applied on register)")]
@@ -40,14 +41,14 @@ namespace AFJK.Rapier
         [SerializeField] private bool lockRotationY;
         [SerializeField] private bool lockRotationZ;
 
-        private readonly List<RapierColliderComponent> colliders = new List<RapierColliderComponent>();
-        private readonly List<RapierJointComponent> joints = new List<RapierJointComponent>();
+        private readonly List<RapierCollider> colliders = new List<RapierCollider>();
+        private readonly List<RapierJoint> joints = new List<RapierJoint>();
 
         public RapierRigidBodyHandle BodyHandle { get; private set; } = RapierRigidBodyHandle.Invalid;
 
         public bool IsRegistered => BodyHandle.IsValid;
 
-        public RapierWorldComponent WorldComponent => worldComponent;
+        public RapierWorldBehaviour WorldComponent => worldComponent;
 
         public RapierWorld World => worldComponent != null ? worldComponent.World : null;
 
@@ -166,12 +167,12 @@ namespace AFJK.Rapier
 
             if (worldComponent == null)
             {
-                worldComponent = GetComponentInParent<RapierWorldComponent>();
+                worldComponent = GetComponentInParent<RapierWorldBehaviour>();
             }
 
             if (worldComponent == null)
             {
-                Debug.LogWarning($"{nameof(RapierRigidBodyComponent)} requires a {nameof(RapierWorldComponent)}.", this);
+                Debug.LogWarning($"{nameof(RapierRigidbody)} requires a {nameof(RapierWorldBehaviour)}.", this);
                 return false;
             }
 
@@ -206,9 +207,9 @@ namespace AFJK.Rapier
         }
 
         // Creates only the native body (no collider/joint pass) against an explicitly chosen world.
-        // RapierWorldComponent.RebuildWorld drives collider/joint creation separately so their global
+        // RapierWorldBehaviour.RebuildWorld drives collider/joint creation separately so their global
         // order is deterministic rather than dependent on per-body registration timing.
-        internal bool CreateManaged(RapierWorldComponent owner)
+        internal bool CreateManaged(RapierWorldBehaviour owner)
         {
             if (IsRegistered)
             {
@@ -243,7 +244,7 @@ namespace AFJK.Rapier
 
         // Adds a collider/joint to this body's tracking lists without creating it, so a managed
         // rebuild can create them in its own deterministic order while teardown still finds them.
-        internal void TrackCollider(RapierColliderComponent collider)
+        internal void TrackCollider(RapierCollider collider)
         {
             if (collider != null && !colliders.Contains(collider))
             {
@@ -251,7 +252,7 @@ namespace AFJK.Rapier
             }
         }
 
-        internal void TrackJoint(RapierJointComponent joint)
+        internal void TrackJoint(RapierJoint joint)
         {
             if (joint != null && !joints.Contains(joint))
             {
@@ -534,7 +535,7 @@ namespace AFJK.Rapier
             }
         }
 
-        internal void RegisterCollider(RapierColliderComponent collider)
+        internal void RegisterCollider(RapierCollider collider)
         {
             if (collider == null || colliders.Contains(collider))
             {
@@ -549,12 +550,12 @@ namespace AFJK.Rapier
             }
         }
 
-        internal void UnregisterCollider(RapierColliderComponent collider)
+        internal void UnregisterCollider(RapierCollider collider)
         {
             colliders.Remove(collider);
         }
 
-        internal void RegisterJoint(RapierJointComponent joint)
+        internal void RegisterJoint(RapierJoint joint)
         {
             if (joint == null || joints.Contains(joint))
             {
@@ -569,7 +570,7 @@ namespace AFJK.Rapier
             }
         }
 
-        internal void UnregisterJoint(RapierJointComponent joint)
+        internal void UnregisterJoint(RapierJoint joint)
         {
             joints.Remove(joint);
         }
@@ -590,7 +591,7 @@ namespace AFJK.Rapier
             }
         }
 
-        internal void ForgetNativeRegistration(RapierWorldComponent owner)
+        internal void ForgetNativeRegistration(RapierWorldBehaviour owner)
         {
             if (owner != worldComponent)
             {

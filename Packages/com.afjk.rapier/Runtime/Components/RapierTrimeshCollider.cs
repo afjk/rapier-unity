@@ -7,7 +7,8 @@ namespace AFJK.Rapier
     /// assigned in code (for procedurally generated terrain) or derived from an assigned
     /// <see cref="UnityEngine.Mesh"/> for editor authoring.
     /// </summary>
-    public sealed class RapierTrimeshCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Trimesh Collider")]
+    public sealed class RapierTrimeshCollider : RapierCollider
     {
         [SerializeField] private Mesh sourceMesh;
         [SerializeField] private Vector3[] vertices;

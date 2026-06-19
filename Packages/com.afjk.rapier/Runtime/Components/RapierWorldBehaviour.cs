@@ -10,7 +10,8 @@ namespace AFJK.Rapier
     }
 
     [DisallowMultipleComponent]
-    public sealed class RapierWorldComponent : MonoBehaviour
+    [AddComponentMenu("Rapier/Rapier World")]
+    public sealed class RapierWorldBehaviour : MonoBehaviour
     {
         [SerializeField] private RapierWorldStepMode stepMode = RapierWorldStepMode.FixedUpdate;
         [SerializeField] private Vector3 gravity = new Vector3(0f, -9.81f, 0f);
@@ -19,7 +20,7 @@ namespace AFJK.Rapier
         [Tooltip("Order used by RebuildWorld when (re)creating bodies, colliders, and joints.")]
         [SerializeField] private RapierRegistrationMode registrationMode = RapierRegistrationMode.HierarchyOrder;
 
-        private readonly List<RapierRigidBodyComponent> bodies = new List<RapierRigidBodyComponent>();
+        private readonly List<RapierRigidbody> bodies = new List<RapierRigidbody>();
         private RapierWorld world;
 
         public RapierWorldStepMode StepMode
@@ -92,19 +93,19 @@ namespace AFJK.Rapier
             TeardownWorld();
             var activeWorld = EnsureWorld();
 
-            var bodyComponents = CollectOrdered<RapierRigidBodyComponent>();
+            var bodyComponents = CollectOrdered<RapierRigidbody>();
             for (var i = 0; i < bodyComponents.Count; i++)
             {
                 bodyComponents[i].CreateManaged(this);
             }
 
-            var colliderComponents = CollectOrdered<RapierColliderComponent>();
+            var colliderComponents = CollectOrdered<RapierCollider>();
             for (var i = 0; i < colliderComponents.Count; i++)
             {
                 colliderComponents[i].CreateManaged();
             }
 
-            var jointComponents = CollectOrdered<RapierJointComponent>();
+            var jointComponents = CollectOrdered<RapierJoint>();
             for (var i = 0; i < jointComponents.Count; i++)
             {
                 jointComponents[i].CreateManaged();
@@ -187,7 +188,7 @@ namespace AFJK.Rapier
                 if (missingId)
                 {
                     Debug.LogWarning(
-                        $"{nameof(RapierWorldComponent)} StableId registration mode found {typeof(T).Name} components without a StableId; those are registered after the identified ones, in hierarchy order.",
+                        $"{nameof(RapierWorldBehaviour)} StableId registration mode found {typeof(T).Name} components without a StableId; those are registered after the identified ones, in hierarchy order.",
                         this);
                 }
 
@@ -284,7 +285,7 @@ namespace AFJK.Rapier
             return EnsureWorld().DrainContactForceEvents(results);
         }
 
-        internal void RegisterBody(RapierRigidBodyComponent body)
+        internal void RegisterBody(RapierRigidbody body)
         {
             if (body == null || bodies.Contains(body))
             {
@@ -294,7 +295,7 @@ namespace AFJK.Rapier
             bodies.Add(body);
         }
 
-        internal void UnregisterBody(RapierRigidBodyComponent body)
+        internal void UnregisterBody(RapierRigidbody body)
         {
             bodies.Remove(body);
         }

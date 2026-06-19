@@ -5,7 +5,7 @@ namespace AFJK.Rapier
 {
     /// <summary>
     /// Component-friendly façade over the <see cref="RapierWorld"/> scene-query API. Every helper
-    /// accepts either a raw <see cref="RapierWorld"/> or a <see cref="RapierWorldComponent"/>, so
+    /// accepts either a raw <see cref="RapierWorld"/> or a <see cref="RapierWorldBehaviour"/>, so
     /// queries can be issued without reaching into the low-level handle types directly.
     /// </summary>
     public static class RapierPhysics
@@ -20,7 +20,7 @@ namespace AFJK.Rapier
         }
 
         public static bool Raycast(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             Ray ray,
             float maxDistance,
             out RapierRaycastHit hit)
@@ -29,7 +29,7 @@ namespace AFJK.Rapier
         }
 
         public static bool RaycastFiltered(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             Ray ray,
             float maxDistance,
             RapierQueryFilter filter,
@@ -40,7 +40,7 @@ namespace AFJK.Rapier
         }
 
         public static int RaycastAll(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             Ray ray,
             float maxDistance,
             RapierQueryFilter filter,
@@ -51,7 +51,7 @@ namespace AFJK.Rapier
         }
 
         public static bool ProjectPoint(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             Vector3 point,
             RapierQueryFilter filter,
             out RapierPointProjection projection,
@@ -61,7 +61,7 @@ namespace AFJK.Rapier
         }
 
         public static bool IntersectionWithPoint(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             Vector3 point,
             RapierQueryFilter filter,
             out RapierColliderHandle collider)
@@ -70,7 +70,7 @@ namespace AFJK.Rapier
         }
 
         public static bool CastShape(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             RapierTransform shapePosition,
             Vector3 shapeVelocity,
             RapierQueryShape shape,
@@ -90,7 +90,7 @@ namespace AFJK.Rapier
         }
 
         public static int IntersectShape(
-            RapierWorldComponent worldComponent,
+            RapierWorldBehaviour worldComponent,
             RapierTransform shapePosition,
             RapierQueryShape shape,
             RapierQueryFilter filter,
@@ -109,7 +109,7 @@ namespace AFJK.Rapier
             return world;
         }
 
-        private static RapierWorld Resolve(RapierWorldComponent worldComponent)
+        private static RapierWorld Resolve(RapierWorldBehaviour worldComponent)
         {
             if (worldComponent == null)
             {

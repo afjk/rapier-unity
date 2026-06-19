@@ -1,7 +1,7 @@
 namespace AFJK.Rapier
 {
     /// <summary>
-    /// How a <see cref="RapierWorldComponent"/> orders the creation of bodies, colliders, and
+    /// How a <see cref="RapierWorldBehaviour"/> orders the creation of bodies, colliders, and
     /// joints when it rebuilds its world. Rapier results depend on creation order, so this makes
     /// that order explicit instead of relying on Unity's incidental component discovery order.
     /// </summary>
@@ -19,7 +19,7 @@ namespace AFJK.Rapier
 
     /// <summary>
     /// Implemented by Rapier components that participate in deterministic registration ordering
-    /// (rigid bodies, colliders, joints). Used by <see cref="RapierWorldComponent.RebuildWorld"/>.
+    /// (rigid bodies, colliders, joints). Used by <see cref="RapierWorldBehaviour.RebuildWorld"/>.
     /// </summary>
     public interface IRapierRegistrationOrdered
     {

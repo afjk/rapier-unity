@@ -45,7 +45,7 @@ install options, a low-level API walkthrough, and the component API.
 
 ## Current Status
 
-The package is in early foundation work. The initial native API covers explicit world creation, stepping, rigid bodies, primitive colliders, raycasts, deterministic state hashing, stable ids, and native snapshot restore. Unity components are intentionally opt-in and operate only on selected `RapierWorldComponent` instances.
+The package is in early foundation work. The initial native API covers explicit world creation, stepping, rigid bodies, primitive colliders, raycasts, deterministic state hashing, stable ids, and native snapshot restore. Unity components are intentionally opt-in and operate only on selected `RapierWorldBehaviour` instances.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ Unity C# RapierWorld
         -> rapier3d PhysicsPipeline, RigidBodySet, ColliderSet, phases, joints
 ```
 
-The registry is an implementation detail of the FFI layer. Public ownership remains explicit: Unity code owns a `RapierWorld`, and component worlds are owned by `RapierWorldComponent`.
+The registry is an implementation detail of the FFI layer. Public ownership remains explicit: Unity code owns a `RapierWorld`, and component worlds are owned by `RapierWorldBehaviour`.
 
 ## Low-level API
 
@@ -96,13 +96,13 @@ if (world.TryGetTransform(body, out var transform))
 
 The component API is opt-in:
 
-- `RapierWorldComponent` owns one native `RapierWorld`.
+- `RapierWorldBehaviour` owns one native `RapierWorld`.
 - It can step automatically in `FixedUpdate` or be stepped manually.
-- `RapierRigidBodyComponent` registers into a selected world.
-- `RapierColliderComponent` implementations attach to a selected rigid body.
+- `RapierRigidbody` registers into a selected world.
+- `RapierCollider` implementations attach to a selected rigid body.
 - Transform synchronization is explicit and configurable.
 - Unity `Rigidbody` and built-in collider behavior is not changed.
-- `RapierWorldComponent.RebuildWorld()` rebuilds the world with a deterministic
+- `RapierWorldBehaviour.RebuildWorld()` rebuilds the world with a deterministic
   registration order (`HierarchyOrder`, `StableId`, or `ExplicitOrder`), so the
   same scene/prefab produces the same body/collider/joint creation order on every
   host — the basis for Scene Sync import and deterministic network parity.

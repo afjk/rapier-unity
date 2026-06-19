@@ -6,7 +6,8 @@ namespace AFJK.Rapier
     /// A voxel collider. Each point selects the voxel cell that contains it; <see cref="VoxelSize"/>
     /// controls the per-axis cell dimensions. Points can be assigned in code or authored inline.
     /// </summary>
-    public sealed class RapierVoxelsCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Voxels Collider")]
+    public sealed class RapierVoxelsCollider : RapierCollider
     {
         [SerializeField] private Vector3 voxelSize = Vector3.one;
         [SerializeField] private Vector3[] points;

@@ -6,7 +6,8 @@ namespace AFJK.Rapier
     /// A heightfield collider. Heights are stored in row-major order and scaled by
     /// <see cref="Scale"/>. Sample data can be assigned in code or authored inline.
     /// </summary>
-    public sealed class RapierHeightfieldCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Heightfield Collider")]
+    public sealed class RapierHeightfieldCollider : RapierCollider
     {
         [SerializeField] private int rows = 2;
         [SerializeField] private int columns = 2;

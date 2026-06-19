@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public sealed class RapierCapsuleCollider : RapierColliderComponent
+    [AddComponentMenu("Rapier/Colliders/Rapier Capsule Collider")]
+    public sealed class RapierCapsuleCollider : RapierCollider
     {
         [SerializeField] private float halfHeight = 0.5f;
         [SerializeField] private float radius = 0.25f;

@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace AFJK.Rapier
 {
-    public abstract class RapierColliderComponent : MonoBehaviour, IRapierRegistrationOrdered
+    public abstract class RapierCollider : MonoBehaviour, IRapierRegistrationOrdered
     {
-        [SerializeField] private RapierRigidBodyComponent rigidBody;
+        [SerializeField] private RapierRigidbody rigidBody;
         [SerializeField] private bool registerOnEnable = true;
         [SerializeField] private bool isSensor;
         [SerializeField] private float density = 1f;
@@ -19,7 +19,7 @@ namespace AFJK.Rapier
         [Tooltip("If set and StableId is empty, a deterministic StableId is generated from the hierarchy path on creation.")]
         [SerializeField] private bool autoGenerateStableId;
 
-        [Tooltip("Used by RapierWorldComponent.RebuildWorld when its registration mode is ExplicitOrder.")]
+        [Tooltip("Used by RapierWorldBehaviour.RebuildWorld when its registration mode is ExplicitOrder.")]
         [SerializeField] private int registrationOrder;
 
         [Header("Authored material/filter (applied on creation)")]
@@ -43,7 +43,7 @@ namespace AFJK.Rapier
 
         public bool IsRegistered => ColliderHandle.IsValid;
 
-        public RapierRigidBodyComponent RigidBody => rigidBody;
+        public RapierRigidbody RigidBody => rigidBody;
 
         public bool IsSensor
         {
@@ -97,7 +97,7 @@ namespace AFJK.Rapier
         {
             if (autoGenerateStableId && string.IsNullOrEmpty(stableId))
             {
-                var siblings = GetComponents<RapierColliderComponent>();
+                var siblings = GetComponents<RapierCollider>();
                 var index = System.Array.IndexOf(siblings, this);
                 stableId = RapierStableId.FromHierarchy(transform, "Collider" + index);
             }
@@ -139,12 +139,12 @@ namespace AFJK.Rapier
 
             if (rigidBody == null)
             {
-                rigidBody = GetComponentInParent<RapierRigidBodyComponent>();
+                rigidBody = GetComponentInParent<RapierRigidbody>();
             }
 
             if (rigidBody == null)
             {
-                Debug.LogWarning($"{GetType().Name} requires a {nameof(RapierRigidBodyComponent)}.", this);
+                Debug.LogWarning($"{GetType().Name} requires a {nameof(RapierRigidbody)}.", this);
                 return false;
             }
 
@@ -234,7 +234,7 @@ namespace AFJK.Rapier
             return TryGetActiveWorld(out var w) && w.SetColliderContactForceEventThreshold(ColliderHandle, threshold);
         }
 
-        internal bool CreateInWorld(RapierRigidBodyComponent body)
+        internal bool CreateInWorld(RapierRigidbody body)
         {
             if (IsRegistered)
             {
@@ -259,7 +259,7 @@ namespace AFJK.Rapier
         }
 
         // Resolves and tracks the owning body, then creates the native collider. Used by
-        // RapierWorldComponent.RebuildWorld so collider creation order is controlled globally.
+        // RapierWorldBehaviour.RebuildWorld so collider creation order is controlled globally.
         internal bool CreateManaged()
         {
             if (IsRegistered)
@@ -269,7 +269,7 @@ namespace AFJK.Rapier
 
             if (rigidBody == null)
             {
-                rigidBody = GetComponentInParent<RapierRigidBodyComponent>();
+                rigidBody = GetComponentInParent<RapierRigidbody>();
             }
 
             if (rigidBody == null || !rigidBody.IsRegistered)

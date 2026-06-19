@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Renamed the authoring components to drop the `Component` suffix so the public
+  type names read naturally in the inspector and in code: `RapierWorldComponent`
+  → `RapierWorldBehaviour`, `RapierRigidBodyComponent` → `RapierRigidbody`,
+  `RapierColliderComponent` → `RapierCollider`, `RapierJointComponent` →
+  `RapierJoint` (and each `*JointComponent` → `*Joint`),
+  `RapierCharacterControllerComponent` → `RapierCharacterControllerBehaviour`,
+  and `RapierPidControllerComponent` → `RapierPidController`. The low-level
+  struct `RapierCharacterController` keeps its name, so the component uses the
+  `Behaviour` suffix to avoid a clash. Script `.meta` GUIDs are preserved, so
+  existing Scenes/Prefabs keep their component references. This is a breaking
+  change for code that referenced the old type names.
+- Every concrete component now declares an `[AddComponentMenu]` entry, grouping
+  them under **Rapier ▸ …** (with `Colliders`, `Joints`, and `Controllers`
+  sub-menus) in the Add Component browser.
+
 ### Added
 - Data-driven scene import (Scene Sync foundation). `RapierSceneImporter` builds a
-  `RapierWorldComponent` + body/collider GameObjects from a neutral, serializable
+  `RapierWorldBehaviour` + body/collider GameObjects from a neutral, serializable
   `RapierSceneDescription` (also loadable from JSON), assigning StableId and
   RegistrationOrder and constructing the world in one deterministic
   `RebuildWorld()` pass. A `RapierImportedObject` metadata component records
@@ -28,14 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a **Tools ▸ Rapier ▸ Assign Stable Ids To Selection** editor menu assign
   persistent ids into a Scene/Prefab. Auto-generation defaults off so existing
   state hashes are unchanged.
-- Deterministic registration order for component worlds. `RapierWorldComponent`
+- Deterministic registration order for component worlds. `RapierWorldBehaviour`
   gained a `RegistrationMode` (`HierarchyOrder` / `StableId` / `ExplicitOrder`)
   and a `RebuildWorld()` method that discards and recreates the native world,
   creating every body, then collider, then joint in a fully determined order
   (independent of Unity's incidental component discovery). Rigid bodies,
   colliders, and joints gained a `RegistrationOrder` (and joints a `StableId`);
   joint limits/motors are cached and reapplied so joints survive a rebuild, and
-  `RapierPidControllerComponent` re-creates its controller when the world is
+  `RapierPidController` re-creates its controller when the world is
   rebuilt. The Rapier Component Demos sample exposes a registration-mode selector
   and a "Rebuild world" button. This is the foundation for Scene Sync import and
   network-bridge parity.
@@ -45,18 +61,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `RapierHeightfieldCollider`, and `RapierVoxelsCollider` (each accepting code or
   serialized inline/mesh geometry). These join the existing box/sphere/capsule
   collider components.
-- `RapierPidControllerComponent` wraps the native PID controller for a target
-  `RapierRigidBodyComponent`.
-- `RapierRigidBodyComponent` gained authored body settings (stable id, gravity
+- `RapierPidController` wraps the native PID controller for a target
+  `RapierRigidbody`.
+- `RapierRigidbody` gained authored body settings (stable id, gravity
   scale, soft-CCD prediction, additional solver iterations, dominance group,
   per-axis translation/rotation locks) plus `TryGetMass` / `SetSoftCcdPrediction`
   / `TryGetTransform` accessors.
-- `RapierColliderComponent` gained authored material/filter settings (stable id,
+- `RapierCollider` gained authored material/filter settings (stable id,
   friction/restitution combine rules, collision and solver groups, active events,
   active collision types, contact-force threshold) applied on creation.
 - `RapierPhysics` query façade expanded to the full scene-query surface
   (filtered/all raycasts, point projection/intersection, shape cast/intersection)
-  for both `RapierWorld` and `RapierWorldComponent`.
+  for both `RapierWorld` and `RapierWorldBehaviour`.
 - New **Rapier Component Demos** sample: reimplements the current Rapier JS 3D
   demo catalog using the component layer (each body is a GameObject with Rapier
   components). This validates practical component coverage; it is not a proof of
