@@ -1,7 +1,7 @@
 {
   "name": "com.afjk.rapier",
   "displayName": "Rapier for Unity",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A general-purpose Unity integration for the Rapier physics engine.",
   "unity": "2022.3",
   "license": "MIT OR Apache-2.0",
@@ -48,7 +48,7 @@
     },
     {
       "displayName": "Deterministic Dice",
-      "description": "Runs two identical Rapier component worlds side by side and compares StateHash across a first roll and a second throw.",
+      "description": "Runs two identical Rapier component worlds side by side and compares StateHash across automatic and manual dice throws.",
       "path": "Samples~/DeterministicDice"
     }
   ]

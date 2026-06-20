@@ -16,7 +16,7 @@ This is not an official Rapier project.
 Install via Unity Package Manager (**+ → Add package from git URL…**):
 
 ```text
-https://github.com/afjk/rapier-unity.git?path=Packages/com.afjk.rapier#v0.2.0
+https://github.com/afjk/rapier-unity.git?path=Packages/com.afjk.rapier#v0.3.0
 ```
 
 Prebuilt native plugins for **Windows, Linux, macOS (arm64), and Android

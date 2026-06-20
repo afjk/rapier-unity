@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-20
+
 ### Changed
 - Renamed the authoring components to drop the `Component` suffix so the public
   type names read naturally in the inspector and in code: `RapierWorldComponent`
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added a Deterministic Dice sample that runs two identical Rapier component worlds
-  side by side and compares `StateHash()` across a first roll and a second throw.
+  side by side and compares `StateHash()` across automatic and manual dice throws.
 - `RapierRigidbody` Inspector now shows read-only computed mass information and
   explains that mass is computed from attached collider density/shape.
 - Custom Inspectors for the authoring components, reorganized to mirror Unity's
