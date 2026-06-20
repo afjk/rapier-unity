@@ -6,7 +6,7 @@ namespace AFJK.Rapier.Editor
 {
     [CustomEditor(typeof(RapierPidController))]
     [CanEditMultipleObjects]
-    public class RapierPidControllerEditor : Editor
+    public class RapierPidControllerEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

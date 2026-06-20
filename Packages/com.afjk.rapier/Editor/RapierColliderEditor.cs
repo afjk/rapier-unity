@@ -6,7 +6,7 @@ namespace AFJK.Rapier.Editor
 {
     [CustomEditor(typeof(RapierCollider), true)]
     [CanEditMultipleObjects]
-    public class RapierColliderEditor : Editor
+    public class RapierColliderEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
