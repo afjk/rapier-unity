@@ -111,22 +111,16 @@ namespace AFJK.Rapier.Editor
 
         private void OnSceneGUI()
         {
-            // Scene View handles are single-object only; multi-edit stays Inspector-only.
-            if (targets.Length != 1)
-            {
-                return;
-            }
-
             switch (target)
             {
                 case RapierBoxCollider box:
-                    RapierColliderSceneHandles.DrawBox(serializedObject, box);
+                    RapierColliderSceneHandles.DrawBox(box);
                     break;
                 case RapierSphereCollider sphere:
-                    RapierColliderSceneHandles.DrawSphere(serializedObject, sphere);
+                    RapierColliderSceneHandles.DrawSphere(sphere);
                     break;
                 case RapierCapsuleCollider capsule:
-                    RapierColliderSceneHandles.DrawCapsule(serializedObject, capsule);
+                    RapierColliderSceneHandles.DrawCapsule(capsule);
                     break;
             }
         }

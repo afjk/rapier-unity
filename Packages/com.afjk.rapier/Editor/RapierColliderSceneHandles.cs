@@ -24,14 +24,9 @@ namespace AFJK.Rapier.Editor
         // Guards size <-> scale conversions against zero/near-zero scale axes.
         private static float SafeScale(float v) => Mathf.Abs(v) > 1e-6f ? Mathf.Abs(v) : 1f;
 
-        public static void DrawBox(SerializedObject serializedObject, RapierBoxCollider collider)
+        public static void DrawBox(RapierBoxCollider collider)
         {
-            serializedObject.Update();
-
-            var localPositionProp = serializedObject.FindProperty("localPosition");
-            var localRotationProp = serializedObject.FindProperty("localRotation");
-            var halfExtentsProp = serializedObject.FindProperty("halfExtents");
-            if (localPositionProp == null || halfExtentsProp == null)
+            if (collider == null)
             {
                 return;
             }
@@ -42,9 +37,9 @@ namespace AFJK.Rapier.Editor
             var scaleY = SafeScale(lossyScale.y);
             var scaleZ = SafeScale(lossyScale.z);
 
-            var localPosition = localPositionProp.vector3Value;
-            var localRotation = NormalizeRotation(localRotationProp);
-            var halfExtents = halfExtentsProp.vector3Value;
+            var localPosition = collider.LocalPosition;
+            var localRotation = NormalizeRotation(collider.LocalRotation);
+            var halfExtents = collider.HalfExtents;
 
             var matrix = ShapeMatrix(transform, localPosition, localRotation);
             using (new Handles.DrawingScope(matrix))
@@ -60,28 +55,25 @@ namespace AFJK.Rapier.Editor
                 BoxHandle.DrawHandle();
                 if (EditorGUI.EndChangeCheck())
                 {
+                    Undo.RecordObject(collider, "Edit Rapier Box Collider");
+
                     var worldCenter = matrix.MultiplyPoint3x4(BoxHandle.center);
-                    localPositionProp.vector3Value =
-                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
+                    collider.LocalPosition = SafeLocalCenter(transform, worldCenter, collider.LocalPosition);
 
                     var size = BoxHandle.size;
-                    halfExtentsProp.vector3Value = new Vector3(
+                    collider.HalfExtents = new Vector3(
                         Mathf.Max(0f, size.x / scaleX * 0.5f),
                         Mathf.Max(0f, size.y / scaleY * 0.5f),
                         Mathf.Max(0f, size.z / scaleZ * 0.5f));
 
-                    serializedObject.ApplyModifiedProperties();
+                    RecordModified(collider);
                 }
             }
         }
 
-        public static void DrawSphere(SerializedObject serializedObject, RapierSphereCollider collider)
+        public static void DrawSphere(RapierSphereCollider collider)
         {
-            serializedObject.Update();
-
-            var localPositionProp = serializedObject.FindProperty("localPosition");
-            var radiusProp = serializedObject.FindProperty("radius");
-            if (localPositionProp == null || radiusProp == null)
+            if (collider == null)
             {
                 return;
             }
@@ -91,38 +83,33 @@ namespace AFJK.Rapier.Editor
             // Unity's SphereCollider scales the radius by the largest absolute axis scale.
             var maxScale = Mathf.Max(SafeScale(lossyScale.x), SafeScale(lossyScale.y), SafeScale(lossyScale.z));
 
-            var localPosition = localPositionProp.vector3Value;
+            var localPosition = collider.LocalPosition;
 
             var matrix = ShapeMatrix(transform, localPosition, Quaternion.identity);
             using (new Handles.DrawingScope(matrix))
             {
                 SphereHandle.center = Vector3.zero;
-                SphereHandle.radius = radiusProp.floatValue * maxScale;
+                SphereHandle.radius = collider.Radius * maxScale;
 
                 EditorGUI.BeginChangeCheck();
                 SphereHandle.DrawHandle();
                 if (EditorGUI.EndChangeCheck())
                 {
+                    Undo.RecordObject(collider, "Edit Rapier Sphere Collider");
+
                     var worldCenter = matrix.MultiplyPoint3x4(SphereHandle.center);
-                    localPositionProp.vector3Value =
-                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
+                    collider.LocalPosition = SafeLocalCenter(transform, worldCenter, collider.LocalPosition);
 
-                    radiusProp.floatValue = Mathf.Max(0f, SphereHandle.radius / maxScale);
+                    collider.Radius = Mathf.Max(0f, SphereHandle.radius / maxScale);
 
-                    serializedObject.ApplyModifiedProperties();
+                    RecordModified(collider);
                 }
             }
         }
 
-        public static void DrawCapsule(SerializedObject serializedObject, RapierCapsuleCollider collider)
+        public static void DrawCapsule(RapierCapsuleCollider collider)
         {
-            serializedObject.Update();
-
-            var localPositionProp = serializedObject.FindProperty("localPosition");
-            var localRotationProp = serializedObject.FindProperty("localRotation");
-            var radiusProp = serializedObject.FindProperty("radius");
-            var halfHeightProp = serializedObject.FindProperty("halfHeight");
-            if (localPositionProp == null || radiusProp == null || halfHeightProp == null)
+            if (collider == null)
             {
                 return;
             }
@@ -133,30 +120,31 @@ namespace AFJK.Rapier.Editor
             var heightScale = SafeScale(lossyScale.y);
             var radiusScale = Mathf.Max(SafeScale(lossyScale.x), SafeScale(lossyScale.z));
 
-            var localPosition = localPositionProp.vector3Value;
-            var localRotation = NormalizeRotation(localRotationProp);
+            var localPosition = collider.LocalPosition;
+            var localRotation = NormalizeRotation(collider.LocalRotation);
 
             var matrix = ShapeMatrix(transform, localPosition, localRotation);
             using (new Handles.DrawingScope(matrix))
             {
                 CapsuleHandle.heightAxis = CapsuleBoundsHandle.HeightAxis.Y;
                 CapsuleHandle.center = Vector3.zero;
-                CapsuleHandle.radius = radiusProp.floatValue * radiusScale;
+                CapsuleHandle.radius = collider.Radius * radiusScale;
                 // Inspector shows Height = halfHeight * 2; keep the handle consistent with it.
-                CapsuleHandle.height = halfHeightProp.floatValue * 2f * heightScale;
+                CapsuleHandle.height = collider.HalfHeight * 2f * heightScale;
 
                 EditorGUI.BeginChangeCheck();
                 CapsuleHandle.DrawHandle();
                 if (EditorGUI.EndChangeCheck())
                 {
+                    Undo.RecordObject(collider, "Edit Rapier Capsule Collider");
+
                     var worldCenter = matrix.MultiplyPoint3x4(CapsuleHandle.center);
-                    localPositionProp.vector3Value =
-                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
+                    collider.LocalPosition = SafeLocalCenter(transform, worldCenter, collider.LocalPosition);
 
-                    radiusProp.floatValue = Mathf.Max(0f, CapsuleHandle.radius / radiusScale);
-                    halfHeightProp.floatValue = Mathf.Max(0f, CapsuleHandle.height / heightScale * 0.5f);
+                    collider.Radius = Mathf.Max(0f, CapsuleHandle.radius / radiusScale);
+                    collider.HalfHeight = Mathf.Max(0f, CapsuleHandle.height / heightScale * 0.5f);
 
-                    serializedObject.ApplyModifiedProperties();
+                    RecordModified(collider);
                 }
             }
         }
@@ -186,15 +174,15 @@ namespace AFJK.Rapier.Editor
 
         private static bool IsFinite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
 
-        private static Quaternion NormalizeRotation(SerializedProperty localRotationProp)
+        private static void RecordModified(Object target)
         {
-            if (localRotationProp == null)
-            {
-                return Quaternion.identity;
-            }
+            EditorUtility.SetDirty(target);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+        }
 
+        private static Quaternion NormalizeRotation(Quaternion q)
+        {
             // A zero/unset quaternion (e.g. legacy serialized data) isn't a valid rotation.
-            var q = localRotationProp.quaternionValue;
             var sqrMagnitude = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
             return sqrMagnitude < 1e-6f ? Quaternion.identity : q;
         }
