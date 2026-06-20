@@ -21,13 +21,13 @@ namespace AFJK.Rapier
                 body,
                 new RapierBoxColliderDesc
                 {
-                    HalfExtents = halfExtents,
+                    HalfExtents = Vector3.Scale(halfExtents, ShapeScale),
                     Density = Density,
                     Friction = Friction,
                     HasFriction = true,
                     Restitution = Restitution,
                     IsSensor = IsSensor,
-                    LocalPosition = LocalPosition,
+                    LocalPosition = ScaledLocalPosition,
                     LocalRotation = LocalRotation
                 });
         }
