@@ -24,18 +24,24 @@ namespace AFJK.Rapier
             RapierWorld world,
             RapierRigidBodyHandle body)
         {
+            // Rapier capsules are aligned to their local Y axis: scale the height by the Y axis and
+            // the radius by the larger perpendicular (X/Z) axis, matching the Scene View handle.
+            var scale = ShapeScale;
+            var heightScale = scale.y;
+            var radiusScale = Mathf.Max(scale.x, scale.z);
+
             return world.CreateCapsuleCollider(
                 body,
                 new RapierCapsuleColliderDesc
                 {
-                    HalfHeight = halfHeight,
-                    Radius = radius,
+                    HalfHeight = halfHeight * heightScale,
+                    Radius = radius * radiusScale,
                     Density = Density,
                     Friction = Friction,
                     HasFriction = true,
                     Restitution = Restitution,
                     IsSensor = IsSensor,
-                    LocalPosition = LocalPosition,
+                    LocalPosition = ScaledLocalPosition,
                     LocalRotation = LocalRotation
                 });
         }

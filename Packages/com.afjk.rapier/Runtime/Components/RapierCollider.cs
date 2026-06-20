@@ -81,6 +81,27 @@ namespace AFJK.Rapier
             set => localRotation = value == default(Quaternion) ? Quaternion.identity : value;
         }
 
+        /// <summary>
+        /// Absolute per-axis Transform scale used to size native collider shapes. Shapes are authored
+        /// in the collider GameObject's local units, so the native shape is scaled by lossyScale to
+        /// match the visible object — the same convention as Unity's built-in colliders and the
+        /// Scene View handles in <c>RapierColliderSceneHandles</c>.
+        /// </summary>
+        protected Vector3 ShapeScale
+        {
+            get
+            {
+                var s = transform.lossyScale;
+                return new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
+            }
+        }
+
+        /// <summary>
+        /// <see cref="LocalPosition"/> scaled by the Transform's lossyScale, matching how Unity scales
+        /// a collider's center offset so the native collider stays aligned with the Scene View handle.
+        /// </summary>
+        protected Vector3 ScaledLocalPosition => Vector3.Scale(LocalPosition, transform.lossyScale);
+
         public string StableId
         {
             get => stableId;
