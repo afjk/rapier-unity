@@ -8,9 +8,9 @@ namespace AFJK.Rapier.Samples
     /// Runs two identical Rapier <b>component</b> worlds side by side and shows that they stay in
     /// sync. Each world is authored in the Scene with <see cref="RapierWorldBehaviour"/>,
     /// <see cref="RapierRigidbody"/>, and <see cref="RapierBoxCollider"/> (a fixed floor, a fixed
-    /// walls, and a dynamic dice). A dice is rolled once automatically, then can be thrown manually
-    /// with the Space key. Both worlds receive the same authored setup, the same timestep, the same
-    /// initial state, and the same inputs at the same ticks, so their
+    /// three fixed walls, and a dynamic dice). A dice is rolled once automatically, then can be
+    /// thrown manually with the Space key. Both worlds receive the same authored setup, the same
+    /// timestep, the same initial state, and the same inputs at the same ticks, so their
     /// <see cref="RapierWorldBehaviour.StateHash"/> values — and the dice faces — match throughout
     /// the run.
     ///
@@ -53,6 +53,9 @@ namespace AFJK.Rapier.Samples
         [SerializeField] private Vector3 secondImpulse = new Vector3(0.25f, 4.5f, -0.5f);
         [SerializeField] private Vector3 secondTorqueImpulse = new Vector3(4f, 8f, 2f);
 
+        [Header("HUD")]
+        [SerializeField] private int hudFontSize = 18;
+
         private const string DicePipsRootName = "Generated Dice Pips";
         private const float PipFaceOffset = 0.53f;
         private const float PipGridOffset = 0.22f;
@@ -77,6 +80,13 @@ namespace AFJK.Rapier.Samples
         private bool chargeRequested;
         private bool releaseRequested;
         private string status = "Not started.";
+        private Vector2 hudScrollPosition;
+        private GUISkin cachedHudSkin;
+        private GUIStyle hudWindowStyle;
+        private GUIStyle hudTitleStyle;
+        private GUIStyle hudLabelStyle;
+        private GUIStyle hudButtonStyle;
+        private int cachedHudFontSize;
 
         // Per-world snapshot of the authored bodies and their initial parent-local poses, captured
         // before the simulation runs. Used to restore the exact starting state on every reset, since
@@ -141,39 +151,80 @@ namespace AFJK.Rapier.Samples
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(12f, 12f, 460f, 360f), GUI.skin.window);
+            EnsureHudStyles();
 
-            GUILayout.Label("Deterministic Dice");
-            GUILayout.Label("Two Rapier component worlds.");
-            GUILayout.Label("Same setup. Same timestep. Same inputs at the same ticks.");
-            GUILayout.Space(6f);
+            GUILayout.BeginArea(new Rect(12f, 12f, 740f, 500f), hudWindowStyle);
+            hudScrollPosition = GUILayout.BeginScrollView(
+                hudScrollPosition,
+                false,
+                false,
+                GUILayout.ExpandWidth(true),
+                GUILayout.ExpandHeight(true));
 
-            GUILayout.Label($"Phase: {PhaseLabel(phase)}");
-            GUILayout.Label($"Tick: {tick}");
-            GUILayout.Label($"StateHash A: 0x{hashA:x16}");
-            GUILayout.Label($"StateHash B: 0x{hashB:x16}");
-            GUILayout.Label($"Status: {(divergedTick < 0 ? "MATCH" : $"DIVERGED (tick {divergedTick})")}");
-            GUILayout.Label($"First Result:  A {FaceLabel(firstFaceA)} / B {FaceLabel(firstFaceB)}");
-            GUILayout.Label($"Manual Result: A {FaceLabel(secondFaceA)} / B {FaceLabel(secondFaceB)}");
-            GUILayout.Label($"Manual Throws: {manualThrowCount}");
+            GUILayout.Label("Deterministic Dice", hudTitleStyle);
+            GUILayout.Label("Two Rapier component worlds.", hudLabelStyle);
+            GUILayout.Label("Same setup. Same timestep. Same inputs at the same ticks.", hudLabelStyle);
+            GUILayout.Space(8f);
 
-            GUILayout.Space(6f);
-            GUILayout.Label(status);
+            GUILayout.Label($"Phase: {PhaseLabel(phase)}", hudLabelStyle);
+            GUILayout.Label($"Tick: {tick}", hudLabelStyle);
+            GUILayout.Label($"StateHash A: 0x{hashA:x16}", hudLabelStyle);
+            GUILayout.Label($"StateHash B: 0x{hashB:x16}", hudLabelStyle);
+            GUILayout.Label($"Status: {(divergedTick < 0 ? "MATCH" : $"DIVERGED (tick {divergedTick})")}", hudLabelStyle);
+            GUILayout.Label($"First Result:  A {FaceLabel(firstFaceA)} / B {FaceLabel(firstFaceB)}", hudLabelStyle);
+            GUILayout.Label($"Manual Result: A {FaceLabel(secondFaceA)} / B {FaceLabel(secondFaceB)}", hudLabelStyle);
+            GUILayout.Label($"Manual Throws: {manualThrowCount}", hudLabelStyle);
 
-            GUILayout.Space(6f);
+            GUILayout.Space(8f);
+            GUILayout.Label(status, hudLabelStyle);
+
+            GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Run Again"))
+            if (GUILayout.Button("Run Again", hudButtonStyle, GUILayout.Height(cachedHudFontSize + 14f)))
             {
                 RunAgain();
             }
 
-            if (GUILayout.Button("Reset"))
+            if (GUILayout.Button("Reset", hudButtonStyle, GUILayout.Height(cachedHudFontSize + 14f)))
             {
                 ResetRun();
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
+        }
+
+        private void EnsureHudStyles()
+        {
+            var fontSize = Mathf.Max(12, hudFontSize);
+            if (hudLabelStyle != null && cachedHudSkin == GUI.skin && cachedHudFontSize == fontSize)
+            {
+                return;
+            }
+
+            cachedHudSkin = GUI.skin;
+            cachedHudFontSize = fontSize;
+            hudWindowStyle = new GUIStyle(GUI.skin.window)
+            {
+                fontSize = fontSize,
+                padding = new RectOffset(14, 14, 12, 12)
+            };
+            hudTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = fontSize + 4,
+                fontStyle = FontStyle.Bold,
+                wordWrap = true
+            };
+            hudLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = fontSize,
+                wordWrap = true
+            };
+            hudButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = fontSize
+            };
         }
 
         // Rebuilds both worlds into an identical initial state and starts the run.
