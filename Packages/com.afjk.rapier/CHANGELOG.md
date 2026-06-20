@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sub-menus) in the Add Component browser.
 
 ### Added
+- Added a Deterministic Dice sample that runs two identical Rapier component worlds
+  side by side and compares `StateHash()` across a first roll and a second throw.
 - `RapierRigidbody` Inspector now shows read-only computed mass information and
   explains that mass is computed from attached collider density/shape.
 - Custom Inspectors for the authoring components, reorganized to mirror Unity's

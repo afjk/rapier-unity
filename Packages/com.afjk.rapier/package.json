@@ -45,6 +45,11 @@
       "displayName": "Scene Import",
       "description": "Builds a Rapier component world from a neutral data description (the Scene Sync import foundation).",
       "path": "Samples~/SceneImport"
+    },
+    {
+      "displayName": "Deterministic Dice",
+      "description": "Runs two identical Rapier component worlds side by side and compares StateHash across a first roll and a second throw.",
+      "path": "Samples~/DeterministicDice"
     }
   ]
 }
