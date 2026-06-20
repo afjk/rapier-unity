@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sub-menus) in the Add Component browser.
 
 ### Added
+- `RapierRigidbody` Inspector now shows read-only computed mass information and
+  explains that mass is computed from attached collider density/shape.
 - Custom Inspectors for the authoring components, reorganized to mirror Unity's
   built-in physics components and lower the learning curve. The values users
   actually tune are shown up top; internal plumbing (transform sync, StableId /
