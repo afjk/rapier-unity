@@ -60,6 +60,26 @@ namespace AFJK.Rapier.Samples
         private int secondFaceB;
         private string status = "Not started.";
 
+        // Per-world snapshot of the authored bodies and their initial parent-local poses, captured
+        // before the simulation runs. Used to restore the exact starting state on every reset, since
+        // SyncDiceVisual overwrites the dice GameObject transforms while the run plays.
+        private WorldCache cacheA;
+        private WorldCache cacheB;
+
+        private sealed class WorldCache
+        {
+            public RapierWorldBehaviour World;
+            public RapierRigidbody[] Bodies;
+            public Vector3[] LocalPositions;
+            public Quaternion[] LocalRotations;
+        }
+
+        private void Awake()
+        {
+            cacheA = BuildCache(worldA);
+            cacheB = BuildCache(worldB);
+        }
+
         private void Start()
         {
             RunAgain();
@@ -212,31 +232,76 @@ namespace AFJK.Rapier.Samples
                 return false;
             }
 
-            PrepareWorld(worldA);
-            PrepareWorld(worldB);
+            // Build the caches on demand in case Awake ran before the references were assigned.
+            cacheA = cacheA ?? BuildCache(worldA);
+            cacheB = cacheB ?? BuildCache(worldB);
+
+            PrepareWorld(cacheA);
+            PrepareWorld(cacheB);
 
             hashA = worldA.StateHash();
             hashB = worldB.StateHash();
             return true;
         }
 
-        // Rebuilds a world deterministically, then normalizes every body into the world-root-local
-        // frame so the two native worlds are identical no matter where their roots sit in the Scene.
-        // The built-in world-space transform sync is disabled because the dice visuals are driven
-        // back out into world space explicitly in SyncDiceVisual.
-        private void PrepareWorld(RapierWorldBehaviour world)
+        // Snapshots a world's bodies and their authored parent-local poses so every run can start
+        // from the exact same state, even after a previous run moved the dice.
+        private static WorldCache BuildCache(RapierWorldBehaviour world)
         {
+            if (world == null)
+            {
+                return null;
+            }
+
+            var bodies = world.GetComponentsInChildren<RapierRigidbody>(true);
+            var cache = new WorldCache
+            {
+                World = world,
+                Bodies = bodies,
+                LocalPositions = new Vector3[bodies.Length],
+                LocalRotations = new Quaternion[bodies.Length]
+            };
+
+            for (var i = 0; i < bodies.Length; i++)
+            {
+                cache.LocalPositions[i] = bodies[i].transform.localPosition;
+                cache.LocalRotations[i] = bodies[i].transform.localRotation;
+            }
+
+            return cache;
+        }
+
+        // Restores every body to its authored pose, rebuilds the world deterministically, then
+        // normalizes every body into the world-root-local frame so the two native worlds are
+        // identical no matter where their roots sit in the Scene. The built-in world-space transform
+        // sync is disabled because the dice visuals are driven back out explicitly in SyncDiceVisual.
+        private void PrepareWorld(WorldCache cache)
+        {
+            var world = cache.World;
+            var root = world.transform;
+
+            // Restore the authored starting pose before (re)registering, so the reset state never
+            // depends on where the previous run left the dice.
+            for (var i = 0; i < cache.Bodies.Length; i++)
+            {
+                var body = cache.Bodies[i];
+                if (body == null)
+                {
+                    continue;
+                }
+
+                body.SyncTransformFromRapier = false;
+                body.transform.localPosition = cache.LocalPositions[i];
+                body.transform.localRotation = cache.LocalRotations[i];
+            }
+
             world.RegistrationMode = RapierRegistrationMode.HierarchyOrder;
             world.RebuildWorld();
 
-            var root = world.transform;
-            var bodies = world.GetComponentsInChildren<RapierRigidbody>(true);
-            for (var i = 0; i < bodies.Length; i++)
+            for (var i = 0; i < cache.Bodies.Length; i++)
             {
-                var body = bodies[i];
-                body.SyncTransformFromRapier = false;
-
-                if (!body.IsRegistered || body.World == null || !body.World.IsCreated)
+                var body = cache.Bodies[i];
+                if (body == null || !body.IsRegistered || body.World == null || !body.World.IsCreated)
                 {
                     continue;
                 }
@@ -337,10 +402,10 @@ namespace AFJK.Rapier.Samples
 
         private static bool IsNativeFailure(Exception ex)
         {
+            // Limited to plugin-loading failures so genuine logic errors are not swallowed.
             return ex is DllNotFoundException
                 || ex is EntryPointNotFoundException
-                || ex is BadImageFormatException
-                || ex is InvalidOperationException;
+                || ex is BadImageFormatException;
         }
     }
 }
