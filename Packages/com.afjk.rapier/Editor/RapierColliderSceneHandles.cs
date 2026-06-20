@@ -61,7 +61,8 @@ namespace AFJK.Rapier.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     var worldCenter = matrix.MultiplyPoint3x4(BoxHandle.center);
-                    localPositionProp.vector3Value = transform.InverseTransformPoint(worldCenter);
+                    localPositionProp.vector3Value =
+                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
 
                     var size = BoxHandle.size;
                     halfExtentsProp.vector3Value = new Vector3(
@@ -103,7 +104,8 @@ namespace AFJK.Rapier.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     var worldCenter = matrix.MultiplyPoint3x4(SphereHandle.center);
-                    localPositionProp.vector3Value = transform.InverseTransformPoint(worldCenter);
+                    localPositionProp.vector3Value =
+                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
 
                     radiusProp.floatValue = Mathf.Max(0f, SphereHandle.radius / maxScale);
 
@@ -148,7 +150,8 @@ namespace AFJK.Rapier.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     var worldCenter = matrix.MultiplyPoint3x4(CapsuleHandle.center);
-                    localPositionProp.vector3Value = transform.InverseTransformPoint(worldCenter);
+                    localPositionProp.vector3Value =
+                        SafeLocalCenter(transform, worldCenter, localPositionProp.vector3Value);
 
                     radiusProp.floatValue = Mathf.Max(0f, CapsuleHandle.radius / radiusScale);
                     halfHeightProp.floatValue = Mathf.Max(0f, CapsuleHandle.height / heightScale * 0.5f);
@@ -166,6 +169,22 @@ namespace AFJK.Rapier.Editor
             var rotation = transform.rotation * localRotation;
             return Matrix4x4.TRS(worldCenter, rotation, Vector3.one);
         }
+
+        // Converts the handle's world center back to collider-local space. When a Transform axis has
+        // zero scale the localToWorld matrix is singular and InverseTransformPoint yields NaN/Inf, so
+        // we keep the previous value instead of serializing a corrupt (NaN) localPosition.
+        private static Vector3 SafeLocalCenter(Transform transform, Vector3 worldCenter, Vector3 fallback)
+        {
+            var local = transform.InverseTransformPoint(worldCenter);
+            if (IsFinite(local.x) && IsFinite(local.y) && IsFinite(local.z))
+            {
+                return local;
+            }
+
+            return fallback;
+        }
+
+        private static bool IsFinite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
 
         private static Quaternion NormalizeRotation(SerializedProperty localRotationProp)
         {
