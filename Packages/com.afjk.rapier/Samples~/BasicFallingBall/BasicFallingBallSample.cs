@@ -126,7 +126,7 @@ namespace AFJK.Rapier.Samples
             body.BodyType = RapierRigidBodyType.Fixed;
 
             var collider = floor.AddComponent<RapierBoxCollider>();
-            collider.HalfExtents = new Vector3(6f, 0.5f, 6f);
+            collider.HalfExtents = Vector3.one * 0.5f;
             collider.Density = 0f;
 
             floor.SetActive(true);

@@ -1206,6 +1206,9 @@ namespace AFJK.Rapier.Samples
         }
 
         // ---- Component body builders -------------------------------------------------------
+        // Primitive collider components multiply their local dimensions by transform.lossyScale.
+        // These demos put the visual size in the Transform scale, so the collider fields stay at
+        // Unity primitive local dimensions to match the low-level JS demo descriptors.
 
         private RapierRigidbody CreateBox(
             string id,
@@ -1227,7 +1230,7 @@ namespace AFJK.Rapier.Samples
             ConfigureBody(body, bodyType, linearVelocity, angularVelocity, linearDamping, angularDamping, false);
 
             var collider = go.AddComponent<RapierBoxCollider>();
-            collider.HalfExtents = halfExtents;
+            collider.HalfExtents = Vector3.one * 0.5f;
             collider.Density = density;
 
             go.SetActive(true);
@@ -1254,7 +1257,7 @@ namespace AFJK.Rapier.Samples
             ConfigureBody(body, bodyType, linearVelocity, angularVelocity, linearDamping, angularDamping, ccd);
 
             var collider = go.AddComponent<RapierSphereCollider>();
-            collider.Radius = radius;
+            collider.Radius = 0.5f;
             collider.Density = density;
 
             go.SetActive(true);
@@ -1279,8 +1282,8 @@ namespace AFJK.Rapier.Samples
             ConfigureBody(body, bodyType, linearVelocity, Vector3.zero, 0f, 0f, false);
 
             var collider = go.AddComponent<RapierCapsuleCollider>();
-            collider.HalfHeight = halfHeight;
-            collider.Radius = radius;
+            collider.HalfHeight = totalHeight > Mathf.Epsilon ? halfHeight / (totalHeight * 0.5f) : 0f;
+            collider.Radius = 0.5f;
             collider.Density = density;
 
             go.SetActive(true);
