@@ -42,6 +42,9 @@ namespace AFJK.Rapier.Editor
 
             // Common
             EditorGUILayout.PropertyField(bodyType, new GUIContent("Body Type"));
+
+            DrawComputedMass();
+
             EditorGUILayout.PropertyField(linearDamping, new GUIContent("Linear Damping"));
             EditorGUILayout.PropertyField(angularDamping, new GUIContent("Angular Damping"));
             EditorGUILayout.PropertyField(canSleep, new GUIContent("Can Sleep"));
@@ -87,6 +90,32 @@ namespace AFJK.Rapier.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawComputedMass()
+        {
+            if (targets.Length > 1)
+            {
+                EditorGUILayout.LabelField("Computed Mass", "Multiple Selection");
+                return;
+            }
+
+            var rigidbody = (RapierRigidbody)target;
+            if (rigidbody.IsRegistered && rigidbody.TryGetMass(out var mass))
+            {
+                EditorGUILayout.LabelField("Computed Mass", $"{mass:0.###} kg");
+                EditorGUILayout.HelpBox(
+                    "Mass is computed from attached Rapier colliders and their density.",
+                    MessageType.None);
+            }
+            else
+            {
+                EditorGUILayout.LabelField("Computed Mass", "Not available");
+                EditorGUILayout.HelpBox(
+                    "Mass is computed from attached Rapier colliders. It becomes available after the body is registered, usually in Play Mode.\n" +
+                    "Edit Density on attached Rapier Collider components to affect mass.",
+                    MessageType.None);
+            }
         }
     }
 }
