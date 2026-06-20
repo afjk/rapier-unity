@@ -109,6 +109,28 @@ namespace AFJK.Rapier.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
+        private void OnSceneGUI()
+        {
+            // Scene View handles are single-object only; multi-edit stays Inspector-only.
+            if (targets.Length != 1)
+            {
+                return;
+            }
+
+            switch (target)
+            {
+                case RapierBoxCollider box:
+                    RapierColliderSceneHandles.DrawBox(serializedObject, box);
+                    break;
+                case RapierSphereCollider sphere:
+                    RapierColliderSceneHandles.DrawSphere(serializedObject, sphere);
+                    break;
+                case RapierCapsuleCollider capsule:
+                    RapierColliderSceneHandles.DrawCapsule(serializedObject, capsule);
+                    break;
+            }
+        }
+
         private void DrawShapeSection()
         {
             var t0 = target.GetType();
